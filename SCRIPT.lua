@@ -131,6 +131,112 @@ screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = game:GetService("CoreGui")
 
 -- ============================================================
+--  TELA DE SENHA
+-- ============================================================
+local SENHA_CORRETA = "159753"
+local senhaDesbloqueada = false
+
+local senhaGui = Instance.new("Frame")
+senhaGui.Size = UDim2.new(0, 260, 0, 180)
+senhaGui.Position = UDim2.new(0.5, -130, 0.5, -90)
+senhaGui.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+senhaGui.BorderSizePixel = 0
+senhaGui.ZIndex = 20
+senhaGui.Parent = screenGui
+Instance.new("UICorner", senhaGui).CornerRadius = UDim.new(0, 14)
+
+local senhaStroke = Instance.new("UIStroke")
+senhaStroke.Color = Color3.fromRGB(80, 160, 230)
+senhaStroke.Thickness = 2
+senhaStroke.Parent = senhaGui
+
+local senhaTitulo = Instance.new("TextLabel")
+senhaTitulo.Size = UDim2.new(1, 0, 0, 40)
+senhaTitulo.Position = UDim2.new(0, 0, 0, 8)
+senhaTitulo.BackgroundTransparency = 1
+senhaTitulo.TextColor3 = Color3.fromRGB(80, 160, 230)
+senhaTitulo.Text = "👑 SCRIPT DE UM VERDADEIRO ADM 👑"
+senhaTitulo.TextScaled = true
+senhaTitulo.Font = Enum.Font.GothamBold
+senhaTitulo.ZIndex = 21
+senhaTitulo.Parent = senhaGui
+
+local senhaSubtitulo = Instance.new("TextLabel")
+senhaSubtitulo.Size = UDim2.new(1, 0, 0, 25)
+senhaSubtitulo.Position = UDim2.new(0, 0, 0, 48)
+senhaSubtitulo.BackgroundTransparency = 1
+senhaSubtitulo.TextColor3 = Color3.fromRGB(180, 180, 180)
+senhaSubtitulo.Text = "🔒 Digite o PIN:"
+senhaSubtitulo.TextScaled = true
+senhaSubtitulo.Font = Enum.Font.GothamBold
+senhaSubtitulo.ZIndex = 21
+senhaSubtitulo.Parent = senhaGui
+
+local senhaInput = Instance.new("TextBox")
+senhaInput.Size = UDim2.new(0.8, 0, 0, 36)
+senhaInput.Position = UDim2.new(0.1, 0, 0, 80)
+senhaInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+senhaInput.BorderSizePixel = 0
+senhaInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+senhaInput.PlaceholderText = "••••••"
+senhaInput.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
+senhaInput.Text = ""
+senhaInput.TextScaled = true
+senhaInput.Font = Enum.Font.GothamBold
+senhaInput.ClearTextOnFocus = true
+senhaInput.ZIndex = 21
+senhaInput.Parent = senhaGui
+Instance.new("UICorner", senhaInput).CornerRadius = UDim.new(0, 8)
+
+local senhaStrokeInput = Instance.new("UIStroke")
+senhaStrokeInput.Color = Color3.fromRGB(60, 60, 60)
+senhaStrokeInput.Thickness = 1
+senhaStrokeInput.Parent = senhaInput
+
+local senhaBtn = Instance.new("TextButton")
+senhaBtn.Size = UDim2.new(0.8, 0, 0, 36)
+senhaBtn.Position = UDim2.new(0.1, 0, 0, 126)
+senhaBtn.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
+senhaBtn.BorderSizePixel = 0
+senhaBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+senhaBtn.Text = "ENTRAR"
+senhaBtn.TextScaled = true
+senhaBtn.Font = Enum.Font.GothamBold
+senhaBtn.ZIndex = 21
+senhaBtn.Parent = senhaGui
+Instance.new("UICorner", senhaBtn).CornerRadius = UDim.new(0, 8)
+
+local senhaErro = Instance.new("TextLabel")
+senhaErro.Size = UDim2.new(1, 0, 0, 20)
+senhaErro.Position = UDim2.new(0, 0, 1, 5)
+senhaErro.BackgroundTransparency = 1
+senhaErro.TextColor3 = Color3.fromRGB(255, 50, 50)
+senhaErro.Text = ""
+senhaErro.TextScaled = true
+senhaErro.Font = Enum.Font.GothamBold
+senhaErro.ZIndex = 21
+senhaErro.Parent = senhaGui
+
+local function tentarSenha()
+    if senhaInput.Text == SENHA_CORRETA then
+        senhaDesbloqueada = true
+        senhaGui:Destroy()
+    else
+        senhaErro.Text = "❌ PIN incorreto! Fechando..."
+        task.wait(1.5)
+        screenGui:Destroy()
+    end
+end
+
+senhaBtn.MouseButton1Click:Connect(tentarSenha)
+senhaInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then tentarSenha() end
+end)
+
+-- Aguarda senha antes de continuar
+repeat task.wait(0.1) until senhaDesbloqueada
+
+-- ============================================================
 --  CONTADOR DE PROGRESSO LITE
 -- ============================================================
 local progressGui = Instance.new("Frame")
