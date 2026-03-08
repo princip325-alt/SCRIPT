@@ -446,7 +446,7 @@ end
 --  DETECÇÕES
 -- ============================================================
 local function checkMirage()
-    local mirage = workspace:FindFirstChild("Mirage Island")
+    local mirage = workspace:FindFirstChild("<Mirage Island>")
     if mirage and not notified["mirage"] then
         notified["mirage"] = true
         sendWebhook(WEBHOOKS.mirage, "Maru Hub Mirage Notify", "🌮", 0x00BFFF)
@@ -454,8 +454,8 @@ local function checkMirage()
 end
 
 local function checkPrehistoric()
-    local prehistoricWS = workspace:FindFirstChild("PrehistoricIsland")
-    local prehistoricRS = RS:FindFirstChild("PrehistoricIsland")
+    local prehistoricWS = workspace:FindFirstChild("<Prehistoric Island>")
+    local prehistoricRS = RS:FindFirstChild("<Prehistoric Island>")
     if (prehistoricWS or prehistoricRS) and not notified["prehistoric"] then
         notified["prehistoric"] = true
         sendWebhook(WEBHOOKS.prehistoric, "Prehistoric Island Ativa!", "🌋", 0x228B22)
@@ -465,9 +465,10 @@ local function checkPrehistoric()
 end
 
 local function checkFullMoon()
-    local blueMoon = workspace:FindFirstChild("BlueMoonWisp", true)
+    local blueMoon = workspace:FindFirstChild("Full Moon", true)
+        or workspace:FindFirstChild("FullMoon", true)
+        or workspace:FindFirstChild("BlueMoonWisp", true)
         or workspace:FindFirstChild("MoonShrine", true)
-        or workspace:FindFirstChild("BloxMoon", true)
     if blueMoon and not notified["full_moon"] then
         notified["full_moon"] = true
         sendWebhook(WEBHOOKS.full_moon, "Lua Cheia Ativa!", "🌑", 0xFFD700)
@@ -494,9 +495,7 @@ local function checkBosses()
 end
 
 local function checkLegendarySword()
-    local sword = workspace:FindFirstChild("LightSword", true)
-        or workspace:FindFirstChild("Legendary Sword", true)
-        or workspace:FindFirstChild("Light Sword", true)
+    local sword = workspace:FindFirstChild("Legendary Sword Dealer", true)
     if sword and not notified["legendary"] then
         notified["legendary"] = true
         sendWebhook(WEBHOOKS.legendary, "Espada Lendária Disponível!", "🤺", 0xFFAA00)
