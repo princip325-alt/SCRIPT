@@ -357,7 +357,7 @@ end
 --  FRAME PRINCIPAL
 -- ============================================================
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 140, 0, 176)
+frame.Size = UDim2.new(0, 140, 0, 209)
 frame.Position = UDim2.new(0, 10, 0.45, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
@@ -532,7 +532,23 @@ bringMobBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local closeBtn, closeDot, closeLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
+-- Botão DmgAura — começa DESATIVADO
+local dmgAuraActive = false
+local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "DmgAura", Color3.fromRGB(255,50,50))
+dmgAuraBtn.MouseButton1Click:Connect(function()
+    dmgAuraActive = not dmgAuraActive
+    if dmgAuraActive then
+        dmgAuraDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
+        dmgAuraLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        dmgAuraLabel.Text = "DmgAura"
+    else
+        dmgAuraDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        dmgAuraLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        dmgAuraLabel.Text = "DmgAura"
+    end
+end)
+
+local closeBtn, closeDot, closeLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
 closeBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.3)
@@ -751,6 +767,21 @@ end)
 -- ============================================================
 task.spawn(function()
     local BRING_DISTANCE = 100
+    -- NPCs amigáveis para ignorar
+    local IGNORAR = {
+        ["Boat Dealer"] = true, ["Luxury Boat Dealer"] = true,
+        ["Ship Dealer"] = true, ["Upgrade"] = true,
+        ["Blox Fruit Gacha"] = true, ["Blox Fruit Dealer"] = true,
+        ["Blox Fruit Dealer Cousin"] = true, ["NPC"] = true,
+        ["Sword Dealer"] = true, ["Legendary Sword Dealer"] = true,
+        ["Arowe"] = true, ["Blacksmith"] = true,
+        ["Master of Auras"] = true, ["Experimented Hand"] = true,
+        ["Vivid Arowe"] = true, ["Advanced Fruit Dealer"] = true,
+        ["Farmer"] = true, ["Chompy"] = true,
+        ["Totto"] = true, ["Yukora"] = true,
+        ["Island Boy"] = true, ["Ability Teacher"] = true,
+        ["Bartilo"] = true, ["Swan"] = true,
+    }
     while running do
         if bringMobActive then
             pcall(function()
@@ -764,10 +795,12 @@ task.spawn(function()
                     if bringMobActive and obj:IsA("Model") and obj ~= char then
                         local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
                         local humanoid = obj:FindFirstChildOfClass("Humanoid")
-                        if enemyHRP and humanoid and humanoid.Health > 0 then
+                        -- Ignora NPCs amigáveis e jogadores
+                        if enemyHRP and humanoid and humanoid.Health > 0
+                            and not IGNORAR[obj.Name]
+                            and not Players:GetPlayerFromCharacter(obj) then
                             local dist = (enemyHRP.Position - hrp.Position).Magnitude
                             if dist <= BRING_DISTANCE then
-                                -- Teletransporta o inimigo até o jogador
                                 enemyHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
                             end
                         end
@@ -782,8 +815,53 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  LOOP PRINCIPAL
+--  DAMAGE AURA — dano real baseado na arma/fruta (50 studs)
 -- ============================================================
+task.spawn(function()
+    local AURA_DISTANCE = 50
+    while running do
+        if dmgAuraActive then
+            pcall(function()
+                local player = Players.LocalPlayer
+                local char = player.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                local tool = char:FindFirstChildOfClass("Tool")
+
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if dmgAuraActive and obj:IsA("Model") and obj ~= char then
+                        local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
+                        local humanoid = obj:FindFirstChildOfClass("Humanoid")
+                        if enemyHRP and humanoid and humanoid.Health > 0 then
+                            local dist = (enemyHRP.Position - hrp.Position).Magnitude
+                            if dist <= AURA_DISTANCE then
+                                -- Simula ataque com a ferramenta equipada
+                                if tool then
+                                    local activate = tool:FindFirstChild("Activate")
+                                        or tool:FindFirstChild("MouseButton1Click")
+                                    if activate then
+                                        pcall(function() activate:Fire() end)
+                                    end
+                                    -- Força hitbox na direção do inimigo
+                                    local oldCFrame = hrp.CFrame
+                                    hrp.CFrame = CFrame.lookAt(hrp.Position, enemyHRP.Position)
+                                    task.wait(0.05)
+                                    hrp.CFrame = oldCFrame
+                                end
+                                -- Aplica dano direto como fallback
+                                humanoid:TakeDamage(humanoid.MaxHealth * 0.1)
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait(0.15)
+        else
+            task.wait(0.2)
+        end
+    end
+end)
 print("👑 BF Notify ATIVO! FPS: 120")
 
 while running do
