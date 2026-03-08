@@ -518,6 +518,21 @@ local function checkHaki()
 end
 
 -- ============================================================
+--  ANTI AFK — Auto Click 35ms
+-- ============================================================
+task.spawn(function()
+    local VIM = game:GetService("VirtualInputManager")
+    while running do
+        pcall(function()
+            VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            task.wait(0.035)
+            VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        end)
+        task.wait(0.035)
+    end
+end)
+
+-- ============================================================
 --  LOOP PRINCIPAL
 -- ============================================================
 print("👑 BF Notify ATIVO! FPS: 120")
