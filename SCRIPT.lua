@@ -815,7 +815,7 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  DAMAGE AURA — dano real baseado na arma/fruta (50 studs)
+--  DAMAGE AURA — mata inimigos no raio (50 studs)
 -- ============================================================
 task.spawn(function()
     local AURA_DISTANCE = 50
@@ -827,30 +827,24 @@ task.spawn(function()
                 if not char then return end
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if not hrp then return end
-                local tool = char:FindFirstChildOfClass("Tool")
 
                 for _, obj in ipairs(workspace:GetDescendants()) do
                     if dmgAuraActive and obj:IsA("Model") and obj ~= char then
                         local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
                         local humanoid = obj:FindFirstChildOfClass("Humanoid")
-                        if enemyHRP and humanoid and humanoid.Health > 0 then
+                        if enemyHRP and humanoid and humanoid.Health > 0
+                            and not Players:GetPlayerFromCharacter(obj) then
                             local dist = (enemyHRP.Position - hrp.Position).Magnitude
                             if dist <= AURA_DISTANCE then
-                                -- Simula ataque com a ferramenta equipada
-                                if tool then
-                                    local activate = tool:FindFirstChild("Activate")
-                                        or tool:FindFirstChild("MouseButton1Click")
-                                    if activate then
-                                        pcall(function() activate:Fire() end)
+                                pcall(function() humanoid.Health = 0 end)
+                                pcall(function() humanoid:TakeDamage(humanoid.MaxHealth) end)
+                                pcall(function()
+                                    for _, v in ipairs(obj:GetDescendants()) do
+                                        if v:IsA("Humanoid") then
+                                            v.Health = 0
+                                        end
                                     end
-                                    -- Força hitbox na direção do inimigo
-                                    local oldCFrame = hrp.CFrame
-                                    hrp.CFrame = CFrame.lookAt(hrp.Position, enemyHRP.Position)
-                                    task.wait(0.05)
-                                    hrp.CFrame = oldCFrame
-                                end
-                                -- Aplica dano direto como fallback
-                                humanoid:TakeDamage(humanoid.MaxHealth * 0.1)
+                                end)
                             end
                         end
                     end
