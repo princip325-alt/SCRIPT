@@ -235,7 +235,7 @@ end
 --  FRAME PRINCIPAL
 -- ============================================================
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 140, 0, 110)
+frame.Size = UDim2.new(0, 140, 0, 143)
 frame.Position = UDim2.new(0, 10, 0.45, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
@@ -346,7 +346,7 @@ local function createBtn2(col, row, dotColor, labelText, labelColor)
 end
 
 -- Linha 1: Ativo | Lite
--- Linha 2: Fechar
+-- Linha 2: AutoClick | Fechar
 local toggleBtn, toggleDot, toggleLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "Ativo", Color3.fromRGB(0,255,80))
 toggleBtn.MouseButton1Click:Connect(function()
     enabled = not enabled
@@ -377,7 +377,23 @@ liteBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local closeBtn, closeDot, closeLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
+-- Botão AutoClick — começa DESATIVADO
+local autoClickActive = false
+local autoClickBtn, autoClickDot, autoClickLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "AutoClick", Color3.fromRGB(255,50,50))
+autoClickBtn.MouseButton1Click:Connect(function()
+    autoClickActive = not autoClickActive
+    if autoClickActive then
+        autoClickDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
+        autoClickLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        autoClickLabel.Text = "AutoClick"
+    else
+        autoClickDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        autoClickLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        autoClickLabel.Text = "AutoClick"
+    end
+end)
+
+local closeBtn, closeDot, closeLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
 closeBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.3)
@@ -517,17 +533,21 @@ local function checkHaki()
 end
 
 -- ============================================================
---  ANTI AFK — Auto Click 35ms
+--  ANTI AFK — Auto Click 35ms (controlado pelo botão)
 -- ============================================================
 task.spawn(function()
     local VIM = game:GetService("VirtualInputManager")
     while running do
-        pcall(function()
-            VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+        if autoClickActive then
+            pcall(function()
+                VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                task.wait(0.035)
+                VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+            end)
             task.wait(0.035)
-            VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-        end)
-        task.wait(0.035)
+        else
+            task.wait(0.1)
+        end
     end
 end)
 
