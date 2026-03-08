@@ -341,7 +341,7 @@ end
 --  FRAME PRINCIPAL
 -- ============================================================
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 140, 0, 143)
+frame.Size = UDim2.new(0, 140, 0, 176)
 frame.Position = UDim2.new(0, 10, 0.45, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
@@ -452,7 +452,8 @@ local function createBtn2(col, row, dotColor, labelText, labelColor)
 end
 
 -- Linha 1: Ativo | Lite
--- Linha 2: AutoClick | Fechar
+-- Linha 2: AutoClick | BringMob
+-- Linha 3: Fechar
 local toggleBtn, toggleDot, toggleLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "Ativo", Color3.fromRGB(0,255,80))
 toggleBtn.MouseButton1Click:Connect(function()
     enabled = not enabled
@@ -499,7 +500,23 @@ autoClickBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local closeBtn, closeDot, closeLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
+-- Botão BringMob — começa DESATIVADO
+local bringMobActive = false
+local bringMobBtn, bringMobDot, bringMobLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "BringMob", Color3.fromRGB(255,50,50))
+bringMobBtn.MouseButton1Click:Connect(function()
+    bringMobActive = not bringMobActive
+    if bringMobActive then
+        bringMobDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
+        bringMobLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        bringMobLabel.Text = "BringMob"
+    else
+        bringMobDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        bringMobLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        bringMobLabel.Text = "BringMob"
+    end
+end)
+
+local closeBtn, closeDot, closeLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
 closeBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.3)
@@ -524,9 +541,65 @@ end
 miniBtn2.MouseButton1Click:Connect(toggleMinimize)
 
 -- Arrastar frame principal pelo título
-makeDraggable(title, frame, 140, 110)
+makeDraggable(title, frame, 140, 176)
 -- Arrastar coroa segurando 1 segundo
 makeDraggableHold(miniFrame, 25, 25)
+
+-- ============================================================
+--  MOB LOCK — Silent Aim 100 studs
+-- ============================================================
+local MOB_RANGE = 100
+
+local function getNearestEnemy()
+    local player = Players.LocalPlayer
+    local char = player.Character
+    if not char then return nil end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local nearest = nil
+    local nearestDist = MOB_RANGE
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj ~= char then
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            local objHrp = obj:FindFirstChild("HumanoidRootPart")
+            if hum and hum.Health > 0 and objHrp then
+                -- Não atacar outros jogadores
+                local isPlayer = false
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p.Character == obj then isPlayer = true break end
+                end
+                if not isPlayer then
+                    local dist = (hrp.Position - objHrp.Position).Magnitude
+                    if dist < nearestDist then
+                        nearestDist = dist
+                        nearest = objHrp
+                    end
+                end
+            end
+        end
+    end
+    return nearest
+end
+
+-- Loop MobLock — trava câmera no inimigo mais próximo
+task.spawn(function()
+    while running do
+        if mobLockActive then
+            pcall(function()
+                local target = getNearestEnemy()
+                if target then
+                    local camera = workspace.CurrentCamera
+                    camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
+                end
+            end)
+            task.wait(0.05)
+        else
+            task.wait(0.1)
+        end
+    end
+end)
 
 -- ============================================================
 --  FUNÇÃO DE ENVIO
@@ -653,6 +726,41 @@ task.spawn(function()
             task.wait(0.035)
         else
             task.wait(0.1)
+        end
+    end
+end)
+
+-- ============================================================
+--  BRING MOB — puxa inimigos até o jogador (100 studs)
+-- ============================================================
+task.spawn(function()
+    local BRING_DISTANCE = 100
+    while running do
+        if bringMobActive then
+            pcall(function()
+                local player = Players.LocalPlayer
+                local char = player.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if bringMobActive and obj:IsA("Model") and obj ~= char then
+                        local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
+                        local humanoid = obj:FindFirstChildOfClass("Humanoid")
+                        if enemyHRP and humanoid and humanoid.Health > 0 then
+                            local dist = (enemyHRP.Position - hrp.Position).Magnitude
+                            if dist <= BRING_DISTANCE then
+                                -- Teletransporta o inimigo até o jogador
+                                enemyHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait(0.1)
+        else
+            task.wait(0.2)
         end
     end
 end)
