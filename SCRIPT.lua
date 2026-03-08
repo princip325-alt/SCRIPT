@@ -188,6 +188,22 @@ senhaInput.ZIndex = 21
 senhaInput.Parent = senhaGui
 Instance.new("UICorner", senhaInput).CornerRadius = UDim.new(0, 8)
 
+-- Esconde o PIN real e mostra apenas *
+local pinReal = ""
+senhaInput:GetPropertyChangedSignal("Text"):Connect(function()
+    local novo = senhaInput.Text
+    if #novo > #pinReal then
+        -- Adicionou caractere
+        local adicionado = string.sub(novo, #pinReal + 1)
+        pinReal = pinReal .. adicionado
+    elseif #novo < #pinReal then
+        -- Apagou caractere
+        pinReal = string.sub(pinReal, 1, #novo)
+    end
+    -- Mostra só asteriscos
+    senhaInput.Text = string.rep("*", #pinReal)
+end)
+
 local senhaStrokeInput = Instance.new("UIStroke")
 senhaStrokeInput.Color = Color3.fromRGB(60, 60, 60)
 senhaStrokeInput.Thickness = 1
@@ -218,7 +234,7 @@ senhaErro.ZIndex = 21
 senhaErro.Parent = senhaGui
 
 local function tentarSenha()
-    if senhaInput.Text == SENHA_CORRETA then
+    if pinReal == SENHA_CORRETA then
         senhaDesbloqueada = true
         senhaGui:Destroy()
     else
