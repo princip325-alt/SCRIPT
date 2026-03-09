@@ -357,7 +357,7 @@ end
 --  FRAME PRINCIPAL
 -- ============================================================
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 160, 0, 178)
+frame.Size = UDim2.new(0, 160, 0, 211)
 frame.Position = UDim2.new(0, 10, 0.45, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
@@ -485,7 +485,7 @@ toggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local liteBtn, liteDot, liteLabel = createBtn2(1, 0, Color3.fromRGB(255,50,50), "Lite", Color3.fromRGB(255,50,50))
+local liteBtn, liteDot, liteLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "Lite", Color3.fromRGB(255,50,50))
 liteBtn.MouseButton1Click:Connect(function()
     liteMode = not liteMode
     task.spawn(function() applyLiteMode(liteMode) end)
@@ -501,7 +501,7 @@ liteBtn.MouseButton1Click:Connect(function()
 end)
 
 local autoClickActive = false
-local autoClickBtn, autoClickDot, autoClickLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "AntAfk", Color3.fromRGB(255,50,50))
+local autoClickBtn, autoClickDot, autoClickLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "AntAfk", Color3.fromRGB(255,50,50))
 autoClickBtn.MouseButton1Click:Connect(function()
     autoClickActive = not autoClickActive
     if autoClickActive then
@@ -516,7 +516,7 @@ autoClickBtn.MouseButton1Click:Connect(function()
 end)
 
 local bringMobActive = false
-local bringMobBtn, bringMobDot, bringMobLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "BringMob", Color3.fromRGB(255,50,50))
+local bringMobBtn, bringMobDot, bringMobLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "BringMob", Color3.fromRGB(255,50,50))
 bringMobBtn.MouseButton1Click:Connect(function()
     bringMobActive = not bringMobActive
     if bringMobActive then
@@ -531,7 +531,7 @@ bringMobBtn.MouseButton1Click:Connect(function()
 end)
 
 local dmgAuraActive = false
-local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "DmgAura", Color3.fromRGB(255,50,50))
+local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "DmgAura", Color3.fromRGB(255,50,50))
 dmgAuraBtn.MouseButton1Click:Connect(function()
     dmgAuraActive = not dmgAuraActive
     if dmgAuraActive then
@@ -546,7 +546,7 @@ dmgAuraBtn.MouseButton1Click:Connect(function()
 end)
 
 local autoKenActive = false
-local autoKenBtn, autoKenDot, autoKenLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "AutoKen", Color3.fromRGB(255,50,50))
+local autoKenBtn, autoKenDot, autoKenLabel = createBtn2(0, 3, Color3.fromRGB(255,50,50), "AutoKen", Color3.fromRGB(255,50,50))
 autoKenBtn.MouseButton1Click:Connect(function()
     autoKenActive = not autoKenActive
     if autoKenActive then
@@ -560,13 +560,89 @@ autoKenBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local closeBtn, closeDot, closeLabel = createBtn2(0, 3, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
--- Fechar ocupa as 2 colunas
+local voarActive = false
+local voarBtn, voarDot, voarLabel = createBtn2(1, 0, Color3.fromRGB(255,50,50), "Voar", Color3.fromRGB(255,50,50))
+voarBtn.MouseButton1Click:Connect(function()
+    voarActive = not voarActive
+    if voarActive then
+        voarDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
+        voarLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        voarLabel.Text = "Voar ON"
+    else
+        voarDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        voarLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        voarLabel.Text = "Voar"
+    end
+end)
+
+local closeBtn, closeDot, closeLabel = createBtn2(0, 4, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
 closeBtn.Size = UDim2.new(0, BTN_W*2 + PAD_X, 0, BTN_H)
+
+-- Tela de confirmacao
+local confirmFrame = Instance.new("Frame")
+confirmFrame.Size = UDim2.new(0, 160, 0, 90)
+confirmFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+confirmFrame.BorderSizePixel = 0
+confirmFrame.Visible = false
+confirmFrame.ZIndex = 10
+confirmFrame.Parent = screenGui
+Instance.new("UICorner", confirmFrame).CornerRadius = UDim.new(0, 10)
+local cfStroke = Instance.new("UIStroke", confirmFrame)
+cfStroke.Color = Color3.fromRGB(255, 50, 50)
+cfStroke.Thickness = 1.5
+
+local cfTitle = Instance.new("TextLabel")
+cfTitle.Size = UDim2.new(1, -10, 0, 30)
+cfTitle.Position = UDim2.new(0, 5, 0, 5)
+cfTitle.BackgroundTransparency = 1
+cfTitle.Text = "Tem certeza que quer fechar?"
+cfTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+cfTitle.TextScaled = true
+cfTitle.Font = Enum.Font.GothamBold
+cfTitle.ZIndex = 10
+cfTitle.Parent = confirmFrame
+
+local cfSim = Instance.new("TextButton")
+cfSim.Size = UDim2.new(0, 65, 0, 28)
+cfSim.Position = UDim2.new(0, 8, 0, 52)
+cfSim.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+cfSim.BorderSizePixel = 0
+cfSim.Text = "Sim"
+cfSim.TextColor3 = Color3.fromRGB(255, 255, 255)
+cfSim.TextScaled = true
+cfSim.Font = Enum.Font.GothamBold
+cfSim.ZIndex = 10
+cfSim.Parent = confirmFrame
+Instance.new("UICorner", cfSim).CornerRadius = UDim.new(0, 6)
+
+local cfNao = Instance.new("TextButton")
+cfNao.Size = UDim2.new(0, 65, 0, 28)
+cfNao.Position = UDim2.new(0, 84, 0, 52)
+cfNao.BackgroundColor3 = Color3.fromRGB(30, 100, 30)
+cfNao.BorderSizePixel = 0
+cfNao.Text = "Nao"
+cfNao.TextColor3 = Color3.fromRGB(255, 255, 255)
+cfNao.TextScaled = true
+cfNao.Font = Enum.Font.GothamBold
+cfNao.ZIndex = 10
+cfNao.Parent = confirmFrame
+Instance.new("UICorner", cfNao).CornerRadius = UDim.new(0, 6)
+
 closeBtn.MouseButton1Click:Connect(function()
+    local screen = workspace.CurrentCamera.ViewportSize
+    confirmFrame.Position = UDim2.new(0, screen.X/2 - 80, 0, screen.Y/2 - 45)
+    confirmFrame.Visible = true
+end)
+
+cfSim.MouseButton1Click:Connect(function()
+    confirmFrame.Visible = false
     running = false
     task.wait(0.3)
     screenGui:Destroy()
+end)
+
+cfNao.MouseButton1Click:Connect(function()
+    confirmFrame.Visible = false
 end)
 
 -- ============================================================
@@ -781,10 +857,12 @@ end)
 -- ============================================================
 task.spawn(function()
     local DETECT_RANGE = 150
-    local LOCK_DIST    = 15
+    local LOCK_DIST    = 14
 
-    local function deveIgnorar(nome)
-        local lower = string.lower(nome)
+    local function deveIgnorar(obj)
+        local nome = string.lower(obj.Name)
+
+        -- Bloqueia NPCs de servico (sem MaxHealth alto ou com dialogo)
         local palavras = {
             "quest","giver","dealer","vendedor","missao","missão",
             "ponto","inicial","outros","shop","merchant","trader",
@@ -793,10 +871,31 @@ task.spawn(function()
             "master","teacher","ability","gacha","cousin","luxury",
             "vivid","advanced","chompy","totto","yukora",
             "experimented","definir","spawn","npc","loja","luxo",
+            "blox","citizen","bandit","home","set ","point",
         }
         for _, p in ipairs(palavras) do
-            if string.find(lower, p) then return true end
+            if string.find(nome, p) then return true end
         end
+
+        -- Verifica se tem Humanoid com MaxHealth baixo (NPC de servico tem pouco HP)
+        local hum = obj:FindFirstChildOfClass("Humanoid")
+        if hum and hum.MaxHealth < 100 then return true end
+
+        -- Verifica se tem BillboardGui com nome (NPCs de servico tem nome flutuante diferente)
+        for _, v in ipairs(obj:GetChildren()) do
+            if v:IsA("BillboardGui") then
+                -- NPCs inimigos tem [Lv. X] no nome
+                local hasLevel = false
+                for _, lbl in ipairs(v:GetDescendants()) do
+                    if lbl:IsA("TextLabel") and string.find(lbl.Text, "%[Lv") then
+                        hasLevel = true
+                        break
+                    end
+                end
+                if not hasLevel then return true end
+            end
+        end
+
         return false
     end
 
@@ -809,22 +908,32 @@ task.spawn(function()
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if not hrp then return end
 
+                -- Se voando, coloca inimigos no chão embaixo do jogador
+                -- Se no chão, coloca na frente do personagem normalmente
+                local stackPos
+                if voarActive then
+                    -- Raycast pra achar o chão embaixo do jogador
+                    local ray = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0))
+                    local groundY = ray and ray.Position.Y or (hrp.Position.Y - 55)
+                    stackPos = Vector3.new(hrp.Position.X, groundY + 3, hrp.Position.Z)
+                else
+                    local lookDir = hrp.CFrame.LookVector
+                    local sp = hrp.Position + lookDir * LOCK_DIST
+                    stackPos = Vector3.new(sp.X, hrp.Position.Y, sp.Z)
+                end
+
                 for _, obj in ipairs(workspace:GetDescendants()) do
                     if obj:IsA("Model") and obj ~= char then
                         local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
                         local humanoid = obj:FindFirstChildOfClass("Humanoid")
                         if enemyHRP and humanoid and humanoid.Health > 0
-                            and not deveIgnorar(obj.Name)
+                            and not deveIgnorar(obj)
                             and not Players:GetPlayerFromCharacter(obj) then
-                            local diff = enemyHRP.Position - hrp.Position
-                            local dist = diff.Magnitude
-                            if dist > 1 and dist <= DETECT_RANGE then
-                                local dir = diff.Unit
-                                local targetPos = hrp.Position + dir * LOCK_DIST
-                                targetPos = Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z)
-                                enemyHRP.CFrame = CFrame.new(targetPos)
-                                    * CFrame.Angles(0, math.atan2(-dir.X, -dir.Z), 0)
-                                -- Trava humanoid no lugar (para ele não se mover)
+                            local dist = (enemyHRP.Position - hrp.Position).Magnitude
+                            if dist <= DETECT_RANGE then
+                                -- Todos vao pro mesmo ponto na frente do boneco
+                                enemyHRP.CFrame = CFrame.new(stackPos)
+                                    * CFrame.Angles(0, math.pi, 0)
                                 pcall(function() humanoid.WalkSpeed = 0 end)
                                 pcall(function() humanoid.JumpPower = 0 end)
                             end
@@ -852,55 +961,78 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  KILL AURA — usa RegisterHit/RegisterAttack reais do jogo
+--  DMG AURA — ativa tool automaticamente (mobile: tool:Activate())
 -- ============================================================
 task.spawn(function()
-    local AURA_DIST = 50
-    local Net = RS:WaitForChild("Modules", 5)
-    local netRE = Net and Net:FindFirstChild("Net") and Net.Net:FindFirstChild("RE")
-        or RS:FindFirstChild("Modules") and RS.Modules:FindFirstChild("Net") and RS.Modules.Net:FindFirstChild("RE")
+    local AURA_DIST = 30
 
-    local registerHit    = netRE and netRE:FindFirstChild("RegisterHit")
-    local registerAttack = netRE and netRE:FindFirstChild("RegisterAttack")
-    local commE          = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("CommE")
+    local function getEquippedTool()
+        local player = Players.LocalPlayer
+        local char = player.Character
+        if not char then return nil end
+        -- Checa tool ja equipada no personagem
+        for _, v in ipairs(char:GetChildren()) do
+            if v:IsA("Tool") then return v end
+        end
+        -- Tenta equipar do backpack automaticamente
+        local backpack = player:FindFirstChildOfClass("Backpack")
+        if backpack then
+            for _, v in ipairs(backpack:GetChildren()) do
+                if v:IsA("Tool") then
+                    -- Equipa movendo pro personagem
+                    v.Parent = char
+                    task.wait(0.05)
+                    return v
+                end
+            end
+        end
+        return nil
+    end
+
+    local VIM2 = game:GetService("VirtualInputManager")
+    local camera = workspace.CurrentCamera
+
+    local function getClosestEnemy()
+        local player = Players.LocalPlayer
+        local char = player.Character
+        if not char then return nil end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return nil end
+        local closest, closestDist = nil, 60
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") and obj ~= char then
+                local eHRP = obj:FindFirstChild("HumanoidRootPart")
+                local hum = obj:FindFirstChildOfClass("Humanoid")
+                if eHRP and hum and hum.Health > 0
+                    and not Players:GetPlayerFromCharacter(obj) then
+                    local dist = (eHRP.Position - hrp.Position).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        closest = eHRP
+                    end
+                end
+            end
+        end
+        return closest
+    end
 
     while running do
         if dmgAuraActive then
             pcall(function()
-                local player = Players.LocalPlayer
-                local char = player.Character
-                if not char then return end
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if not hrp then return end
-
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj:IsA("Model") and obj ~= char then
-                        local eHRP = obj:FindFirstChild("HumanoidRootPart")
-                        local hum  = obj:FindFirstChildOfClass("Humanoid")
-                        if eHRP and hum and hum.Health > 0
-                            and not Players:GetPlayerFromCharacter(obj) then
-                            local d = (eHRP.Position - hrp.Position).Magnitude
-                            if d <= AURA_DIST then
-                                -- Tenta via remotes reais do jogo
-                                pcall(function()
-                                    if registerHit then
-                                        registerHit:FireServer(obj, eHRP.Position, 9999)
-                                    end
-                                end)
-                                pcall(function()
-                                    if registerAttack then
-                                        registerAttack:FireServer(obj, 9999)
-                                    end
-                                end)
-                                -- Fallback direto
-                                pcall(function() hum.Health = 0 end)
-                                pcall(function() hum:TakeDamage(math.huge) end)
-                            end
-                        end
+                local enemyHRP = getClosestEnemy()
+                if enemyHRP then
+                    -- Converte posição 3D do inimigo para 2D na tela
+                    local screenPos, onScreen = camera:WorldToScreenPoint(enemyHRP.Position)
+                    if onScreen then
+                        local sx, sy = screenPos.X, screenPos.Y
+                        -- Simula toque rápido em cima do inimigo (metralhadora)
+                        VIM2:SendMouseButtonEvent(sx, sy, 0, true, game, 1)
+                        task.wait(0.03)
+                        VIM2:SendMouseButtonEvent(sx, sy, 0, false, game, 1)
                     end
                 end
             end)
-            task.wait(0.1)
+            task.wait(0.07) -- velocidade metralhadora
         else
             task.wait(0.2)
         end
@@ -908,35 +1040,127 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  AUTO KEN — ativa Observation Haki via LocalScript do jogo
+--  AUTO KEN — mantém Observation Haki sempre ativo
+--  Detecta o LocalScript Observation no char e força enabled=true
 -- ============================================================
 task.spawn(function()
+    local function ativarKen()
+        local char = Players.LocalPlayer.Character
+        if not char then return end
+
+        -- Método 1: LocalScript Observation no char
+        local obs = char:FindFirstChild("Observation")
+        if obs and obs:IsA("LocalScript") then
+            obs.Disabled = false
+            return
+        end
+
+        -- Método 2: procura em todo char
+        for _, v in ipairs(char:GetDescendants()) do
+            if v:IsA("LocalScript") and v.Name:lower():find("ken") then
+                v.Disabled = false
+            end
+            if v:IsA("LocalScript") and v.Name:lower():find("observation") then
+                v.Disabled = false
+            end
+        end
+
+        -- Método 3: usa DisableKen remote — NÃO disparar = Ken fica ativo
+        -- (o jogo desativa ken disparando DisableKen, então simplesmente não disparamos)
+
+        -- Método 4: CommF_ com parametro Ken
+        pcall(function()
+            local Remotes = RS:FindFirstChild("Remotes")
+            if Remotes then
+                local CommF_ = Remotes:FindFirstChild("CommF_")
+                if CommF_ then CommF_:InvokeServer("Ken") end
+            end
+        end)
+    end
+
+    local function kenEstaAtivo()
+        local char = Players.LocalPlayer.Character
+        if not char then return false end
+        -- Verifica BusoLayer nos braços (aparece quando Ken ativo)
+        for _, v in ipairs(char:GetDescendants()) do
+            if v.Name:find("BusoLayer") then return true end
+        end
+        -- Verifica LocalScript Observation habilitado
+        local obs = char:FindFirstChild("Observation")
+        if obs and not obs.Disabled then return true end
+        return false
+    end
+
     while running do
         if autoKenActive then
-            pcall(function()
-                local char = Players.LocalPlayer.Character
-                if not char then return end
-                -- O script "Observation" já existe no personagem
-                -- Simula o evento de ativar Ken via DisableKen ao contrário
-                local disableKen = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("DisableKen")
-                -- Verifica se Ken está ativo pelo folder HasBuso ou pelo script Observation
-                local observation = char:FindFirstChild("Observation")
-                if observation and observation:IsA("LocalScript") then
-                    -- Ken está presente, força ativação via enabled
-                    pcall(function() observation.Disabled = false end)
-                end
-                -- Simula tecla de ativar Ken (Blox Fruits usa input customizado)
-                local VIM3 = game:GetService("VirtualInputManager")
-                VIM3:SendKeyEvent(true,  Enum.KeyCode.T, false, game)
-                task.wait(0.05)
-                VIM3:SendKeyEvent(false, Enum.KeyCode.T, false, game)
-            end)
-            task.wait(4)
+            if not kenEstaAtivo() then
+                pcall(ativarKen)
+            end
+            task.wait(0.5)
         else
             task.wait(0.5)
         end
     end
 end)
+-- ============================================================
+--  VOAR — trava o personagem a altura fixa no ar
+-- ============================================================
+task.spawn(function()
+    local ALTURA_VOO = 40  -- studs fixos acima do chão
+    local bodyPos = nil
+
+    while running do
+        if voarActive then
+            pcall(function()
+                local char = Players.LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if not hrp or not hum then return end
+
+                -- Cria BodyPosition se não existir
+                if not bodyPos or not bodyPos.Parent then
+                    if bodyPos then bodyPos:Destroy() end
+                    bodyPos = Instance.new("BodyPosition")
+                    bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                    bodyPos.P = 9999
+                    bodyPos.D = 500
+                    bodyPos.Parent = hrp
+                end
+
+                -- Raycast para achar o chão e travar a altura correta
+                local ray = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0))
+                local groundY = ray and ray.Position.Y or (hrp.Position.Y - ALTURA_VOO)
+                local alvoY = groundY + ALTURA_VOO
+
+                -- Só atualiza se estiver fora da altura alvo (evita subir infinito)
+                if math.abs(hrp.Position.Y - alvoY) > 1 then
+                    bodyPos.Position = Vector3.new(hrp.Position.X, alvoY, hrp.Position.Z)
+                else
+                    bodyPos.Position = hrp.Position  -- trava no lugar
+                end
+
+                pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end)
+            end)
+            task.wait(0.05)
+        else
+            -- Desce e remove
+            if bodyPos then
+                pcall(function() bodyPos:Destroy() end)
+                bodyPos = nil
+            end
+            pcall(function()
+                local char = Players.LocalPlayer.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+                end
+            end)
+            task.wait(0.5)
+        end
+    end
+end)
+
 print("👑 BF Notify ATIVO! FPS: 120")
 
 while running do
