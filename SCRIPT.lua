@@ -1,7 +1,11 @@
 -- ============================================================
---  BLOX FRUITS — Discord Notify Script
+--  BLOX FRUITS — Discord Notify Script (VERSÃO FINAL)
 --  Execute no Delta Executor
 -- ============================================================
+
+repeat wait() until game:IsLoaded()
+
+print("✅ Blox Fruits detectado! Carregando script principal...")
 
 local WEBHOOKS = {
     boss        = "https://discord.com/api/webhooks/1479587891393990767/KHDJG4kVU72wSoHcqogXB-pd4e3ywx8vKnIgtLuvIeVyxH4WSF18b6DPU3VvQnuB7P77",
@@ -25,25 +29,29 @@ local enabled = true
 local liteMode = false
 local minimized = true
 
--- ============================================================
---  120 FPS
--- ============================================================
+local autoClickActive = false
+local bringMobActive = false
+local voarActive = false
+
 setfpscap(120)
 
--- ============================================================
---  ARRASTAR — sem pulo no início
--- ============================================================
 local function makeDraggable(dragHandle, targetFrame, frameW, frameH)
     local dragging = false
     local dragStartInput = nil
-    local frameStartPos = nil
-
+    local frameStartX = 0
+    local frameStartY = 0
     dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch
             or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
-            dragStartInput = input.Position           -- posição do dedo ao tocar
-            frameStartPos = targetFrame.Position      -- posição do frame ao tocar
+            dragStartInput = input.Position
+            -- Converte posição atual (escala+offset) para pixels absolutos
+            local screen = workspace.CurrentCamera.ViewportSize
+            local absPos = targetFrame.AbsolutePosition
+            frameStartX = absPos.X
+            frameStartY = absPos.Y
+            -- Garante que o frame passa a usar só offset daqui pra frente
+            targetFrame.Position = UDim2.new(0, frameStartX, 0, frameStartY)
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -51,49 +59,44 @@ local function makeDraggable(dragHandle, targetFrame, frameW, frameH)
             end)
         end
     end)
-
     UIS.InputChanged:Connect(function(input)
         if dragging and dragStartInput and (
             input.UserInputType == Enum.UserInputType.Touch or
             input.UserInputType == Enum.UserInputType.MouseMovement
         ) then
-            -- delta desde o início do toque (sem acúmulo)
             local delta = input.Position - dragStartInput
             local screen = workspace.CurrentCamera.ViewportSize
-            local newX = math.clamp(frameStartPos.X.Offset + delta.X, 0, screen.X - frameW)
-            local newY = math.clamp(frameStartPos.Y.Offset + delta.Y, 0, screen.Y - frameH)
+            local newX = math.clamp(frameStartX + delta.X, 0, screen.X - frameW)
+            local newY = math.clamp(frameStartY + delta.Y, 0, screen.Y - frameH)
             targetFrame.Position = UDim2.new(0, newX, 0, newY)
         end
     end)
 end
 
--- Arrastar com segurar 1 segundo (coroa)
-local function makeDraggableHold(targetFrame, frameW, frameH)
+local function makeDraggableHold(targetFrame, frameW, frameH, strokeRef)
     local dragging = false
     local holdTimer = nil
     local holdReady = false
     local dragStartInput = nil
     local frameStartPos = nil
-
     targetFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch
             or input.UserInputType == Enum.UserInputType.MouseButton1 then
-
             holdReady = false
             holdTimer = task.delay(1, function()
                 holdReady = true
                 dragging = true
                 dragStartInput = input.Position
                 frameStartPos = targetFrame.Position
-                -- Feedback visual: borda pisca
-                for i = 1, 3 do
-                    rgbStroke.Thickness = 4
-                    task.wait(0.1)
-                    rgbStroke.Thickness = 2
-                    task.wait(0.1)
+                if strokeRef then
+                    for i = 1, 3 do
+                        strokeRef.Thickness = 4
+                        task.wait(0.1)
+                        strokeRef.Thickness = 2
+                        task.wait(0.1)
+                    end
                 end
             end)
-
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     if holdTimer then task.cancel(holdTimer) holdTimer = nil end
@@ -101,12 +104,11 @@ local function makeDraggableHold(targetFrame, frameW, frameH)
                     holdReady = false
                     dragStartInput = nil
                     frameStartPos = nil
-                    rgbStroke.Thickness = 2
+                    if strokeRef then strokeRef.Thickness = 2 end
                 end
             end)
         end
     end)
-
     UIS.InputChanged:Connect(function(input)
         if dragging and holdReady and dragStartInput and (
             input.UserInputType == Enum.UserInputType.Touch or
@@ -121,9 +123,6 @@ local function makeDraggableHold(targetFrame, frameW, frameH)
     end)
 end
 
--- ============================================================
---  GUI
--- ============================================================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BFNotifyGUI"
 screenGui.ResetOnSpawn = false
@@ -155,7 +154,7 @@ senhaTitulo.Size = UDim2.new(1, 0, 0, 40)
 senhaTitulo.Position = UDim2.new(0, 0, 0, 8)
 senhaTitulo.BackgroundTransparency = 1
 senhaTitulo.TextColor3 = Color3.fromRGB(80, 160, 230)
-senhaTitulo.Text = "👑 SCRIPT DE UM VERDADEIRO ADM 👑"
+senhaTitulo.Text = "👑 Celestial Hub X 👑"
 senhaTitulo.TextScaled = true
 senhaTitulo.Font = Enum.Font.GothamBold
 senhaTitulo.ZIndex = 21
@@ -188,19 +187,15 @@ senhaInput.ZIndex = 21
 senhaInput.Parent = senhaGui
 Instance.new("UICorner", senhaInput).CornerRadius = UDim.new(0, 8)
 
--- Esconde o PIN real e mostra apenas *
 local pinReal = ""
 senhaInput:GetPropertyChangedSignal("Text"):Connect(function()
     local novo = senhaInput.Text
     if #novo > #pinReal then
-        -- Adicionou caractere
         local adicionado = string.sub(novo, #pinReal + 1)
         pinReal = pinReal .. adicionado
     elseif #novo < #pinReal then
-        -- Apagou caractere
         pinReal = string.sub(pinReal, 1, #novo)
     end
-    -- Mostra só asteriscos
     senhaInput.Text = string.rep("*", #pinReal)
 end)
 
@@ -249,116 +244,30 @@ senhaInput.FocusLost:Connect(function(enterPressed)
     if enterPressed then tentarSenha() end
 end)
 
--- Aguarda senha antes de continuar
 repeat task.wait(0.1) until senhaDesbloqueada
-
--- ============================================================
---  CONTADOR DE PROGRESSO LITE
--- ============================================================
-local progressGui = Instance.new("Frame")
-progressGui.Size = UDim2.new(0, 260, 0, 100)
-progressGui.Position = UDim2.new(0.5, -130, 0.4, 0)
-progressGui.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-progressGui.BackgroundTransparency = 0.2
-progressGui.BorderSizePixel = 0
-progressGui.Visible = false
-progressGui.ZIndex = 10
-progressGui.Parent = screenGui
-Instance.new("UICorner", progressGui).CornerRadius = UDim.new(0, 16)
-
-local progressStroke = Instance.new("UIStroke")
-progressStroke.Color = Color3.fromRGB(255, 185, 0)
-progressStroke.Thickness = 2
-progressStroke.Parent = progressGui
-
-local progressTitle = Instance.new("TextLabel")
-progressTitle.Size = UDim2.new(1, 0, 0.35, 0)
-progressTitle.Position = UDim2.new(0, 0, 0.05, 0)
-progressTitle.BackgroundTransparency = 1
-progressTitle.TextColor3 = Color3.fromRGB(255, 185, 0)
-progressTitle.Text = "⚡ Aplicando Modo Lite..."
-progressTitle.TextScaled = true
-progressTitle.Font = Enum.Font.GothamBold
-progressTitle.ZIndex = 11
-progressTitle.Parent = progressGui
-
-local progressPercent = Instance.new("TextLabel")
-progressPercent.Size = UDim2.new(1, 0, 0.5, 0)
-progressPercent.Position = UDim2.new(0, 0, 0.45, 0)
-progressPercent.BackgroundTransparency = 1
-progressPercent.TextColor3 = Color3.fromRGB(255, 255, 255)
-progressPercent.Text = "0%"
-progressPercent.TextScaled = true
-progressPercent.Font = Enum.Font.GothamBold
-progressPercent.ZIndex = 11
-progressPercent.Parent = progressGui
-
-local barBg = Instance.new("Frame")
-barBg.Size = UDim2.new(0.85, 0, 0.12, 0)
-barBg.Position = UDim2.new(0.075, 0, 0.84, 0)
-barBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-barBg.BorderSizePixel = 0
-barBg.ZIndex = 11
-barBg.Parent = progressGui
-Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
-
-local barFill = Instance.new("Frame")
-barFill.Size = UDim2.new(0, 0, 1, 0)
-barFill.BackgroundColor3 = Color3.fromRGB(255, 185, 0)
-barFill.BorderSizePixel = 0
-barFill.ZIndex = 12
-barFill.Parent = barBg
-Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
-
--- ============================================================
---  MODO LEVE COM PROGRESSO
--- ============================================================
-local function applyLiteMode(active)
-    progressGui.Visible = true
-    progressPercent.Text = "0%"
-    barFill.Size = UDim2.new(0, 0, 1, 0)
-    progressTitle.Text = active and "⚡ Aplicando Modo Lite..." or "🔄 Restaurando..."
-    progressTitle.TextColor3 = active and Color3.fromRGB(255, 185, 0) or Color3.fromRGB(100, 200, 255)
-
-    local descendants = workspace:GetDescendants()
-    local total = #descendants
-    local processed = 0
-
-    for _, obj in ipairs(descendants) do
-        if obj:IsA("BasePart") then
-            obj.CastShadow = not active
-            if active then obj.Material = Enum.Material.SmoothPlastic end
-        end
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-            obj.Enabled = not active
-        end
-        processed = processed + 1
-        if processed % 50 == 0 then
-            local pct = math.floor((processed / total) * 100)
-            progressPercent.Text = pct .. "%"
-            barFill.Size = UDim2.new(pct / 100, 0, 1, 0)
-            task.wait()
-        end
-    end
-
-    Lighting.GlobalShadows = not active
-    Lighting.FogEnd = active and 1000000 or 1000
-    settings().Rendering.QualityLevel = active and Enum.QualityLevel.Level01 or Enum.QualityLevel.Automatic
-
-    progressPercent.Text = "100%"
-    barFill.Size = UDim2.new(1, 0, 1, 0)
-    progressTitle.Text = active and "✅ Modo Lite Ativo!" or "✅ Restaurado!"
-    progressTitle.TextColor3 = Color3.fromRGB(0, 255, 100)
-    task.wait(1.5)
-    progressGui.Visible = false
-end
 
 -- ============================================================
 --  FRAME PRINCIPAL
 -- ============================================================
+-- MUDANÇAS: Layout 3x3, fonte ArialBold 18, nomes PT-BR
+-- Linha 0: Ativo(0,0) | Puxar(1,0) | Voar(2,0)
+-- Linha 1: Sem Afk(0,1) | Fechar(1,1) | Vaga(2,1)
+-- Linha 2: Vaga(0,2) | Vaga(1,2) | Vaga(2,2)
+
+local BTN_W = 68
+local BTN_H = 28
+local PAD_X = 8
+local PAD_Y = 5
+local START_Y = 30
+
+-- Frame: 3 colunas = PAD_X + 3*(BTN_W+PAD_X) = 8 + 3*76 = 236
+-- Altura: START_Y + 3*(BTN_H+PAD_Y) + PAD_Y = 30 + 3*33 + 5 = 134
+local FRAME_W = PAD_X + 3 * (BTN_W + PAD_X)  -- 236
+local FRAME_H = START_Y + 3 * (BTN_H + PAD_Y) + PAD_Y  -- 134
+
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 160, 0, 211)
-frame.Position = UDim2.new(0, 10, 0.45, 0)
+frame.Size = UDim2.new(0, FRAME_W, 0, FRAME_H)
+frame.Position = UDim2.new(0.5, -FRAME_W/2, 0.5, -FRAME_H/2)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -371,7 +280,7 @@ title.Size = UDim2.new(1, 0, 0, 22)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Text = "👑 SCRIPT DE UM VERDADEIRO ADM 👑"
+title.Text = "👑 Celestial Hub X 👑"
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.BorderSizePixel = 0
@@ -380,11 +289,8 @@ title.AutoButtonColor = false
 title.Parent = frame
 Instance.new("UICorner", title).CornerRadius = UDim.new(0, 10)
 
--- Título sem botão minimizar
-
-
 -- ============================================================
---  BOTÃO MINIMIZADO — 25x25 com coroa e borda RGB
+--  BOTÃO MINIMIZADO
 -- ============================================================
 local miniFrame = Instance.new("Frame")
 miniFrame.Size = UDim2.new(0, 25, 0, 25)
@@ -396,13 +302,11 @@ miniFrame.Visible = true
 miniFrame.Parent = screenGui
 Instance.new("UICorner", miniFrame).CornerRadius = UDim.new(0, 6)
 
--- Borda RGB animada
 local rgbStroke = Instance.new("UIStroke")
 rgbStroke.Color = Color3.fromRGB(255, 0, 0)
 rgbStroke.Thickness = 2
 rgbStroke.Parent = miniFrame
 
--- Emoji coroa
 local miniBtn2 = Instance.new("TextButton")
 miniBtn2.Size = UDim2.new(1, 0, 1, 0)
 miniBtn2.BackgroundTransparency = 1
@@ -413,9 +317,6 @@ miniBtn2.Font = Enum.Font.GothamBold
 miniBtn2.Active = true
 miniBtn2.Parent = miniFrame
 
--- ============================================================
---  ANIMAÇÃO RGB NA BORDA
--- ============================================================
 local rgbHue = 0
 RunService.Heartbeat:Connect(function(dt)
     rgbHue = (rgbHue + dt * 0.5) % 1
@@ -423,14 +324,65 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 -- ============================================================
---  CRIAR BOTÃO — grid 2 colunas
+--  TELA DE AVISO
 -- ============================================================
-local BTN_W = 68
-local BTN_H = 28
-local PAD_X = 8
-local PAD_Y = 5
-local START_Y = 30
+local avisoFrame = Instance.new("Frame")
+avisoFrame.Size = UDim2.new(0, 300, 0, 150)
+avisoFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
+avisoFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+avisoFrame.BorderSizePixel = 0
+avisoFrame.Visible = false
+avisoFrame.ZIndex = 30
+avisoFrame.Parent = screenGui
+Instance.new("UICorner", avisoFrame).CornerRadius = UDim.new(0, 15)
 
+local avisoStroke = Instance.new("UIStroke")
+avisoStroke.Color = Color3.fromRGB(255, 50, 50)
+avisoStroke.Thickness = 2
+avisoStroke.Parent = avisoFrame
+
+local avisoTitulo = Instance.new("TextLabel")
+avisoTitulo.Size = UDim2.new(1, -20, 0, 40)
+avisoTitulo.Position = UDim2.new(0, 10, 0, 10)
+avisoTitulo.BackgroundTransparency = 1
+avisoTitulo.TextColor3 = Color3.fromRGB(255, 80, 80)
+avisoTitulo.Text = "⚠️ ACESSO NEGADO ⚠️"
+avisoTitulo.TextScaled = true
+avisoTitulo.Font = Enum.Font.GothamBold
+avisoTitulo.ZIndex = 31
+avisoTitulo.Parent = avisoFrame
+
+local avisoMensagem = Instance.new("TextLabel")
+avisoMensagem.Size = UDim2.new(1, -20, 0, 60)
+avisoMensagem.Position = UDim2.new(0, 10, 0, 50)
+avisoMensagem.BackgroundTransparency = 1
+avisoMensagem.TextColor3 = Color3.fromRGB(255, 255, 255)
+avisoMensagem.Text = "VOCÊ NÃO TEM PERMISSÃO PARA DESATIVAR ESSE RECURSO!\nPOR FAVOR, ENTRE EM CONTATO COM UM ADM.\nOBRIGADO!"
+avisoMensagem.TextScaled = true
+avisoMensagem.Font = Enum.Font.Gotham
+avisoMensagem.ZIndex = 31
+avisoMensagem.Parent = avisoFrame
+
+local avisoBtn = Instance.new("TextButton")
+avisoBtn.Size = UDim2.new(0, 100, 0, 30)
+avisoBtn.Position = UDim2.new(0.5, -50, 0, 115)
+avisoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+avisoBtn.BorderSizePixel = 0
+avisoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+avisoBtn.Text = "OK"
+avisoBtn.TextScaled = true
+avisoBtn.Font = Enum.Font.GothamBold
+avisoBtn.ZIndex = 31
+avisoBtn.Parent = avisoFrame
+Instance.new("UICorner", avisoBtn).CornerRadius = UDim.new(0, 6)
+
+avisoBtn.MouseButton1Click:Connect(function()
+    avisoFrame.Visible = false
+end)
+
+-- ============================================================
+--  CRIAR BOTÃO — ArialBold tamanho 18, grid 3 colunas
+-- ============================================================
 local function createBtn2(col, row, dotColor, labelText, labelColor)
     local x = PAD_X + col * (BTN_W + PAD_X)
     local y = START_Y + row * (BTN_H + PAD_Y)
@@ -445,140 +397,108 @@ local function createBtn2(col, row, dotColor, labelText, labelColor)
     btn.Parent = frame
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
 
-    local dot = Instance.new("Frame")
-    dot.Size = UDim2.new(0, 7, 0, 7)
-    dot.Position = UDim2.new(0, 6, 0.5, -3)
-    dot.BackgroundColor3 = dotColor
-    dot.BorderSizePixel = 0
-    dot.Parent = btn
-    Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
-
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0, BTN_W - 18, 0, BTN_H)
-    lbl.Position = UDim2.new(0, 16, 0, 0)
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 0, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = labelColor
     lbl.Text = labelText
-    lbl.TextScaled = true
-    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 18
+    lbl.Font = Enum.Font.ArialBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Center
+    lbl.TextYAlignment = Enum.TextYAlignment.Center
     lbl.Parent = btn
 
-    return btn, dot, lbl
+    return btn, lbl
 end
 
--- Layout:
--- Linha 0: Ativo | Lite
--- Linha 1: AntAfk | Bring
--- Linha 2: Aura | Fechar
-local toggleBtn, toggleDot, toggleLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "Ativo", Color3.fromRGB(0,255,80))
-toggleBtn.MouseButton1Click:Connect(function()
-    enabled = not enabled
-    if enabled then
-        notified = {}
-        toggleDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
-        toggleLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        toggleLabel.Text = "Ativo"
-    else
-        toggleDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        toggleLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        toggleLabel.Text = "Pausado"
-    end
+-- ============================================================
+--  LINHA 0: Ativo | Puxar | Voar
+-- ============================================================
+local ativoBtn, ativoLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "Ativo", Color3.fromRGB(0,255,80))
+
+-- Cadeado centralizado no meio do botão, meio transparente
+local cadeadoLabel = Instance.new("TextLabel")
+cadeadoLabel.Size = UDim2.new(1, 0, 1, 0)
+cadeadoLabel.Position = UDim2.new(0, 0, 0, 0)
+cadeadoLabel.BackgroundTransparency = 1
+cadeadoLabel.Text = "🔒"
+cadeadoLabel.TextScaled = true
+cadeadoLabel.TextTransparency = 0.5
+cadeadoLabel.TextXAlignment = Enum.TextXAlignment.Center
+cadeadoLabel.TextYAlignment = Enum.TextYAlignment.Center
+cadeadoLabel.Font = Enum.Font.GothamBold
+cadeadoLabel.ZIndex = ativoBtn.ZIndex + 1
+cadeadoLabel.Parent = ativoBtn
+
+-- "Ativo" centralizado no meio do botão
+ativoLabel.Size = UDim2.new(1, 0, 1, 0)
+ativoLabel.Position = UDim2.new(0, 0, 0, 0)
+
+ativoBtn.MouseButton1Click:Connect(function()
+    avisoFrame.Visible = true
+    local som = Instance.new("Sound")
+    som.SoundId = "rbxasset://sounds/action_fail.mp3"
+    som.Volume = 0.5
+    som.Parent = avisoFrame
+    som:Play()
+    task.wait(2)
+    som:Destroy()
 end)
 
-local liteBtn, liteDot, liteLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "Lite", Color3.fromRGB(255,50,50))
-liteBtn.MouseButton1Click:Connect(function()
-    liteMode = not liteMode
-    task.spawn(function() applyLiteMode(liteMode) end)
-    if liteMode then
-        liteDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
-        liteLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        liteLabel.Text = "Lite ON"
-    else
-        liteDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        liteLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        liteLabel.Text = "Lite"
-    end
-end)
-
-local autoClickActive = false
-local autoClickBtn, autoClickDot, autoClickLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "AntAfk", Color3.fromRGB(255,50,50))
-autoClickBtn.MouseButton1Click:Connect(function()
-    autoClickActive = not autoClickActive
-    if autoClickActive then
-        autoClickDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
-        autoClickLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        autoClickLabel.Text = "AntAfk"
-    else
-        autoClickDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        autoClickLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        autoClickLabel.Text = "AntAfk"
-    end
-end)
-
-local bringMobActive = false
-local bringMobBtn, bringMobDot, bringMobLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "BringMob", Color3.fromRGB(255,50,50))
+local bringMobBtn, bringMobLabel = createBtn2(1, 0, Color3.fromRGB(255,50,50), "Puxar", Color3.fromRGB(255,50,50))
 bringMobBtn.MouseButton1Click:Connect(function()
     bringMobActive = not bringMobActive
     if bringMobActive then
-        bringMobDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
         bringMobLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        bringMobLabel.Text = "BringMob"
+        bringMobLabel.Text = "Puxar"
     else
-        bringMobDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         bringMobLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        bringMobLabel.Text = "BringMob"
+        bringMobLabel.Text = "Puxar"
     end
 end)
 
-local dmgAuraActive = false
-local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "DmgAura", Color3.fromRGB(255,50,50))
-dmgAuraBtn.MouseButton1Click:Connect(function()
-    dmgAuraActive = not dmgAuraActive
-    if dmgAuraActive then
-        dmgAuraDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
-        dmgAuraLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        dmgAuraLabel.Text = "DmgAura"
-    else
-        dmgAuraDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        dmgAuraLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        dmgAuraLabel.Text = "DmgAura"
-    end
-end)
-
-local autoKenActive = false
-local autoKenBtn, autoKenDot, autoKenLabel = createBtn2(0, 3, Color3.fromRGB(255,50,50), "AutoKen", Color3.fromRGB(255,50,50))
-autoKenBtn.MouseButton1Click:Connect(function()
-    autoKenActive = not autoKenActive
-    if autoKenActive then
-        autoKenDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
-        autoKenLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        autoKenLabel.Text = "AutoKen"
-    else
-        autoKenDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        autoKenLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        autoKenLabel.Text = "AutoKen"
-    end
-end)
-
-local voarActive = false
-local voarBtn, voarDot, voarLabel = createBtn2(1, 0, Color3.fromRGB(255,50,50), "Voar", Color3.fromRGB(255,50,50))
+local voarBtn, voarLabel = createBtn2(2, 0, Color3.fromRGB(255,50,50), "Voar", Color3.fromRGB(255,50,50))
 voarBtn.MouseButton1Click:Connect(function()
     voarActive = not voarActive
     if voarActive then
-        voarDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
         voarLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        voarLabel.Text = "Voar ON"
+        voarLabel.Text = "Voar"
     else
-        voarDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         voarLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         voarLabel.Text = "Voar"
     end
 end)
 
-local closeBtn, closeDot, closeLabel = createBtn2(0, 4, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
-closeBtn.Size = UDim2.new(0, BTN_W*2 + PAD_X, 0, BTN_H)
+-- ============================================================
+--  LINHA 1: Sem Afk | Fechar | Vaga
+-- ============================================================
+local autoClickBtn, autoClickLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "Sem Afk", Color3.fromRGB(255,50,50))
+autoClickBtn.MouseButton1Click:Connect(function()
+    autoClickActive = not autoClickActive
+    if autoClickActive then
+        autoClickLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        autoClickLabel.Text = "Sem Afk"
+    else
+        autoClickLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        autoClickLabel.Text = "Sem Afk"
+    end
+end)
 
--- Tela de confirmacao
+local closeBtn, closeLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
+
+createBtn2(2, 1, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
+
+-- ============================================================
+--  LINHA 2: Vaga | Vaga | Vaga
+-- ============================================================
+createBtn2(0, 2, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
+createBtn2(1, 2, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
+createBtn2(2, 2, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
+
+-- ============================================================
+--  TELA DE CONFIRMAÇÃO (FECHAR)
+-- ============================================================
 local confirmFrame = Instance.new("Frame")
 confirmFrame.Size = UDim2.new(0, 160, 0, 90)
 confirmFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
@@ -651,83 +571,27 @@ end)
 local function toggleMinimize()
     minimized = not minimized
     if not minimized then
-        -- Centraliza na tela ao abrir
-        local screen = workspace.CurrentCamera.ViewportSize
-        frame.Position = UDim2.new(0, screen.X/2 - 70, 0, screen.Y/2 - 100)
+        frame.Position = UDim2.new(0.5, -FRAME_W/2, 0.5, -FRAME_H/2)
     end
     frame.Visible = not minimized
-    -- coroa sempre visível, não esconde nunca
 end
 
--- Apenas a coroa flutuante abre/fecha o painel
 miniBtn2.MouseButton1Click:Connect(toggleMinimize)
-
--- Arrastar frame principal pelo título
-makeDraggable(title, frame, 140, 176)
--- Arrastar coroa segurando 1 segundo
-makeDraggableHold(miniFrame, 25, 25)
-
--- ============================================================
---  MOB LOCK — Silent Aim 100 studs
--- ============================================================
-local MOB_RANGE = 100
-
-local function getNearestEnemy()
-    local player = Players.LocalPlayer
-    local char = player.Character
-    if not char then return nil end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
-
-    local nearest = nil
-    local nearestDist = MOB_RANGE
-
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") and obj ~= char then
-            local hum = obj:FindFirstChildOfClass("Humanoid")
-            local objHrp = obj:FindFirstChild("HumanoidRootPart")
-            if hum and hum.Health > 0 and objHrp then
-                -- Não atacar outros jogadores
-                local isPlayer = false
-                for _, p in ipairs(Players:GetPlayers()) do
-                    if p.Character == obj then isPlayer = true break end
-                end
-                if not isPlayer then
-                    local dist = (hrp.Position - objHrp.Position).Magnitude
-                    if dist < nearestDist then
-                        nearestDist = dist
-                        nearest = objHrp
-                    end
-                end
-            end
-        end
-    end
-    return nearest
-end
-
--- Loop MobLock — trava câmera no inimigo mais próximo
-task.spawn(function()
-    while running do
-        if mobLockActive then
-            pcall(function()
-                local target = getNearestEnemy()
-                if target then
-                    local camera = workspace.CurrentCamera
-                    camera.CFrame = CFrame.new(camera.CFrame.Position, target.Position)
-                end
-            end)
-            task.wait(0.05)
-        else
-            task.wait(0.1)
-        end
-    end
-end)
+makeDraggable(title, frame, FRAME_W, FRAME_H)
+makeDraggableHold(miniFrame, 25, 25, rgbStroke)
 
 -- ============================================================
 --  FUNÇÃO DE ENVIO
 -- ============================================================
+local lastWebhookTime = 0
+local WEBHOOK_COOLDOWN = 2
+
 local function sendWebhook(webhookUrl, wTitle, emoji, color)
     if not enabled then return end
+    local currentTime = tick()
+    if currentTime - lastWebhookTime < WEBHOOK_COOLDOWN then
+        task.wait(WEBHOOK_COOLDOWN - (currentTime - lastWebhookTime))
+    end
     local jobId = game.JobId
     local players = #Players:GetPlayers() .. "/" .. Players.MaxPlayers
     local timeOfDay = Lighting.TimeOfDay
@@ -755,8 +619,12 @@ local function sendWebhook(webhookUrl, wTitle, emoji, color)
             Body = jsonData
         })
     end)
-    if success then print("[OK] '" .. wTitle .. "' enviado!")
-    else warn("[ERRO] '" .. wTitle .. "': " .. tostring(err)) end
+    if success then
+        print("[OK] '" .. wTitle .. "' enviado!")
+        lastWebhookTime = tick()
+    else
+        warn("[ERRO] '" .. wTitle .. "': " .. tostring(err))
+    end
 end
 
 -- ============================================================
@@ -834,7 +702,7 @@ local function checkHaki()
 end
 
 -- ============================================================
---  ANTI AFK — Auto Click 35ms (controlado pelo botão)
+--  ANTI AFK
 -- ============================================================
 task.spawn(function()
     local VIM = game:GetService("VirtualInputManager")
@@ -853,16 +721,14 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  BRING MOB — trava inimigos a 20 studs do jogador
+--  BRING MOB
 -- ============================================================
 task.spawn(function()
-    local DETECT_RANGE = 150
+    local DETECT_RANGE = 500
     local LOCK_DIST    = 14
 
     local function deveIgnorar(obj)
         local nome = string.lower(obj.Name)
-
-        -- Bloqueia NPCs de servico (sem MaxHealth alto ou com dialogo)
         local palavras = {
             "quest","giver","dealer","vendedor","missao","missão",
             "ponto","inicial","outros","shop","merchant","trader",
@@ -876,15 +742,8 @@ task.spawn(function()
         for _, p in ipairs(palavras) do
             if string.find(nome, p) then return true end
         end
-
-        -- Verifica se tem Humanoid com MaxHealth baixo (NPC de servico tem pouco HP)
-        local hum = obj:FindFirstChildOfClass("Humanoid")
-        if hum and hum.MaxHealth < 100 then return true end
-
-        -- Verifica se tem BillboardGui com nome (NPCs de servico tem nome flutuante diferente)
         for _, v in ipairs(obj:GetChildren()) do
             if v:IsA("BillboardGui") then
-                -- NPCs inimigos tem [Lv. X] no nome
                 local hasLevel = false
                 for _, lbl in ipairs(v:GetDescendants()) do
                     if lbl:IsA("TextLabel") and string.find(lbl.Text, "%[Lv") then
@@ -895,7 +754,6 @@ task.spawn(function()
                 if not hasLevel then return true end
             end
         end
-
         return false
     end
 
@@ -908,11 +766,8 @@ task.spawn(function()
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if not hrp then return end
 
-                -- Se voando, coloca inimigos no chão embaixo do jogador
-                -- Se no chão, coloca na frente do personagem normalmente
                 local stackPos
                 if voarActive then
-                    -- Raycast pra achar o chão embaixo do jogador
                     local ray = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0))
                     local groundY = ray and ray.Position.Y or (hrp.Position.Y - 55)
                     stackPos = Vector3.new(hrp.Position.X, groundY + 3, hrp.Position.Z)
@@ -931,11 +786,11 @@ task.spawn(function()
                             and not Players:GetPlayerFromCharacter(obj) then
                             local dist = (enemyHRP.Position - hrp.Position).Magnitude
                             if dist <= DETECT_RANGE then
-                                -- Todos vao pro mesmo ponto na frente do boneco
                                 enemyHRP.CFrame = CFrame.new(stackPos)
                                     * CFrame.Angles(0, math.pi, 0)
                                 pcall(function() humanoid.WalkSpeed = 0 end)
                                 pcall(function() humanoid.JumpPower = 0 end)
+                                pcall(function() humanoid.AutoRotate = false end)
                             end
                         end
                     end
@@ -943,7 +798,6 @@ task.spawn(function()
             end)
             task.wait(0.08)
         else
-            -- Quando desligar, restaura velocidade
             pcall(function()
                 for _, obj in ipairs(workspace:GetDescendants()) do
                     if obj:IsA("Model") then
@@ -951,6 +805,7 @@ task.spawn(function()
                         if hum then
                             pcall(function() hum.WalkSpeed = 16 end)
                             pcall(function() hum.JumpPower = 50 end)
+                            pcall(function() hum.AutoRotate = true end)
                         end
                     end
                 end
@@ -961,152 +816,10 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  DMG AURA — ativa tool automaticamente (mobile: tool:Activate())
+--  VOAR
 -- ============================================================
 task.spawn(function()
-    local AURA_DIST = 30
-
-    local function getEquippedTool()
-        local player = Players.LocalPlayer
-        local char = player.Character
-        if not char then return nil end
-        -- Checa tool ja equipada no personagem
-        for _, v in ipairs(char:GetChildren()) do
-            if v:IsA("Tool") then return v end
-        end
-        -- Tenta equipar do backpack automaticamente
-        local backpack = player:FindFirstChildOfClass("Backpack")
-        if backpack then
-            for _, v in ipairs(backpack:GetChildren()) do
-                if v:IsA("Tool") then
-                    -- Equipa movendo pro personagem
-                    v.Parent = char
-                    task.wait(0.05)
-                    return v
-                end
-            end
-        end
-        return nil
-    end
-
-    local VIM2 = game:GetService("VirtualInputManager")
-    local camera = workspace.CurrentCamera
-
-    local function getClosestEnemy()
-        local player = Players.LocalPlayer
-        local char = player.Character
-        if not char then return nil end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp then return nil end
-        local closest, closestDist = nil, 60
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("Model") and obj ~= char then
-                local eHRP = obj:FindFirstChild("HumanoidRootPart")
-                local hum = obj:FindFirstChildOfClass("Humanoid")
-                if eHRP and hum and hum.Health > 0
-                    and not Players:GetPlayerFromCharacter(obj) then
-                    local dist = (eHRP.Position - hrp.Position).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        closest = eHRP
-                    end
-                end
-            end
-        end
-        return closest
-    end
-
-    while running do
-        if dmgAuraActive then
-            pcall(function()
-                local enemyHRP = getClosestEnemy()
-                if enemyHRP then
-                    -- Converte posição 3D do inimigo para 2D na tela
-                    local screenPos, onScreen = camera:WorldToScreenPoint(enemyHRP.Position)
-                    if onScreen then
-                        local sx, sy = screenPos.X, screenPos.Y
-                        -- Simula toque rápido em cima do inimigo (metralhadora)
-                        VIM2:SendMouseButtonEvent(sx, sy, 0, true, game, 1)
-                        task.wait(0.03)
-                        VIM2:SendMouseButtonEvent(sx, sy, 0, false, game, 1)
-                    end
-                end
-            end)
-            task.wait(0.07) -- velocidade metralhadora
-        else
-            task.wait(0.2)
-        end
-    end
-end)
-
--- ============================================================
---  AUTO KEN — mantém Observation Haki sempre ativo
---  Detecta o LocalScript Observation no char e força enabled=true
--- ============================================================
-task.spawn(function()
-    local function ativarKen()
-        local char = Players.LocalPlayer.Character
-        if not char then return end
-
-        -- Método 1: LocalScript Observation no char
-        local obs = char:FindFirstChild("Observation")
-        if obs and obs:IsA("LocalScript") then
-            obs.Disabled = false
-            return
-        end
-
-        -- Método 2: procura em todo char
-        for _, v in ipairs(char:GetDescendants()) do
-            if v:IsA("LocalScript") and v.Name:lower():find("ken") then
-                v.Disabled = false
-            end
-            if v:IsA("LocalScript") and v.Name:lower():find("observation") then
-                v.Disabled = false
-            end
-        end
-
-        -- Método 3: usa DisableKen remote — NÃO disparar = Ken fica ativo
-        -- (o jogo desativa ken disparando DisableKen, então simplesmente não disparamos)
-
-        -- Método 4: CommF_ com parametro Ken
-        pcall(function()
-            local Remotes = RS:FindFirstChild("Remotes")
-            if Remotes then
-                local CommF_ = Remotes:FindFirstChild("CommF_")
-                if CommF_ then CommF_:InvokeServer("Ken") end
-            end
-        end)
-    end
-
-    local function kenEstaAtivo()
-        local char = Players.LocalPlayer.Character
-        if not char then return false end
-        -- Verifica BusoLayer nos braços (aparece quando Ken ativo)
-        for _, v in ipairs(char:GetDescendants()) do
-            if v.Name:find("BusoLayer") then return true end
-        end
-        -- Verifica LocalScript Observation habilitado
-        local obs = char:FindFirstChild("Observation")
-        if obs and not obs.Disabled then return true end
-        return false
-    end
-
-    while running do
-        if autoKenActive then
-            if not kenEstaAtivo() then
-                pcall(ativarKen)
-            end
-            task.wait(0.5)
-        else
-            task.wait(0.5)
-        end
-    end
-end)
--- ============================================================
---  VOAR — trava o personagem a altura fixa no ar
--- ============================================================
-task.spawn(function()
-    local ALTURA_VOO = 40  -- studs fixos acima do chão
+    local ALTURA_VOO = 40
     local bodyPos = nil
 
     while running do
@@ -1118,7 +831,6 @@ task.spawn(function()
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if not hrp or not hum then return end
 
-                -- Cria BodyPosition se não existir
                 if not bodyPos or not bodyPos.Parent then
                     if bodyPos then bodyPos:Destroy() end
                     bodyPos = Instance.new("BodyPosition")
@@ -1128,23 +840,20 @@ task.spawn(function()
                     bodyPos.Parent = hrp
                 end
 
-                -- Raycast para achar o chão e travar a altura correta
                 local ray = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0))
                 local groundY = ray and ray.Position.Y or (hrp.Position.Y - ALTURA_VOO)
                 local alvoY = groundY + ALTURA_VOO
 
-                -- Só atualiza se estiver fora da altura alvo (evita subir infinito)
                 if math.abs(hrp.Position.Y - alvoY) > 1 then
                     bodyPos.Position = Vector3.new(hrp.Position.X, alvoY, hrp.Position.Z)
                 else
-                    bodyPos.Position = hrp.Position  -- trava no lugar
+                    bodyPos.Position = hrp.Position
                 end
 
                 pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end)
             end)
             task.wait(0.05)
         else
-            -- Desce e remove
             if bodyPos then
                 pcall(function() bodyPos:Destroy() end)
                 bodyPos = nil
@@ -1161,7 +870,10 @@ task.spawn(function()
     end
 end)
 
-print("👑 BF Notify ATIVO! FPS: 120")
+-- ============================================================
+--  LOOP PRINCIPAL DE DETECÇÃO
+-- ============================================================
+print("👑 BF Notify - VERSÃO FINAL! FPS: 120")
 
 while running do
     pcall(checkMirage)
