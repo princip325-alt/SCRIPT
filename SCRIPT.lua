@@ -728,16 +728,57 @@ task.spawn(function()
     local LOCK_DIST    = 14
 
     local function deveIgnorar(obj)
+        -- Ignora qualquer NPC com diálogo ou venda
+        if obj:FindFirstChildOfClass("Dialog") then return true end
+        if obj:FindFirstChildWhichIsA("ProximityPrompt", true) then return true end
+        for _, v in ipairs(obj:GetDescendants()) do
+            if v:IsA("Dialog") or v:IsA("ProximityPrompt") then return true end
+        end
+
         local nome = string.lower(obj.Name)
         local palavras = {
+            -- Genéricos
             "quest","giver","dealer","vendedor","missao","missão",
-            "ponto","inicial","outros","shop","merchant","trader",
-            "blacksmith","arowe","bartilo","swan","upgrade","farmer",
-            "tiki","barcos","boat","ship","fruit","sword",
-            "master","teacher","ability","gacha","cousin","luxury",
-            "vivid","advanced","chompy","totto","yukora",
-            "experimented","definir","spawn","npc","loja","luxo",
-            "blox","citizen","bandit","home","set ","point",
+            "shop","merchant","trader","spawn","npc","loja",
+            "definir","ponto","inicial","set ","point",
+            -- Lojas / barcos / frutas / espadas
+            "boat","ship","barcos","barco","luxury","luxo",
+            "fruit","blox","sword","weapon","arma",
+            "gacha","cousin","upgrade","ferreiro","blacksmith",
+            "advanced","vivid","revendedor","negociante",
+            -- Professores / mestres
+            "master","teacher","mestre","professor","instrutor",
+            "ability","habilidade","trainer","treinador",
+            -- NPCs diversos nomeados
+            "arowe","bartilo","swan","chompy","totto","yukora",
+            "experimented","experim","citizen","bandit","home",
+            "tiki","farmer","barista","fisherman","pescador",
+            "mysterious","misterios","plokster","lunoven",
+            "tacomura","phoeyu","sharkman","artemetic","artemetico",
+            "alchemist","alquimista","uzoth","lucien","erina",
+            "trevor","sabi","gerente","nerd","cliente","mordomo",
+            "rip_indra","indra","yoshi","hasan","parlus",
+            "shafi","espiao","espião","relíquia","reliquia",
+            "santuário","santuario","observador","antigo",
+            "capitão","capitao","detetive","militar",
+            "editor","aura","reward","recompensa","titulo","título",
+            "despertar","awakening","honor","honra",
+            "refinador","bugiganga","entrega","namorados",
+            "inventor","tesouros","scientist","cientista",
+            "skeleton","esqueleto","ghostly","fantasma",
+            "tombstone","lapide","lápide","strange","estranha",
+            "sick","doente","hungry","faminto","horned","chifre",
+            "force","força","ancient","antigo","monk","monge",
+            "hero","heroi","herói","crypt","cripta",
+            "dragon","dragão","dojo","mago","sage","sabio","sábio",
+            "hunter","caçador","cacador","elite","spy","spies",
+            "shipwright","naval","underwater","submarino",
+            "worker","trabalhador","removal","remov",
+            "administrator","administrador","perro","guashiem",
+            "rodolfo","illicit","ilicito","ilícito",
+            "king","rei","death","morte","machine","maquina",
+            "drip","gotejamento","candy","doce","artisan","artesao",
+            "military","detective","strange","esquisito",
         }
         for _, p in ipairs(palavras) do
             if string.find(nome, p) then return true end
@@ -752,6 +793,20 @@ task.spawn(function()
                     end
                 end
                 if not hasLevel then return true end
+            end
+            -- Aura verde = NPC morto (Highlight ou SelectionBox verde)
+            if v:IsA("Highlight") then
+                local fc = v.FillColor
+                local oc = v.OutlineColor
+                if (fc.G > 0.4 and fc.R < 0.4) or (oc.G > 0.4 and oc.R < 0.4) then
+                    return true
+                end
+            end
+            if v:IsA("SelectionBox") then
+                local c = v.Color3
+                if c.G > 0.4 and c.R < 0.4 then
+                    return true
+                end
             end
         end
         return false
@@ -781,7 +836,12 @@ task.spawn(function()
                     if obj:IsA("Model") and obj ~= char then
                         local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
                         local humanoid = obj:FindFirstChildOfClass("Humanoid")
-                        if enemyHRP and humanoid and humanoid.Health > 0
+                        local estaVivo = humanoid
+                            and humanoid.Health > 0
+                            and humanoid.MaxHealth > 0
+                            and humanoid:GetState() ~= Enum.HumanoidStateType.Dead
+
+                        if enemyHRP and estaVivo
                             and not deveIgnorar(obj)
                             and not Players:GetPlayerFromCharacter(obj) then
                             local dist = (enemyHRP.Position - hrp.Position).Magnitude
