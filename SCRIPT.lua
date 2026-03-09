@@ -357,7 +357,7 @@ end
 --  FRAME PRINCIPAL
 -- ============================================================
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 160, 0, 145)
+frame.Size = UDim2.new(0, 160, 0, 178)
 frame.Position = UDim2.new(0, 10, 0.45, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
@@ -531,21 +531,38 @@ bringMobBtn.MouseButton1Click:Connect(function()
 end)
 
 local dmgAuraActive = false
-local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "KillAura", Color3.fromRGB(255,50,50))
+local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "DmgAura", Color3.fromRGB(255,50,50))
 dmgAuraBtn.MouseButton1Click:Connect(function()
     dmgAuraActive = not dmgAuraActive
     if dmgAuraActive then
         dmgAuraDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
         dmgAuraLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        dmgAuraLabel.Text = "KillAura"
+        dmgAuraLabel.Text = "DmgAura"
     else
         dmgAuraDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         dmgAuraLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        dmgAuraLabel.Text = "KillAura"
+        dmgAuraLabel.Text = "DmgAura"
     end
 end)
 
-local closeBtn, closeDot, closeLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
+local autoKenActive = false
+local autoKenBtn, autoKenDot, autoKenLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "AutoKen", Color3.fromRGB(255,50,50))
+autoKenBtn.MouseButton1Click:Connect(function()
+    autoKenActive = not autoKenActive
+    if autoKenActive then
+        autoKenDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
+        autoKenLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        autoKenLabel.Text = "AutoKen"
+    else
+        autoKenDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        autoKenLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        autoKenLabel.Text = "AutoKen"
+    end
+end)
+
+local closeBtn, closeDot, closeLabel = createBtn2(0, 3, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
+-- Fechar ocupa as 2 colunas
+closeBtn.Size = UDim2.new(0, BTN_W*2 + PAD_X, 0, BTN_H)
 closeBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.3)
@@ -760,45 +777,29 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  BRING MOB — puxa inimigos até o jogador (100 studs)
+--  BRING MOB — trava inimigos a distância segura (não puxa em cima)
 -- ============================================================
 task.spawn(function()
-    local BRING_DISTANCE = 100
-    -- NPCs amigáveis para ignorar
-    local IGNORAR = {
-        ["Boat Dealer"] = true, ["Luxury Boat Dealer"] = true,
-        ["Ship Dealer"] = true, ["Upgrade"] = true,
-        ["Blox Fruit Gacha"] = true, ["Blox Fruit Dealer"] = true,
-        ["Blox Fruit Dealer Cousin"] = true, ["NPC"] = true,
-        ["Sword Dealer"] = true, ["Legendary Sword Dealer"] = true,
-        ["Arowe"] = true, ["Blacksmith"] = true,
-        ["Master of Auras"] = true, ["Experimented Hand"] = true,
-        ["Vivid Arowe"] = true, ["Advanced Fruit Dealer"] = true,
-        ["Farmer"] = true, ["Chompy"] = true,
-        ["Totto"] = true, ["Yukora"] = true,
-        ["Island Boy"] = true, ["Ability Teacher"] = true,
-        ["Bartilo"] = true, ["Swan"] = true,
-        ["Vendedor de Barcos"] = true, ["Vendedor de B"] = true,
-        ["Vendedor"] = true, ["Dealer"] = true,
-        ["Tiki Quest Giver"] = true, ["Tiki Quest Giver 2"] = true,
-        ["Quest Giver"] = true, ["Definir Ponto Inicial"] = true,
-        ["Outros"] = true, ["OUTROS"] = true,
-    }
-    -- Ignora qualquer NPC com "Quest" ou "Giver" ou "Missao" no nome
+    local DETECT_RANGE = 120  -- raio de detecção
+    local LOCK_DIST    = 8    -- distância segura: inimigo fica aqui, fora do alcance de acertar você
+
     local function deveIgnorar(nome)
-        if IGNORAR[nome] then return true end
         local lower = string.lower(nome)
-        if string.find(lower, "quest") then return true end
-        if string.find(lower, "giver") then return true end
-        if string.find(lower, "dealer") then return true end
-        if string.find(lower, "vendedor") then return true end
-        if string.find(lower, "missao") then return true end
-        if string.find(lower, "missão") then return true end
-        if string.find(lower, "ponto") then return true end
-        if string.find(lower, "inicial") then return true end
-        if string.find(lower, "outros") then return true end
+        local palavras = {
+            "quest","giver","dealer","vendedor","missao","missão",
+            "ponto","inicial","outros","shop","merchant","trader",
+            "blacksmith","arowe","bartilo","swan","upgrade","farmer",
+            "tiki","barcos","boat","ship","fruit","sword",
+            "master","teacher","ability","gacha","cousin","luxury",
+            "vivid","advanced","chompy","totto","yukora",
+            "experimented","definir","spawn","npc","loja","luxo",
+        }
+        for _, p in ipairs(palavras) do
+            if string.find(lower, p) then return true end
+        end
         return false
     end
+
     while running do
         if bringMobActive then
             pcall(function()
@@ -809,16 +810,65 @@ task.spawn(function()
                 if not hrp then return end
 
                 for _, obj in ipairs(workspace:GetDescendants()) do
-                    if bringMobActive and obj:IsA("Model") and obj ~= char then
+                    if obj:IsA("Model") and obj ~= char then
                         local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
                         local humanoid = obj:FindFirstChildOfClass("Humanoid")
-                        -- Ignora NPCs amigáveis e jogadores
                         if enemyHRP and humanoid and humanoid.Health > 0
                             and not deveIgnorar(obj.Name)
                             and not Players:GetPlayerFromCharacter(obj) then
-                            local dist = (enemyHRP.Position - hrp.Position).Magnitude
-                            if dist <= BRING_DISTANCE then
-                                enemyHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
+                            local diff = enemyHRP.Position - hrp.Position
+                            local dist = diff.Magnitude
+                            if dist > 1 and dist <= DETECT_RANGE then
+                                -- Posiciona inimigo na direção dele, a LOCK_DIST studs
+                                local dir = diff.Unit
+                                local targetPos = hrp.Position + dir * LOCK_DIST
+                                targetPos = Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z)
+                                enemyHRP.CFrame = CFrame.new(targetPos)
+                                    * CFrame.Angles(0, math.atan2(-dir.X, -dir.Z), 0)
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait(0.08)
+        else
+            task.wait(0.2)
+        end
+    end
+end)
+
+-- ============================================================
+--  KILL AURA — mata instante todos dentro de 50 studs
+-- ============================================================
+task.spawn(function()
+    local AURA_DIST = 50
+    while running do
+        if dmgAuraActive then
+            pcall(function()
+                local player = Players.LocalPlayer
+                local char = player.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") and obj ~= char then
+                        local eHRP = obj:FindFirstChild("HumanoidRootPart")
+                        local hum  = obj:FindFirstChildOfClass("Humanoid")
+                        if eHRP and hum and hum.Health > 0
+                            and not Players:GetPlayerFromCharacter(obj) then
+                            local d = (eHRP.Position - hrp.Position).Magnitude
+                            if d <= AURA_DIST then
+                                pcall(function() hum.Health = 0 end)
+                                pcall(function() hum:TakeDamage(math.huge) end)
+                                -- Remove o personagem do workspace diretamente
+                                pcall(function()
+                                    for _, part in ipairs(obj:GetDescendants()) do
+                                        if part:IsA("BasePart") then
+                                            part.CanCollide = false
+                                        end
+                                    end
+                                end)
                             end
                         end
                     end
@@ -832,67 +882,35 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  KILL AURA — simula clique real do estilo de luta (50 studs)
+--  AUTO KEN — mantém Observation Haki (mãozinha) ativo
 -- ============================================================
 task.spawn(function()
-    local AURA_DISTANCE = 50
-    local VIM = game:GetService("VirtualInputManager")
-    local camera = workspace.CurrentCamera
+    local VIM3 = game:GetService("VirtualInputManager")
     while running do
-        if dmgAuraActive then
+        if autoKenActive then
             pcall(function()
-                local player = Players.LocalPlayer
-                local char = player.Character
-                if not char then return end
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if not hrp then return end
-                local tool = char:FindFirstChildOfClass("Tool")
-                if not tool then return end
-
-                -- Acha inimigo mais próximo
-                local closest = nil
-                local closestDist = AURA_DISTANCE
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj:IsA("Model") and obj ~= char then
-                        local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
-                        local humanoid = obj:FindFirstChildOfClass("Humanoid")
-                        if enemyHRP and humanoid and humanoid.Health > 0
-                            and not Players:GetPlayerFromCharacter(obj) then
-                            local dist = (enemyHRP.Position - hrp.Position).Magnitude
-                            if dist < closestDist then
-                                closestDist = dist
-                                closest = obj
+                -- Tenta via RemoteEvent interno do jogo
+                local function tryRemotes(folder)
+                    if not folder then return end
+                    for _, r in ipairs(folder:GetDescendants()) do
+                        if r:IsA("RemoteEvent") then
+                            local n = string.lower(r.Name)
+                            if string.find(n,"ken") or string.find(n,"observation") then
+                                pcall(function() r:FireServer() end)
                             end
                         end
                     end
                 end
-
-                if closest then
-                    local enemyHRP = closest:FindFirstChild("HumanoidRootPart")
-                    if enemyHRP then
-                        -- Converte posição 3D do inimigo para posição na tela
-                        local screenPos, onScreen = camera:WorldToScreenPoint(enemyHRP.Position)
-                        if onScreen then
-                            -- Simula clique do mouse na posição do inimigo na tela
-                            VIM:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 1)
-                            task.wait(0.05)
-                            VIM:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 1)
-                        else
-                            -- Inimigo fora da tela — vira câmera e clica no centro
-                            hrp.CFrame = CFrame.lookAt(hrp.Position, enemyHRP.Position)
-                            task.wait(0.05)
-                            local cx = camera.ViewportSize.X / 2
-                            local cy = camera.ViewportSize.Y / 2
-                            VIM:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
-                            task.wait(0.05)
-                            VIM:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
-                        end
-                    end
-                end
+                tryRemotes(RS:FindFirstChild("Remotes"))
+                tryRemotes(RS:FindFirstChild("Network"))
+                -- Fallback: simula tecla Q (Ken no Blox Fruits)
+                VIM3:SendKeyEvent(true,  Enum.KeyCode.Q, false, game)
+                task.wait(0.1)
+                VIM3:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
             end)
-            task.wait(0.2)
+            task.wait(4)
         else
-            task.wait(0.2)
+            task.wait(0.5)
         end
     end
 end)
