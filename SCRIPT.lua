@@ -780,7 +780,25 @@ task.spawn(function()
         ["Bartilo"] = true, ["Swan"] = true,
         ["Vendedor de Barcos"] = true, ["Vendedor de B"] = true,
         ["Vendedor"] = true, ["Dealer"] = true,
+        ["Tiki Quest Giver"] = true, ["Tiki Quest Giver 2"] = true,
+        ["Quest Giver"] = true, ["Definir Ponto Inicial"] = true,
+        ["Outros"] = true, ["OUTROS"] = true,
     }
+    -- Ignora qualquer NPC com "Quest" ou "Giver" ou "Missao" no nome
+    local function deveIgnorar(nome)
+        if IGNORAR[nome] then return true end
+        local lower = string.lower(nome)
+        if string.find(lower, "quest") then return true end
+        if string.find(lower, "giver") then return true end
+        if string.find(lower, "dealer") then return true end
+        if string.find(lower, "vendedor") then return true end
+        if string.find(lower, "missao") then return true end
+        if string.find(lower, "missão") then return true end
+        if string.find(lower, "ponto") then return true end
+        if string.find(lower, "inicial") then return true end
+        if string.find(lower, "outros") then return true end
+        return false
+    end
     while running do
         if bringMobActive then
             pcall(function()
@@ -796,7 +814,7 @@ task.spawn(function()
                         local humanoid = obj:FindFirstChildOfClass("Humanoid")
                         -- Ignora NPCs amigáveis e jogadores
                         if enemyHRP and humanoid and humanoid.Health > 0
-                            and not IGNORAR[obj.Name]
+                            and not deveIgnorar(obj.Name)
                             and not Players:GetPlayerFromCharacter(obj) then
                             local dist = (enemyHRP.Position - hrp.Position).Magnitude
                             if dist <= BRING_DISTANCE then
@@ -814,10 +832,12 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  KILL AURA — usa dano real do jogo para dar XP (50 studs)
+--  KILL AURA — simula clique real do estilo de luta (50 studs)
 -- ============================================================
 task.spawn(function()
     local AURA_DISTANCE = 50
+    local VIM = game:GetService("VirtualInputManager")
+    local camera = workspace.CurrentCamera
     while running do
         if dmgAuraActive then
             pcall(function()
@@ -829,41 +849,48 @@ task.spawn(function()
                 local tool = char:FindFirstChildOfClass("Tool")
                 if not tool then return end
 
+                -- Acha inimigo mais próximo
+                local closest = nil
+                local closestDist = AURA_DISTANCE
                 for _, obj in ipairs(workspace:GetDescendants()) do
-                    if dmgAuraActive and obj:IsA("Model") and obj ~= char then
+                    if obj:IsA("Model") and obj ~= char then
                         local enemyHRP = obj:FindFirstChild("HumanoidRootPart")
                         local humanoid = obj:FindFirstChildOfClass("Humanoid")
                         if enemyHRP and humanoid and humanoid.Health > 0
                             and not Players:GetPlayerFromCharacter(obj) then
                             local dist = (enemyHRP.Position - hrp.Position).Magnitude
-                            if dist <= AURA_DISTANCE then
-                                -- Vira para o inimigo e simula ataque real
-                                local oldCF = hrp.CFrame
-                                hrp.CFrame = CFrame.lookAt(hrp.Position, enemyHRP.Position)
-                                -- Dispara evento de hit via RemoteEvent do jogo
-                                pcall(function()
-                                    local hitbox = RS:FindFirstChild("Remotes")
-                                        or RS:FindFirstChild("Network")
-                                    if hitbox then
-                                        for _, remote in ipairs(hitbox:GetDescendants()) do
-                                            if remote:IsA("RemoteEvent") and
-                                                (string.find(string.lower(remote.Name), "hit") or
-                                                 string.find(string.lower(remote.Name), "damage")) then
-                                                pcall(function() remote:FireServer(obj, 9999) end)
-                                            end
-                                        end
-                                    end
-                                end)
-                                -- Fallback: dano direto
-                                pcall(function() humanoid:TakeDamage(humanoid.MaxHealth * 999) end)
-                                task.wait(0.05)
-                                hrp.CFrame = oldCF
+                            if dist < closestDist then
+                                closestDist = dist
+                                closest = obj
                             end
                         end
                     end
                 end
+
+                if closest then
+                    local enemyHRP = closest:FindFirstChild("HumanoidRootPart")
+                    if enemyHRP then
+                        -- Converte posição 3D do inimigo para posição na tela
+                        local screenPos, onScreen = camera:WorldToScreenPoint(enemyHRP.Position)
+                        if onScreen then
+                            -- Simula clique do mouse na posição do inimigo na tela
+                            VIM:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 1)
+                            task.wait(0.05)
+                            VIM:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 1)
+                        else
+                            -- Inimigo fora da tela — vira câmera e clica no centro
+                            hrp.CFrame = CFrame.lookAt(hrp.Position, enemyHRP.Position)
+                            task.wait(0.05)
+                            local cx = camera.ViewportSize.X / 2
+                            local cy = camera.ViewportSize.Y / 2
+                            VIM:SendMouseButtonEvent(cx, cy, 0, true, game, 1)
+                            task.wait(0.05)
+                            VIM:SendMouseButtonEvent(cx, cy, 0, false, game, 1)
+                        end
+                    end
+                end
             end)
-            task.wait(0.15)
+            task.wait(0.2)
         else
             task.wait(0.2)
         end
