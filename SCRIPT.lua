@@ -777,11 +777,11 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  BRING MOB — trava inimigos a distância segura (não puxa em cima)
+--  BRING MOB — trava inimigos a 20 studs do jogador
 -- ============================================================
 task.spawn(function()
-    local DETECT_RANGE = 120  -- raio de detecção
-    local LOCK_DIST    = 8    -- distância segura: inimigo fica aqui, fora do alcance de acertar você
+    local DETECT_RANGE = 150
+    local LOCK_DIST    = 15
 
     local function deveIgnorar(nome)
         local lower = string.lower(nome)
@@ -819,12 +819,14 @@ task.spawn(function()
                             local diff = enemyHRP.Position - hrp.Position
                             local dist = diff.Magnitude
                             if dist > 1 and dist <= DETECT_RANGE then
-                                -- Posiciona inimigo na direção dele, a LOCK_DIST studs
                                 local dir = diff.Unit
                                 local targetPos = hrp.Position + dir * LOCK_DIST
                                 targetPos = Vector3.new(targetPos.X, hrp.Position.Y, targetPos.Z)
                                 enemyHRP.CFrame = CFrame.new(targetPos)
                                     * CFrame.Angles(0, math.atan2(-dir.X, -dir.Z), 0)
+                                -- Trava humanoid no lugar (para ele não se mover)
+                                pcall(function() humanoid.WalkSpeed = 0 end)
+                                pcall(function() humanoid.JumpPower = 0 end)
                             end
                         end
                     end
@@ -832,16 +834,36 @@ task.spawn(function()
             end)
             task.wait(0.08)
         else
-            task.wait(0.2)
+            -- Quando desligar, restaura velocidade
+            pcall(function()
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Model") then
+                        local hum = obj:FindFirstChildOfClass("Humanoid")
+                        if hum then
+                            pcall(function() hum.WalkSpeed = 16 end)
+                            pcall(function() hum.JumpPower = 50 end)
+                        end
+                    end
+                end
+            end)
+            task.wait(0.5)
         end
     end
 end)
 
 -- ============================================================
---  KILL AURA — mata instante todos dentro de 50 studs
+--  KILL AURA — usa RegisterHit/RegisterAttack reais do jogo
 -- ============================================================
 task.spawn(function()
     local AURA_DIST = 50
+    local Net = RS:WaitForChild("Modules", 5)
+    local netRE = Net and Net:FindFirstChild("Net") and Net.Net:FindFirstChild("RE")
+        or RS:FindFirstChild("Modules") and RS.Modules:FindFirstChild("Net") and RS.Modules.Net:FindFirstChild("RE")
+
+    local registerHit    = netRE and netRE:FindFirstChild("RegisterHit")
+    local registerAttack = netRE and netRE:FindFirstChild("RegisterAttack")
+    local commE          = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("CommE")
+
     while running do
         if dmgAuraActive then
             pcall(function()
@@ -859,16 +881,20 @@ task.spawn(function()
                             and not Players:GetPlayerFromCharacter(obj) then
                             local d = (eHRP.Position - hrp.Position).Magnitude
                             if d <= AURA_DIST then
-                                pcall(function() hum.Health = 0 end)
-                                pcall(function() hum:TakeDamage(math.huge) end)
-                                -- Remove o personagem do workspace diretamente
+                                -- Tenta via remotes reais do jogo
                                 pcall(function()
-                                    for _, part in ipairs(obj:GetDescendants()) do
-                                        if part:IsA("BasePart") then
-                                            part.CanCollide = false
-                                        end
+                                    if registerHit then
+                                        registerHit:FireServer(obj, eHRP.Position, 9999)
                                     end
                                 end)
+                                pcall(function()
+                                    if registerAttack then
+                                        registerAttack:FireServer(obj, 9999)
+                                    end
+                                end)
+                                -- Fallback direto
+                                pcall(function() hum.Health = 0 end)
+                                pcall(function() hum:TakeDamage(math.huge) end)
                             end
                         end
                     end
@@ -882,31 +908,28 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  AUTO KEN — mantém Observation Haki (mãozinha) ativo
+--  AUTO KEN — ativa Observation Haki via LocalScript do jogo
 -- ============================================================
 task.spawn(function()
-    local VIM3 = game:GetService("VirtualInputManager")
     while running do
         if autoKenActive then
             pcall(function()
-                -- Tenta via RemoteEvent interno do jogo
-                local function tryRemotes(folder)
-                    if not folder then return end
-                    for _, r in ipairs(folder:GetDescendants()) do
-                        if r:IsA("RemoteEvent") then
-                            local n = string.lower(r.Name)
-                            if string.find(n,"ken") or string.find(n,"observation") then
-                                pcall(function() r:FireServer() end)
-                            end
-                        end
-                    end
+                local char = Players.LocalPlayer.Character
+                if not char then return end
+                -- O script "Observation" já existe no personagem
+                -- Simula o evento de ativar Ken via DisableKen ao contrário
+                local disableKen = RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("DisableKen")
+                -- Verifica se Ken está ativo pelo folder HasBuso ou pelo script Observation
+                local observation = char:FindFirstChild("Observation")
+                if observation and observation:IsA("LocalScript") then
+                    -- Ken está presente, força ativação via enabled
+                    pcall(function() observation.Disabled = false end)
                 end
-                tryRemotes(RS:FindFirstChild("Remotes"))
-                tryRemotes(RS:FindFirstChild("Network"))
-                -- Fallback: simula tecla Q (Ken no Blox Fruits)
-                VIM3:SendKeyEvent(true,  Enum.KeyCode.Q, false, game)
-                task.wait(0.1)
-                VIM3:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+                -- Simula tecla de ativar Ken (Blox Fruits usa input customizado)
+                local VIM3 = game:GetService("VirtualInputManager")
+                VIM3:SendKeyEvent(true,  Enum.KeyCode.T, false, game)
+                task.wait(0.05)
+                VIM3:SendKeyEvent(false, Enum.KeyCode.T, false, game)
             end)
             task.wait(4)
         else
