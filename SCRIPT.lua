@@ -357,7 +357,7 @@ end
 --  FRAME PRINCIPAL
 -- ============================================================
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 160, 0, 220)
+frame.Size = UDim2.new(0, 160, 0, 145)
 frame.Position = UDim2.new(0, 10, 0.45, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
@@ -423,12 +423,11 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 -- ============================================================
---  CRIAR BOTÃO — grid 5 colunas
+--  CRIAR BOTÃO — grid 2 colunas
 -- ============================================================
--- Layout: col=0..4 | row=0..N
-local BTN_W = 28
+local BTN_W = 68
 local BTN_H = 28
-local PAD_X = 4
+local PAD_X = 8
 local PAD_Y = 5
 local START_Y = 30
 
@@ -447,16 +446,16 @@ local function createBtn2(col, row, dotColor, labelText, labelColor)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
 
     local dot = Instance.new("Frame")
-    dot.Size = UDim2.new(0, 8, 0, 8)
-    dot.Position = UDim2.new(0, 6, 0.5, -4)
+    dot.Size = UDim2.new(0, 7, 0, 7)
+    dot.Position = UDim2.new(0, 6, 0.5, -3)
     dot.BackgroundColor3 = dotColor
     dot.BorderSizePixel = 0
     dot.Parent = btn
     Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0, BTN_W - 20, 0, BTN_H)
-    lbl.Position = UDim2.new(0, 18, 0, 0)
+    lbl.Size = UDim2.new(0, BTN_W - 18, 0, BTN_H)
+    lbl.Position = UDim2.new(0, 16, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = labelColor
     lbl.Text = labelText
@@ -467,8 +466,10 @@ local function createBtn2(col, row, dotColor, labelText, labelColor)
     return btn, dot, lbl
 end
 
--- Grid 5x5: Ativo | Lite | AntAfk | Bring | Aura
---           Fechar (centralizado)
+-- Layout:
+-- Linha 0: Ativo | Lite
+-- Linha 1: AntAfk | Bring
+-- Linha 2: Aura | Fechar
 local toggleBtn, toggleDot, toggleLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "Ativo", Color3.fromRGB(0,255,80))
 toggleBtn.MouseButton1Click:Connect(function()
     enabled = not enabled
@@ -491,7 +492,7 @@ liteBtn.MouseButton1Click:Connect(function()
     if liteMode then
         liteDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
         liteLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        liteLabel.Text = "Lite"
+        liteLabel.Text = "Lite ON"
     else
         liteDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         liteLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
@@ -500,7 +501,7 @@ liteBtn.MouseButton1Click:Connect(function()
 end)
 
 local autoClickActive = false
-local autoClickBtn, autoClickDot, autoClickLabel = createBtn2(2, 0, Color3.fromRGB(255,50,50), "AntAfk", Color3.fromRGB(255,50,50))
+local autoClickBtn, autoClickDot, autoClickLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "AntAfk", Color3.fromRGB(255,50,50))
 autoClickBtn.MouseButton1Click:Connect(function()
     autoClickActive = not autoClickActive
     if autoClickActive then
@@ -515,48 +516,36 @@ autoClickBtn.MouseButton1Click:Connect(function()
 end)
 
 local bringMobActive = false
-local bringMobBtn, bringMobDot, bringMobLabel = createBtn2(3, 0, Color3.fromRGB(255,50,50), "Bring", Color3.fromRGB(255,50,50))
+local bringMobBtn, bringMobDot, bringMobLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "BringMob", Color3.fromRGB(255,50,50))
 bringMobBtn.MouseButton1Click:Connect(function()
     bringMobActive = not bringMobActive
     if bringMobActive then
         bringMobDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
         bringMobLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        bringMobLabel.Text = "Bring"
+        bringMobLabel.Text = "BringMob"
     else
         bringMobDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         bringMobLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        bringMobLabel.Text = "Bring"
+        bringMobLabel.Text = "BringMob"
     end
 end)
 
 local dmgAuraActive = false
-local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(4, 0, Color3.fromRGB(255,50,50), "Aura", Color3.fromRGB(255,50,50))
+local dmgAuraBtn, dmgAuraDot, dmgAuraLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "KillAura", Color3.fromRGB(255,50,50))
 dmgAuraBtn.MouseButton1Click:Connect(function()
     dmgAuraActive = not dmgAuraActive
     if dmgAuraActive then
         dmgAuraDot.BackgroundColor3 = Color3.fromRGB(0, 255, 80)
         dmgAuraLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        dmgAuraLabel.Text = "Aura"
+        dmgAuraLabel.Text = "KillAura"
     else
         dmgAuraDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         dmgAuraLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        dmgAuraLabel.Text = "Aura"
+        dmgAuraLabel.Text = "KillAura"
     end
 end)
 
--- Fechar centralizado
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 80, 0, 28)
-closeBtn.Position = UDim2.new(0.5, -40, 0, 30 + 28 + 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-closeBtn.BorderSizePixel = 0
-closeBtn.Text = "✖ Fechar"
-closeBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
-closeBtn.TextScaled = true
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.Active = true
-closeBtn.Parent = frame
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 7)
+local closeBtn, closeDot, closeLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
 closeBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.3)
@@ -789,6 +778,8 @@ task.spawn(function()
         ["Totto"] = true, ["Yukora"] = true,
         ["Island Boy"] = true, ["Ability Teacher"] = true,
         ["Bartilo"] = true, ["Swan"] = true,
+        ["Vendedor de Barcos"] = true, ["Vendedor de B"] = true,
+        ["Vendedor"] = true, ["Dealer"] = true,
     }
     while running do
         if bringMobActive then
@@ -823,7 +814,7 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  DAMAGE AURA — só funciona com estilo/arma equipada (50 studs)
+--  KILL AURA — usa dano real do jogo para dar XP (50 studs)
 -- ============================================================
 task.spawn(function()
     local AURA_DISTANCE = 50
@@ -835,8 +826,6 @@ task.spawn(function()
                 if not char then return end
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 if not hrp then return end
-
-                -- Só funciona se tiver arma/ferramenta equipada
                 local tool = char:FindFirstChildOfClass("Tool")
                 if not tool then return end
 
@@ -848,9 +837,27 @@ task.spawn(function()
                             and not Players:GetPlayerFromCharacter(obj) then
                             local dist = (enemyHRP.Position - hrp.Position).Magnitude
                             if dist <= AURA_DISTANCE then
-                                -- Mata o inimigo
-                                pcall(function() humanoid.Health = 0 end)
-                                pcall(function() humanoid:TakeDamage(999999) end)
+                                -- Vira para o inimigo e simula ataque real
+                                local oldCF = hrp.CFrame
+                                hrp.CFrame = CFrame.lookAt(hrp.Position, enemyHRP.Position)
+                                -- Dispara evento de hit via RemoteEvent do jogo
+                                pcall(function()
+                                    local hitbox = RS:FindFirstChild("Remotes")
+                                        or RS:FindFirstChild("Network")
+                                    if hitbox then
+                                        for _, remote in ipairs(hitbox:GetDescendants()) do
+                                            if remote:IsA("RemoteEvent") and
+                                                (string.find(string.lower(remote.Name), "hit") or
+                                                 string.find(string.lower(remote.Name), "damage")) then
+                                                pcall(function() remote:FireServer(obj, 9999) end)
+                                            end
+                                        end
+                                    end
+                                end)
+                                -- Fallback: dano direto
+                                pcall(function() humanoid:TakeDamage(humanoid.MaxHealth * 999) end)
+                                task.wait(0.05)
+                                hrp.CFrame = oldCF
                             end
                         end
                     end
