@@ -45,12 +45,10 @@ local function makeDraggable(dragHandle, targetFrame, frameW, frameH)
             or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStartInput = input.Position
-            -- Converte posição atual (escala+offset) para pixels absolutos
             local screen = workspace.CurrentCamera.ViewportSize
             local absPos = targetFrame.AbsolutePosition
             frameStartX = absPos.X
             frameStartY = absPos.Y
-            -- Garante que o frame passa a usar só offset daqui pra frente
             targetFrame.Position = UDim2.new(0, frameStartX, 0, frameStartY)
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -249,21 +247,14 @@ repeat task.wait(0.1) until senhaDesbloqueada
 -- ============================================================
 --  FRAME PRINCIPAL
 -- ============================================================
--- MUDANÇAS: Layout 3x3, fonte ArialBold 18, nomes PT-BR
--- Linha 0: Ativo(0,0) | Puxar(1,0) | Voar(2,0)
--- Linha 1: Sem Afk(0,1) | Fechar(1,1) | Vaga(2,1)
--- Linha 2: Vaga(0,2) | Vaga(1,2) | Vaga(2,2)
-
 local BTN_W = 68
 local BTN_H = 28
 local PAD_X = 8
 local PAD_Y = 5
 local START_Y = 30
 
--- Frame: 3 colunas = PAD_X + 3*(BTN_W+PAD_X) = 8 + 3*76 = 236
--- Altura: START_Y + 3*(BTN_H+PAD_Y) + PAD_Y = 30 + 3*33 + 5 = 134
-local FRAME_W = PAD_X + 3 * (BTN_W + PAD_X)  -- 236
-local FRAME_H = START_Y + 3 * (BTN_H + PAD_Y) + PAD_Y  -- 134
+local FRAME_W = PAD_X + 3 * (BTN_W + PAD_X)
+local FRAME_H = START_Y + 3 * (BTN_H + PAD_Y) + PAD_Y
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, FRAME_W, 0, FRAME_H)
@@ -381,7 +372,7 @@ avisoBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================================
---  CRIAR BOTÃO — ArialBold tamanho 18, grid 3 colunas
+--  CRIAR BOTÃO
 -- ============================================================
 local function createBtn2(col, row, dotColor, labelText, labelColor)
     local x = PAD_X + col * (BTN_W + PAD_X)
@@ -417,7 +408,6 @@ end
 -- ============================================================
 local ativoBtn, ativoLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "Ativo", Color3.fromRGB(0,255,80))
 
--- Cadeado centralizado no meio do botão, meio transparente
 local cadeadoLabel = Instance.new("TextLabel")
 cadeadoLabel.Size = UDim2.new(1, 0, 1, 0)
 cadeadoLabel.Position = UDim2.new(0, 0, 0, 0)
@@ -431,7 +421,6 @@ cadeadoLabel.Font = Enum.Font.GothamBold
 cadeadoLabel.ZIndex = ativoBtn.ZIndex + 1
 cadeadoLabel.Parent = ativoBtn
 
--- "Ativo" centralizado no meio do botão
 ativoLabel.Size = UDim2.new(1, 0, 1, 0)
 ativoLabel.Position = UDim2.new(0, 0, 0, 0)
 
@@ -728,7 +717,6 @@ task.spawn(function()
     local LOCK_DIST    = 14
 
     local function deveIgnorar(obj)
-        -- Ignora qualquer NPC com diálogo ou venda
         if obj:FindFirstChildOfClass("Dialog") then return true end
         if obj:FindFirstChildWhichIsA("ProximityPrompt", true) then return true end
         for _, v in ipairs(obj:GetDescendants()) do
@@ -737,19 +725,15 @@ task.spawn(function()
 
         local nome = string.lower(obj.Name)
         local palavras = {
-            -- Genéricos
             "quest","giver","dealer","vendedor","missao","missão",
             "shop","merchant","trader","spawn","npc","loja",
             "definir","ponto","inicial","set ","point",
-            -- Lojas / barcos / frutas / espadas
             "boat","ship","barcos","barco","luxury","luxo",
             "fruit","blox","sword","weapon","arma",
             "gacha","cousin","upgrade","ferreiro","blacksmith",
             "advanced","vivid","revendedor","negociante",
-            -- Professores / mestres
             "master","teacher","mestre","professor","instrutor",
             "ability","habilidade","trainer","treinador",
-            -- NPCs diversos nomeados
             "arowe","bartilo","swan","chompy","totto","yukora",
             "experimented","experim","citizen","bandit","home",
             "tiki","farmer","barista","fisherman","pescador",
@@ -779,6 +763,8 @@ task.spawn(function()
             "king","rei","death","morte","machine","maquina",
             "drip","gotejamento","candy","doce","artisan","artesao",
             "military","detective","strange","esquisito",
+            -- ADICIONADO: NPCs da Marinha que não devem ser puxados
+            "recrutador","recruta","marinha","marine","recruit","pirata","pirate","tort","titles","specialist","titulo","títulos",
         }
         for _, p in ipairs(palavras) do
             if string.find(nome, p) then return true end
@@ -794,7 +780,6 @@ task.spawn(function()
                 end
                 if not hasLevel then return true end
             end
-            -- Aura verde = NPC morto (Highlight ou SelectionBox verde)
             if v:IsA("Highlight") then
                 local fc = v.FillColor
                 local oc = v.OutlineColor
@@ -880,6 +865,7 @@ end)
 -- ============================================================
 task.spawn(function()
     local ALTURA_VOO = 40
+    local bodyGyro = nil
     local bodyPos = nil
 
     while running do
@@ -891,38 +877,46 @@ task.spawn(function()
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if not hrp or not hum then return end
 
+                -- Cria BodyGyro para estabilizar rotação
+                if not bodyGyro or not bodyGyro.Parent then
+                    bodyGyro = Instance.new("BodyGyro")
+                    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                    bodyGyro.P = 9999
+                    bodyGyro.D = 100
+                    bodyGyro.CFrame = hrp.CFrame
+                    bodyGyro.Parent = hrp
+                end
+
+                -- Cria BodyPosition para segurar no ar
                 if not bodyPos or not bodyPos.Parent then
-                    if bodyPos then bodyPos:Destroy() end
                     bodyPos = Instance.new("BodyPosition")
                     bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
                     bodyPos.P = 9999
-                    bodyPos.D = 500
+                    bodyPos.D = 1000
                     bodyPos.Parent = hrp
                 end
 
-                local ray = workspace:Raycast(hrp.Position, Vector3.new(0, -500, 0))
-                local groundY = ray and ray.Position.Y or (hrp.Position.Y - ALTURA_VOO)
-                local alvoY = groundY + ALTURA_VOO
+                -- Sobe reto para cima, trava X e Z
+                local alvoY = hrp.Position.Y + 25
+                bodyPos.Position = Vector3.new(hrp.Position.X, alvoY, hrp.Position.Z)
+                bodyGyro.CFrame = CFrame.new(hrp.Position)
 
-                if math.abs(hrp.Position.Y - alvoY) > 1 then
-                    bodyPos.Position = Vector3.new(hrp.Position.X, alvoY, hrp.Position.Z)
-                else
-                    bodyPos.Position = hrp.Position
-                end
-
-                pcall(function() hum:ChangeState(Enum.HumanoidStateType.Physics) end)
+                hum.PlatformStand = true
             end)
             task.wait(0.05)
         else
-            if bodyPos then
-                pcall(function() bodyPos:Destroy() end)
-                bodyPos = nil
-            end
             pcall(function()
                 local char = Players.LocalPlayer.Character
-                if char then
-                    local hum = char:FindFirstChildOfClass("Humanoid")
-                    if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildOfClass("Humanoid")
+
+                if bodyPos then bodyPos:Destroy() bodyPos = nil end
+                if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+
+                if hum then
+                    hum.PlatformStand = false
+                    hum:ChangeState(Enum.HumanoidStateType.GettingUp)
                 end
             end)
             task.wait(0.5)
