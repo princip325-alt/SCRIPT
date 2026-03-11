@@ -32,6 +32,8 @@ local minimized = true
 local autoClickActive = false
 local bringMobActive = false
 local voarActive = false
+local liteActive = false
+local pegarBausActive = false
 
 setfpscap(120)
 
@@ -247,8 +249,8 @@ repeat task.wait(0.1) until senhaDesbloqueada
 -- ============================================================
 --  FRAME PRINCIPAL
 -- ============================================================
-local BTN_W = 68
-local BTN_H = 28
+local BTN_W = 88
+local BTN_H = 36
 local PAD_X = 8
 local PAD_Y = 5
 local START_Y = 30
@@ -394,7 +396,7 @@ local function createBtn2(col, row, dotColor, labelText, labelColor)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = labelColor
     lbl.Text = labelText
-    lbl.TextSize = 18
+    lbl.TextSize = 13
     lbl.Font = Enum.Font.ArialBold
     lbl.TextXAlignment = Enum.TextXAlignment.Center
     lbl.TextYAlignment = Enum.TextYAlignment.Center
@@ -406,7 +408,7 @@ end
 -- ============================================================
 --  LINHA 0: Ativo | Puxar | Voar
 -- ============================================================
-local ativoBtn, ativoLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "Ativo", Color3.fromRGB(0,255,80))
+local ativoBtn, ativoLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "ATIVO", Color3.fromRGB(0,255,80))
 
 local cadeadoLabel = Instance.new("TextLabel")
 cadeadoLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -435,55 +437,349 @@ ativoBtn.MouseButton1Click:Connect(function()
     som:Destroy()
 end)
 
-local bringMobBtn, bringMobLabel = createBtn2(1, 0, Color3.fromRGB(255,50,50), "Puxar", Color3.fromRGB(255,50,50))
+local bringMobBtn, bringMobLabel = createBtn2(1, 0, Color3.fromRGB(255,50,50), "PUXAR", Color3.fromRGB(255,50,50))
 bringMobBtn.MouseButton1Click:Connect(function()
     bringMobActive = not bringMobActive
     if bringMobActive then
         bringMobLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        bringMobLabel.Text = "Puxar"
+        bringMobLabel.Text = "PUXAR"
     else
         bringMobLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        bringMobLabel.Text = "Puxar"
+        bringMobLabel.Text = "PUXAR"
     end
 end)
 
-local voarBtn, voarLabel = createBtn2(2, 0, Color3.fromRGB(255,50,50), "Voar", Color3.fromRGB(255,50,50))
+local voarBtn, voarLabel = createBtn2(2, 0, Color3.fromRGB(255,50,50), "VOAR", Color3.fromRGB(255,50,50))
 voarBtn.MouseButton1Click:Connect(function()
     voarActive = not voarActive
     if voarActive then
         voarLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        voarLabel.Text = "Voar"
+        voarLabel.Text = "VOAR"
     else
         voarLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        voarLabel.Text = "Voar"
+        voarLabel.Text = "VOAR"
     end
 end)
 
 -- ============================================================
 --  LINHA 1: Sem Afk | Fechar | Vaga
 -- ============================================================
-local autoClickBtn, autoClickLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "Sem Afk", Color3.fromRGB(255,50,50))
+local autoClickBtn, autoClickLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "SEM AFK", Color3.fromRGB(255,50,50))
 autoClickBtn.MouseButton1Click:Connect(function()
     autoClickActive = not autoClickActive
     if autoClickActive then
         autoClickLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        autoClickLabel.Text = "Sem Afk"
+        autoClickLabel.Text = "SEM AFK"
     else
         autoClickLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        autoClickLabel.Text = "Sem Afk"
+        autoClickLabel.Text = "SEM AFK"
     end
 end)
 
-local closeBtn, closeLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "Fechar", Color3.fromRGB(255,50,50))
+local closeBtn, closeLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "FECHAR", Color3.fromRGB(255,50,50))
 
-createBtn2(2, 1, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
+createBtn2(2, 1, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
 
 -- ============================================================
---  LINHA 2: Vaga | Vaga | Vaga
+--  LINHA 2: Lite | Vaga | Vaga
 -- ============================================================
-createBtn2(0, 2, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
-createBtn2(1, 2, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
-createBtn2(2, 2, Color3.fromRGB(50,50,50), "Vaga", Color3.fromRGB(80,80,80))
+local liteBtn, liteLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "MODO LITE", Color3.fromRGB(255,50,50))
+-- Caixa de diálogo do Modo Lite
+local liteDialog = Instance.new("Frame")
+liteDialog.Size = UDim2.new(0, 260, 0, 120)
+liteDialog.Position = UDim2.new(0.5, -130, 0.5, -60)
+liteDialog.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+liteDialog.BorderSizePixel = 0
+liteDialog.Visible = false
+liteDialog.ZIndex = 50
+liteDialog.Parent = screenGui
+Instance.new("UICorner", liteDialog).CornerRadius = UDim.new(0, 12)
+
+local liteDialogStroke = Instance.new("UIStroke")
+liteDialogStroke.Color = Color3.fromRGB(255, 160, 0)
+liteDialogStroke.Thickness = 2
+liteDialogStroke.Parent = liteDialog
+
+-- Ícone
+local liteDialogIcon = Instance.new("TextLabel")
+liteDialogIcon.Size = UDim2.new(0, 30, 0, 30)
+liteDialogIcon.Position = UDim2.new(0, 12, 0, 10)
+liteDialogIcon.BackgroundTransparency = 1
+liteDialogIcon.Text = "⚡"
+liteDialogIcon.TextScaled = true
+liteDialogIcon.ZIndex = 51
+liteDialogIcon.Parent = liteDialog
+
+-- Título
+local liteDialogTitle = Instance.new("TextLabel")
+liteDialogTitle.Size = UDim2.new(1, -55, 0, 28)
+liteDialogTitle.Position = UDim2.new(0, 48, 0, 8)
+liteDialogTitle.BackgroundTransparency = 1
+liteDialogTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+liteDialogTitle.Text = "Desativando arquivos..."
+liteDialogTitle.TextScaled = true
+liteDialogTitle.Font = Enum.Font.GothamBold
+liteDialogTitle.TextXAlignment = Enum.TextXAlignment.Left
+liteDialogTitle.ZIndex = 51
+liteDialogTitle.Parent = liteDialog
+
+-- Subtítulo
+local liteDialogSub = Instance.new("TextLabel")
+liteDialogSub.Size = UDim2.new(1, -16, 0, 18)
+liteDialogSub.Position = UDim2.new(0, 8, 0, 38)
+liteDialogSub.BackgroundTransparency = 1
+liteDialogSub.TextColor3 = Color3.fromRGB(160, 160, 160)
+liteDialogSub.Text = "Otimizando gráficos para melhor desempenho"
+liteDialogSub.TextScaled = true
+liteDialogSub.Font = Enum.Font.Gotham
+liteDialogSub.ZIndex = 51
+liteDialogSub.Parent = liteDialog
+
+-- Porcentagem
+local liteDialogPct = Instance.new("TextLabel")
+liteDialogPct.Size = UDim2.new(0, 45, 0, 18)
+liteDialogPct.Position = UDim2.new(1, -50, 0, 62)
+liteDialogPct.BackgroundTransparency = 1
+liteDialogPct.TextColor3 = Color3.fromRGB(255, 160, 0)
+liteDialogPct.Text = "0%"
+liteDialogPct.TextScaled = true
+liteDialogPct.Font = Enum.Font.GothamBold
+liteDialogPct.ZIndex = 51
+liteDialogPct.Parent = liteDialog
+
+-- Fundo da barra
+local liteBarBg = Instance.new("Frame")
+liteBarBg.Size = UDim2.new(1, -16, 0, 12)
+liteBarBg.Position = UDim2.new(0, 8, 0, 82)
+liteBarBg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+liteBarBg.BorderSizePixel = 0
+liteBarBg.ZIndex = 51
+liteBarBg.Parent = liteDialog
+Instance.new("UICorner", liteBarBg).CornerRadius = UDim.new(1, 0)
+
+-- Preenchimento da barra
+local liteBarFill = Instance.new("Frame")
+liteBarFill.Size = UDim2.new(0, 0, 1, 0)
+liteBarFill.BackgroundColor3 = Color3.fromRGB(255, 160, 0)
+liteBarFill.BorderSizePixel = 0
+liteBarFill.ZIndex = 52
+liteBarFill.Parent = liteBarBg
+Instance.new("UICorner", liteBarFill).CornerRadius = UDim.new(1, 0)
+
+-- Texto da etapa
+local liteDialogStep = Instance.new("TextLabel")
+liteDialogStep.Size = UDim2.new(1, -55, 0, 16)
+liteDialogStep.Position = UDim2.new(0, 8, 0, 62)
+liteDialogStep.BackgroundTransparency = 1
+liteDialogStep.TextColor3 = Color3.fromRGB(120, 120, 120)
+liteDialogStep.Text = ""
+liteDialogStep.TextScaled = true
+liteDialogStep.Font = Enum.Font.Gotham
+liteDialogStep.TextXAlignment = Enum.TextXAlignment.Left
+liteDialogStep.ZIndex = 51
+liteDialogStep.Parent = liteDialog
+
+-- Salva configs originais
+local ugs = UserSettings():GetService("UserGameSettings")
+local originalQuality = ugs.SavedQualityLevel
+local originalShadows = game:GetService("Lighting").GlobalShadows
+
+local function rodarLite(ativando)
+    liteDialog.Visible = true
+    liteBarFill.Size = UDim2.new(0, 0, 1, 0)
+    liteDialogPct.Text = "0%"
+
+    if ativando then
+        liteDialogTitle.Text = "Desativando arquivos..."
+        liteDialogSub.Text = "Otimizando gráficos para melhor desempenho"
+        liteDialogIcon.Text = "⚡"
+        liteDialogStroke.Color = Color3.fromRGB(255, 160, 0)
+        liteDialogPct.TextColor3 = Color3.fromRGB(255, 160, 0)
+        liteBarFill.BackgroundColor3 = Color3.fromRGB(255, 160, 0)
+    else
+        liteDialogTitle.Text = "Restaurando arquivos..."
+        liteDialogSub.Text = "Restaurando configurações originais"
+        liteDialogIcon.Text = "🔄"
+        liteDialogStroke.Color = Color3.fromRGB(80, 160, 230)
+        liteDialogPct.TextColor3 = Color3.fromRGB(80, 160, 230)
+        liteBarFill.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
+    end
+
+    local p = 0
+    local animando = true
+
+    -- Animação suave
+    task.spawn(function()
+        while animando do
+            local atual = liteBarFill.Size.X.Scale * 100
+            if p > atual then
+                local novo = math.min(atual + 1.5, p)
+                liteBarFill.Size = UDim2.new(novo / 100, 0, 1, 0)
+                liteDialogPct.Text = math.floor(novo) .. "%"
+            end
+            task.wait(0.02)
+        end
+    end)
+
+    if ativando then
+        originalQuality = ugs.SavedQualityLevel
+        originalShadows = game:GetService("Lighting").GlobalShadows
+
+        -- PASSO 1/4: Tenta clicar no botão de modo leve dentro do jogo
+        pcall(function()
+            for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+                local n = string.lower(gui.Name)
+                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
+                    gui:Activate()
+                end
+            end
+            for _, gui in ipairs(game:GetService("Players").LocalPlayer.PlayerGui:GetDescendants()) do
+                local n = string.lower(gui.Name)
+                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
+                    gui:Activate()
+                end
+            end
+        end)
+        p = 15 task.wait(0.3)
+
+        -- PASSO 2/4: Qualidade gráfica mínima via UserGameSettings
+        pcall(function() ugs.SavedQualityLevel = Enum.SavedQualitySetting.QualityLevel01 end)
+        p = 30 task.wait(0.3)
+
+        -- PASSO 3/4: Desativa lighting e efeitos
+        pcall(function()
+            local l = game:GetService("Lighting")
+            l.GlobalShadows = false
+            l.FogEnd = 100000
+            l.FogStart = 100000
+            for _, ef in ipairs(l:GetChildren()) do
+                if ef:IsA("BloomEffect") or ef:IsA("BlurEffect")
+                    or ef:IsA("ColorCorrectionEffect") or ef:IsA("SunRaysEffect")
+                    or ef:IsA("DepthOfFieldEffect") then
+                    ef.Enabled = false
+                end
+            end
+        end)
+        p = 50 task.wait(0.3)
+
+        -- PASSO 4/4: Partículas/efeitos visuais — progresso real
+        local descend = workspace:GetDescendants()
+        local total = math.max(#descend, 1)
+        local count = 0
+        for _, v in ipairs(descend) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam")
+                or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                pcall(function() v.Enabled = false end)
+            end
+            count = count + 1
+            p = 50 + (count / total) * 45
+            if count % 100 == 0 then task.wait(0) end
+        end
+        p = 95 task.wait(0.3)
+        setfpscap(120)
+        p = 100
+
+    else
+        -- PASSO 1/4: Tenta clicar no botão de modo leve para desativar
+        pcall(function()
+            for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+                local n = string.lower(gui.Name)
+                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
+                    gui:Activate()
+                end
+            end
+            for _, gui in ipairs(game:GetService("Players").LocalPlayer.PlayerGui:GetDescendants()) do
+                local n = string.lower(gui.Name)
+                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
+                    gui:Activate()
+                end
+            end
+        end)
+        p = 15 task.wait(0.3)
+
+        -- PASSO 2/4: Restaura qualidade original
+        pcall(function() ugs.SavedQualityLevel = originalQuality end)
+        p = 30 task.wait(0.3)
+
+        -- PASSO 3/4: Restaura lighting
+        pcall(function()
+            local l = game:GetService("Lighting")
+            l.GlobalShadows = originalShadows
+            for _, ef in ipairs(l:GetChildren()) do
+                if ef:IsA("BloomEffect") or ef:IsA("BlurEffect")
+                    or ef:IsA("ColorCorrectionEffect") or ef:IsA("SunRaysEffect")
+                    or ef:IsA("DepthOfFieldEffect") then
+                    ef.Enabled = true
+                end
+            end
+        end)
+        p = 50 task.wait(0.3)
+
+        -- PASSO 4/4: Restaura partículas — progresso real
+        local descend = workspace:GetDescendants()
+        local total = math.max(#descend, 1)
+        local count = 0
+        for _, v in ipairs(descend) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam")
+                or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
+                pcall(function() v.Enabled = true end)
+            end
+            count = count + 1
+            p = 50 + (count / total) * 45
+            if count % 100 == 0 then task.wait(0) end
+        end
+        p = 95 task.wait(0.3)
+        setfpscap(120)
+        p = 100
+    end
+    task.wait(0.5)
+    animando = false
+    liteBarFill.Size = UDim2.new(1, 0, 1, 0)
+    liteDialogPct.Text = "100%"
+    liteDialogStep.Text = ativando and "Modo Lite ativado!" or "Jogo restaurado!"
+    task.wait(1)
+    liteDialog.Visible = false
+end
+
+liteBtn.MouseButton1Click:Connect(function()
+    liteActive = not liteActive
+    if liteActive then
+        liteLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        liteLabel.Text = "MODO LITE"
+    else
+        liteLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        liteLabel.Text = "MODO LITE"
+    end
+    task.spawn(function() rodarLite(liteActive) end)
+end)
+
+local pegarBausBtn, pegarBausLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "PEGAR BAUS", Color3.fromRGB(255,50,50))
+pegarBausBtn.MouseButton1Click:Connect(function()
+    pegarBausActive = not pegarBausActive
+    if pegarBausActive then
+        pegarBausLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+        pegarBausLabel.Text = "PEGAR BAUS"
+    else
+        pegarBausLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        pegarBausLabel.Text = "PEGAR BAUS"
+    end
+end)
+local serverHopBtn, serverHopLabel = createBtn2(2, 2, Color3.fromRGB(255,50,50), "SERVER HOP", Color3.fromRGB(255,50,50))
+serverHopBtn.MouseButton1Click:Connect(function()
+    -- Muda cor para indicar que está trocando
+    serverHopLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+    serverHopLabel.Text = "TROCANDO"
+    task.wait(0.5)
+    pcall(function()
+        local TeleportService = game:GetService("TeleportService")
+        local placeId = game.PlaceId
+        TeleportService:Teleport(placeId, Players.LocalPlayer)
+    end)
+    -- Se falhar, volta ao normal
+    task.wait(3)
+    serverHopLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    serverHopLabel.Text = "SERVER HOP"
+end)
 
 -- ============================================================
 --  TELA DE CONFIRMAÇÃO (FECHAR)
@@ -864,9 +1160,9 @@ end)
 --  VOAR
 -- ============================================================
 task.spawn(function()
-    local ALTURA_VOO = 40
     local bodyGyro = nil
     local bodyPos = nil
+    local voarAnterior = false
 
     while running do
         if voarActive then
@@ -877,17 +1173,15 @@ task.spawn(function()
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if not hrp or not hum then return end
 
-                -- Cria BodyGyro para estabilizar rotação
                 if not bodyGyro or not bodyGyro.Parent then
                     bodyGyro = Instance.new("BodyGyro")
                     bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
                     bodyGyro.P = 9999
                     bodyGyro.D = 100
-                    bodyGyro.CFrame = hrp.CFrame
+                    bodyGyro.CFrame = CFrame.new(hrp.Position)
                     bodyGyro.Parent = hrp
                 end
 
-                -- Cria BodyPosition para segurar no ar
                 if not bodyPos or not bodyPos.Parent then
                     bodyPos = Instance.new("BodyPosition")
                     bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
@@ -896,29 +1190,111 @@ task.spawn(function()
                     bodyPos.Parent = hrp
                 end
 
-                -- Sobe reto para cima, trava X e Z
-                local alvoY = hrp.Position.Y + 25
-                bodyPos.Position = Vector3.new(hrp.Position.X, alvoY, hrp.Position.Z)
+                -- Sobe reto para cima
+                bodyPos.Position = Vector3.new(hrp.Position.X, hrp.Position.Y + 25, hrp.Position.Z)
                 bodyGyro.CFrame = CFrame.new(hrp.Position)
-
-                hum.PlatformStand = true
             end)
+            voarAnterior = true
             task.wait(0.05)
         else
+            -- Só limpa quando acabou de desligar
+            if voarAnterior then
+                pcall(function()
+                    local char = Players.LocalPlayer.Character
+                    if not char then return end
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if bodyPos then bodyPos:Destroy() bodyPos = nil end
+                    if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+                    if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+                end)
+                voarAnterior = false
+            end
+            task.wait(0.1)
+        end
+    end
+end)
+
+-- ============================================================
+--  PEGAR BAÚS
+-- ============================================================
+task.spawn(function()
+    while running do
+        if pegarBausActive then
             pcall(function()
-                local char = Players.LocalPlayer.Character
+                local player = Players.LocalPlayer
+                local char = player.Character
                 if not char then return end
                 local hrp = char:FindFirstChild("HumanoidRootPart")
                 local hum = char:FindFirstChildOfClass("Humanoid")
+                if not hrp or not hum then return end
 
-                if bodyPos then bodyPos:Destroy() bodyPos = nil end
-                if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+                -- Procura baús no workspace
+                local baus = {}
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    local nome = string.lower(obj.Name)
+                    if obj:IsA("Model") or obj:IsA("BasePart") then
+                        if nome == "silver chest" or nome == "golden chest"
+                            or nome == "diamond chest" or nome == "fragment chest" then
+                            local pos = obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart")
+                                or (obj:IsA("Model") and obj.PrimaryPart)
+                                or (obj:IsA("BasePart") and obj)
+                            if pos then
+                                table.insert(baus, {obj = obj, pos = pos.Position})
+                            end
+                        end
+                    end
+                end
 
-                if hum then
-                    hum.PlatformStand = false
-                    hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+                if #baus == 0 then
+                    task.wait(3)
+                    return
+                end
+
+                -- Pega o baú mais próximo
+                local maisProximo = nil
+                local menorDist = math.huge
+                for _, b in ipairs(baus) do
+                    local dist = (b.pos - hrp.Position).Magnitude
+                    if dist < menorDist then
+                        menorDist = dist
+                        maisProximo = b
+                    end
+                end
+
+                if maisProximo then
+                    -- Ativa voar automaticamente
+                    voarActive = true
+
+                    -- Voa em direção ao baú gradualmente (sem teleporte)
+                    local t = 0
+                    while pegarBausActive and t < 15 do
+                        local dist = (hrp.Position - maisProximo.pos).Magnitude
+                        if dist < 8 then break end
+
+                        -- Move suavemente em direção ao baú
+                        local dir = (maisProximo.pos - hrp.Position).Unit
+                        local novaPos = hrp.Position + dir * 10
+                        hum:MoveTo(novaPos)
+
+                        task.wait(0.2)
+                        t = t + 0.2
+                    end
+
+                    -- Chegou — tenta pegar
+                    if pegarBausActive then
+                        pcall(function()
+                            for _, v in ipairs(maisProximo.obj:GetDescendants()) do
+                                if v:IsA("ProximityPrompt") then
+                                    fireproximityprompt(v)
+                                end
+                            end
+                        end)
+                        task.wait(1.5)
+                    end
                 end
             end)
+            task.wait(0.5)
+        else
             task.wait(0.5)
         end
     end
