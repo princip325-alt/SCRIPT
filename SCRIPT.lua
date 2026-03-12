@@ -247,6 +247,107 @@ end)
 repeat task.wait(0.1) until senhaDesbloqueada
 
 -- ============================================================
+--  CONTADOR DE PROGRESSO LITE
+-- ============================================================
+local progressGui = Instance.new("Frame")
+progressGui.Size = UDim2.new(0, 260, 0, 100)
+progressGui.Position = UDim2.new(0.5, -130, 0.4, 0)
+progressGui.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+progressGui.BackgroundTransparency = 0.2
+progressGui.BorderSizePixel = 0
+progressGui.Visible = false
+progressGui.ZIndex = 10
+progressGui.Parent = screenGui
+Instance.new("UICorner", progressGui).CornerRadius = UDim.new(0, 16)
+
+local progressStroke = Instance.new("UIStroke")
+progressStroke.Color = Color3.fromRGB(255, 185, 0)
+progressStroke.Thickness = 2
+progressStroke.Parent = progressGui
+
+local progressTitle = Instance.new("TextLabel")
+progressTitle.Size = UDim2.new(1, 0, 0.35, 0)
+progressTitle.Position = UDim2.new(0, 0, 0.05, 0)
+progressTitle.BackgroundTransparency = 1
+progressTitle.TextColor3 = Color3.fromRGB(255, 185, 0)
+progressTitle.Text = "⚡ Aplicando Modo Lite..."
+progressTitle.TextScaled = true
+progressTitle.Font = Enum.Font.GothamBold
+progressTitle.ZIndex = 11
+progressTitle.Parent = progressGui
+
+local progressPercent = Instance.new("TextLabel")
+progressPercent.Size = UDim2.new(1, 0, 0.5, 0)
+progressPercent.Position = UDim2.new(0, 0, 0.45, 0)
+progressPercent.BackgroundTransparency = 1
+progressPercent.TextColor3 = Color3.fromRGB(255, 255, 255)
+progressPercent.Text = "0%"
+progressPercent.TextScaled = true
+progressPercent.Font = Enum.Font.GothamBold
+progressPercent.ZIndex = 11
+progressPercent.Parent = progressGui
+
+local barBg = Instance.new("Frame")
+barBg.Size = UDim2.new(0.85, 0, 0.12, 0)
+barBg.Position = UDim2.new(0.075, 0, 0.84, 0)
+barBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+barBg.BorderSizePixel = 0
+barBg.ZIndex = 11
+barBg.Parent = progressGui
+Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
+
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.new(0, 0, 1, 0)
+barFill.BackgroundColor3 = Color3.fromRGB(255, 185, 0)
+barFill.BorderSizePixel = 0
+barFill.ZIndex = 12
+barFill.Parent = barBg
+Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
+
+-- ============================================================
+--  MODO LEVE COM PROGRESSO
+-- ============================================================
+local function applyLiteMode(active)
+    progressGui.Visible = true
+    progressPercent.Text = "0%"
+    barFill.Size = UDim2.new(0, 0, 1, 0)
+    progressTitle.Text = active and "⚡ Aplicando Modo Lite..." or "🔄 Restaurando..."
+    progressTitle.TextColor3 = active and Color3.fromRGB(255, 185, 0) or Color3.fromRGB(100, 200, 255)
+
+    local descendants = workspace:GetDescendants()
+    local total = #descendants
+    local processed = 0
+
+    for _, obj in ipairs(descendants) do
+        if obj:IsA("BasePart") then
+            obj.CastShadow = not active
+            if active then obj.Material = Enum.Material.SmoothPlastic end
+        end
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+            obj.Enabled = not active
+        end
+        processed = processed + 1
+        if processed % 50 == 0 then
+            local pct = math.floor((processed / total) * 100)
+            progressPercent.Text = pct .. "%"
+            barFill.Size = UDim2.new(pct / 100, 0, 1, 0)
+            task.wait()
+        end
+    end
+
+    Lighting.GlobalShadows = not active
+    Lighting.FogEnd = active and 1000000 or 1000
+    settings().Rendering.QualityLevel = active and Enum.QualityLevel.Level01 or Enum.QualityLevel.Automatic
+
+    progressPercent.Text = "100%"
+    barFill.Size = UDim2.new(1, 0, 1, 0)
+    progressTitle.Text = active and "✅ Modo Lite Ativo!" or "✅ Restaurado!"
+    progressTitle.TextColor3 = Color3.fromRGB(0, 255, 100)
+    task.wait(1.5)
+    progressGui.Visible = false
+end
+
+-- ============================================================
 --  FRAME PRINCIPAL
 -- ============================================================
 local BTN_W = 88
@@ -484,263 +585,6 @@ createBtn2(2, 1, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
 --  LINHA 2: Lite | Vaga | Vaga
 -- ============================================================
 local liteBtn, liteLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "MODO LITE", Color3.fromRGB(255,50,50))
--- Caixa de diálogo do Modo Lite
-local liteDialog = Instance.new("Frame")
-liteDialog.Size = UDim2.new(0, 260, 0, 120)
-liteDialog.Position = UDim2.new(0.5, -130, 0.5, -60)
-liteDialog.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-liteDialog.BorderSizePixel = 0
-liteDialog.Visible = false
-liteDialog.ZIndex = 50
-liteDialog.Parent = screenGui
-Instance.new("UICorner", liteDialog).CornerRadius = UDim.new(0, 12)
-
-local liteDialogStroke = Instance.new("UIStroke")
-liteDialogStroke.Color = Color3.fromRGB(255, 160, 0)
-liteDialogStroke.Thickness = 2
-liteDialogStroke.Parent = liteDialog
-
--- Ícone
-local liteDialogIcon = Instance.new("TextLabel")
-liteDialogIcon.Size = UDim2.new(0, 30, 0, 30)
-liteDialogIcon.Position = UDim2.new(0, 12, 0, 10)
-liteDialogIcon.BackgroundTransparency = 1
-liteDialogIcon.Text = "⚡"
-liteDialogIcon.TextScaled = true
-liteDialogIcon.ZIndex = 51
-liteDialogIcon.Parent = liteDialog
-
--- Título
-local liteDialogTitle = Instance.new("TextLabel")
-liteDialogTitle.Size = UDim2.new(1, -55, 0, 28)
-liteDialogTitle.Position = UDim2.new(0, 48, 0, 8)
-liteDialogTitle.BackgroundTransparency = 1
-liteDialogTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-liteDialogTitle.Text = "Desativando arquivos..."
-liteDialogTitle.TextScaled = true
-liteDialogTitle.Font = Enum.Font.GothamBold
-liteDialogTitle.TextXAlignment = Enum.TextXAlignment.Left
-liteDialogTitle.ZIndex = 51
-liteDialogTitle.Parent = liteDialog
-
--- Subtítulo
-local liteDialogSub = Instance.new("TextLabel")
-liteDialogSub.Size = UDim2.new(1, -16, 0, 18)
-liteDialogSub.Position = UDim2.new(0, 8, 0, 38)
-liteDialogSub.BackgroundTransparency = 1
-liteDialogSub.TextColor3 = Color3.fromRGB(160, 160, 160)
-liteDialogSub.Text = "Otimizando gráficos para melhor desempenho"
-liteDialogSub.TextScaled = true
-liteDialogSub.Font = Enum.Font.Gotham
-liteDialogSub.ZIndex = 51
-liteDialogSub.Parent = liteDialog
-
--- Porcentagem
-local liteDialogPct = Instance.new("TextLabel")
-liteDialogPct.Size = UDim2.new(0, 45, 0, 18)
-liteDialogPct.Position = UDim2.new(1, -50, 0, 62)
-liteDialogPct.BackgroundTransparency = 1
-liteDialogPct.TextColor3 = Color3.fromRGB(255, 160, 0)
-liteDialogPct.Text = "0%"
-liteDialogPct.TextScaled = true
-liteDialogPct.Font = Enum.Font.GothamBold
-liteDialogPct.ZIndex = 51
-liteDialogPct.Parent = liteDialog
-
--- Fundo da barra
-local liteBarBg = Instance.new("Frame")
-liteBarBg.Size = UDim2.new(1, -16, 0, 12)
-liteBarBg.Position = UDim2.new(0, 8, 0, 82)
-liteBarBg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-liteBarBg.BorderSizePixel = 0
-liteBarBg.ZIndex = 51
-liteBarBg.Parent = liteDialog
-Instance.new("UICorner", liteBarBg).CornerRadius = UDim.new(1, 0)
-
--- Preenchimento da barra
-local liteBarFill = Instance.new("Frame")
-liteBarFill.Size = UDim2.new(0, 0, 1, 0)
-liteBarFill.BackgroundColor3 = Color3.fromRGB(255, 160, 0)
-liteBarFill.BorderSizePixel = 0
-liteBarFill.ZIndex = 52
-liteBarFill.Parent = liteBarBg
-Instance.new("UICorner", liteBarFill).CornerRadius = UDim.new(1, 0)
-
--- Texto da etapa
-local liteDialogStep = Instance.new("TextLabel")
-liteDialogStep.Size = UDim2.new(1, -55, 0, 16)
-liteDialogStep.Position = UDim2.new(0, 8, 0, 62)
-liteDialogStep.BackgroundTransparency = 1
-liteDialogStep.TextColor3 = Color3.fromRGB(120, 120, 120)
-liteDialogStep.Text = ""
-liteDialogStep.TextScaled = true
-liteDialogStep.Font = Enum.Font.Gotham
-liteDialogStep.TextXAlignment = Enum.TextXAlignment.Left
-liteDialogStep.ZIndex = 51
-liteDialogStep.Parent = liteDialog
-
--- Salva configs originais
-local ugs = UserSettings():GetService("UserGameSettings")
-local originalQuality = ugs.SavedQualityLevel
-local originalShadows = game:GetService("Lighting").GlobalShadows
-
-local function rodarLite(ativando)
-    liteDialog.Visible = true
-    liteBarFill.Size = UDim2.new(0, 0, 1, 0)
-    liteDialogPct.Text = "0%"
-
-    if ativando then
-        liteDialogTitle.Text = "Desativando arquivos..."
-        liteDialogSub.Text = "Otimizando gráficos para melhor desempenho"
-        liteDialogIcon.Text = "⚡"
-        liteDialogStroke.Color = Color3.fromRGB(255, 160, 0)
-        liteDialogPct.TextColor3 = Color3.fromRGB(255, 160, 0)
-        liteBarFill.BackgroundColor3 = Color3.fromRGB(255, 160, 0)
-    else
-        liteDialogTitle.Text = "Restaurando arquivos..."
-        liteDialogSub.Text = "Restaurando configurações originais"
-        liteDialogIcon.Text = "🔄"
-        liteDialogStroke.Color = Color3.fromRGB(80, 160, 230)
-        liteDialogPct.TextColor3 = Color3.fromRGB(80, 160, 230)
-        liteBarFill.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
-    end
-
-    local p = 0
-    local animando = true
-
-    -- Animação suave
-    task.spawn(function()
-        while animando do
-            local atual = liteBarFill.Size.X.Scale * 100
-            if p > atual then
-                local novo = math.min(atual + 1.5, p)
-                liteBarFill.Size = UDim2.new(novo / 100, 0, 1, 0)
-                liteDialogPct.Text = math.floor(novo) .. "%"
-            end
-            task.wait(0.02)
-        end
-    end)
-
-    if ativando then
-        originalQuality = ugs.SavedQualityLevel
-        originalShadows = game:GetService("Lighting").GlobalShadows
-
-        -- PASSO 1/4: Tenta clicar no botão de modo leve dentro do jogo
-        pcall(function()
-            for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
-                local n = string.lower(gui.Name)
-                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
-                    gui:Activate()
-                end
-            end
-            for _, gui in ipairs(game:GetService("Players").LocalPlayer.PlayerGui:GetDescendants()) do
-                local n = string.lower(gui.Name)
-                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
-                    gui:Activate()
-                end
-            end
-        end)
-        p = 15 task.wait(0.3)
-
-        -- PASSO 2/4: Qualidade gráfica mínima via UserGameSettings
-        pcall(function() ugs.SavedQualityLevel = Enum.SavedQualitySetting.QualityLevel01 end)
-        p = 30 task.wait(0.3)
-
-        -- PASSO 3/4: Desativa lighting e efeitos
-        pcall(function()
-            local l = game:GetService("Lighting")
-            l.GlobalShadows = false
-            l.FogEnd = 100000
-            l.FogStart = 100000
-            for _, ef in ipairs(l:GetChildren()) do
-                if ef:IsA("BloomEffect") or ef:IsA("BlurEffect")
-                    or ef:IsA("ColorCorrectionEffect") or ef:IsA("SunRaysEffect")
-                    or ef:IsA("DepthOfFieldEffect") then
-                    ef.Enabled = false
-                end
-            end
-        end)
-        p = 50 task.wait(0.3)
-
-        -- PASSO 4/4: Partículas/efeitos visuais — progresso real
-        local descend = workspace:GetDescendants()
-        local total = math.max(#descend, 1)
-        local count = 0
-        for _, v in ipairs(descend) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam")
-                or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
-                pcall(function() v.Enabled = false end)
-            end
-            count = count + 1
-            p = 50 + (count / total) * 45
-            if count % 100 == 0 then task.wait(0) end
-        end
-        p = 95 task.wait(0.3)
-        setfpscap(120)
-        p = 100
-
-    else
-        -- PASSO 1/4: Tenta clicar no botão de modo leve para desativar
-        pcall(function()
-            for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
-                local n = string.lower(gui.Name)
-                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
-                    gui:Activate()
-                end
-            end
-            for _, gui in ipairs(game:GetService("Players").LocalPlayer.PlayerGui:GetDescendants()) do
-                local n = string.lower(gui.Name)
-                if (string.find(n, "lite") or string.find(n, "leve") or string.find(n, "low") or string.find(n, "performance")) and gui:IsA("GuiButton") then
-                    gui:Activate()
-                end
-            end
-        end)
-        p = 15 task.wait(0.3)
-
-        -- PASSO 2/4: Restaura qualidade original
-        pcall(function() ugs.SavedQualityLevel = originalQuality end)
-        p = 30 task.wait(0.3)
-
-        -- PASSO 3/4: Restaura lighting
-        pcall(function()
-            local l = game:GetService("Lighting")
-            l.GlobalShadows = originalShadows
-            for _, ef in ipairs(l:GetChildren()) do
-                if ef:IsA("BloomEffect") or ef:IsA("BlurEffect")
-                    or ef:IsA("ColorCorrectionEffect") or ef:IsA("SunRaysEffect")
-                    or ef:IsA("DepthOfFieldEffect") then
-                    ef.Enabled = true
-                end
-            end
-        end)
-        p = 50 task.wait(0.3)
-
-        -- PASSO 4/4: Restaura partículas — progresso real
-        local descend = workspace:GetDescendants()
-        local total = math.max(#descend, 1)
-        local count = 0
-        for _, v in ipairs(descend) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam")
-                or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
-                pcall(function() v.Enabled = true end)
-            end
-            count = count + 1
-            p = 50 + (count / total) * 45
-            if count % 100 == 0 then task.wait(0) end
-        end
-        p = 95 task.wait(0.3)
-        setfpscap(120)
-        p = 100
-    end
-    task.wait(0.5)
-    animando = false
-    liteBarFill.Size = UDim2.new(1, 0, 1, 0)
-    liteDialogPct.Text = "100%"
-    liteDialogStep.Text = ativando and "Modo Lite ativado!" or "Jogo restaurado!"
-    task.wait(1)
-    liteDialog.Visible = false
-end
-
 liteBtn.MouseButton1Click:Connect(function()
     liteActive = not liteActive
     if liteActive then
@@ -750,9 +594,8 @@ liteBtn.MouseButton1Click:Connect(function()
         liteLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         liteLabel.Text = "MODO LITE"
     end
-    task.spawn(function() rodarLite(liteActive) end)
+    task.spawn(function() applyLiteMode(liteActive) end)
 end)
-
 local pegarBausBtn, pegarBausLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "PEGAR BAUS", Color3.fromRGB(255,50,50))
 pegarBausBtn.MouseButton1Click:Connect(function()
     pegarBausActive = not pegarBausActive
