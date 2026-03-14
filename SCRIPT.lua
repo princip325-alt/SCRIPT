@@ -247,6 +247,118 @@ end)
 repeat task.wait(0.1) until senhaDesbloqueada
 
 -- ============================================================
+--  TELA DE BOAS-VINDAS
+-- ============================================================
+local bemVindoGui = Instance.new("Frame")
+bemVindoGui.Size = UDim2.new(0, 300, 0, 140)
+bemVindoGui.Position = UDim2.new(0.5, -150, 0.5, -70)
+bemVindoGui.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+bemVindoGui.BorderSizePixel = 0
+bemVindoGui.ZIndex = 20
+bemVindoGui.Parent = screenGui
+Instance.new("UICorner", bemVindoGui).CornerRadius = UDim.new(0, 16)
+
+local bvStroke = Instance.new("UIStroke")
+bvStroke.Color = Color3.fromRGB(80, 160, 230)
+bvStroke.Thickness = 2
+bvStroke.Parent = bemVindoGui
+
+-- Emoji de coroa no topo
+local bvCoroa = Instance.new("TextLabel")
+bvCoroa.Size = UDim2.new(1, 0, 0, 36)
+bvCoroa.Position = UDim2.new(0, 0, 0, 8)
+bvCoroa.BackgroundTransparency = 1
+bvCoroa.Text = "👑"
+bvCoroa.TextScaled = true
+bvCoroa.Font = Enum.Font.GothamBold
+bvCoroa.ZIndex = 21
+bvCoroa.Parent = bemVindoGui
+
+-- Bem vindo SR ALLAN
+local bvLinha1 = Instance.new("TextLabel")
+bvLinha1.Size = UDim2.new(1, -20, 0, 30)
+bvLinha1.Position = UDim2.new(0, 10, 0, 46)
+bvLinha1.BackgroundTransparency = 1
+bvLinha1.TextColor3 = Color3.fromRGB(80, 160, 230)
+bvLinha1.Text = "Bem vindo SR ALLAN"
+bvLinha1.TextScaled = true
+bvLinha1.Font = Enum.Font.GothamBold
+bvLinha1.ZIndex = 21
+bvLinha1.Parent = bemVindoGui
+
+-- Em que posso te ajudar hoje?
+local bvLinha2 = Instance.new("TextLabel")
+bvLinha2.Size = UDim2.new(1, -20, 0, 26)
+bvLinha2.Position = UDim2.new(0, 10, 0, 78)
+bvLinha2.BackgroundTransparency = 1
+bvLinha2.TextColor3 = Color3.fromRGB(200, 200, 200)
+bvLinha2.Text = "Em que posso te ajudar hoje?"
+bvLinha2.TextScaled = true
+bvLinha2.Font = Enum.Font.GothamBold
+bvLinha2.ZIndex = 21
+bvLinha2.Parent = bemVindoGui
+
+-- Barra de progresso do timer
+local bvBarBg = Instance.new("Frame")
+bvBarBg.Size = UDim2.new(0.85, 0, 0, 5)
+bvBarBg.Position = UDim2.new(0.075, 0, 1, -14)
+bvBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+bvBarBg.BorderSizePixel = 0
+bvBarBg.ZIndex = 21
+bvBarBg.Parent = bemVindoGui
+Instance.new("UICorner", bvBarBg).CornerRadius = UDim.new(1, 0)
+
+local bvBarFill = Instance.new("Frame")
+bvBarFill.Size = UDim2.new(1, 0, 1, 0)
+bvBarFill.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
+bvBarFill.BorderSizePixel = 0
+bvBarFill.ZIndex = 22
+bvBarFill.Parent = bvBarBg
+Instance.new("UICorner", bvBarFill).CornerRadius = UDim.new(1, 0)
+
+-- Animação RGB na borda da tela de boas-vindas
+local bvHue = 0
+local bvRgbConn = RunService.Heartbeat:Connect(function(dt)
+    bvHue = (bvHue + dt * 0.5) % 1
+    bvStroke.Color = Color3.fromHSV(bvHue, 1, 1)
+end)
+
+-- Botão X para fechar
+local bvFechar = Instance.new("TextButton")
+bvFechar.Size = UDim2.new(0, 24, 0, 24)
+bvFechar.Position = UDim2.new(1, -30, 0, 6)
+bvFechar.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+bvFechar.BorderSizePixel = 0
+bvFechar.Text = "X"
+bvFechar.TextColor3 = Color3.fromRGB(255, 255, 255)
+bvFechar.TextScaled = true
+bvFechar.Font = Enum.Font.GothamBold
+bvFechar.ZIndex = 23
+bvFechar.Parent = bemVindoGui
+Instance.new("UICorner", bvFechar).CornerRadius = UDim.new(0, 6)
+
+bvFechar.MouseButton1Click:Connect(function()
+    bvRgbConn:Disconnect()
+    bemVindoGui:Destroy()
+end)
+
+-- Barra diminui em 3 segundos e some
+task.spawn(function()
+    local duracao = 10
+    local intervalo = 0.05
+    local passos = duracao / intervalo
+    for i = passos, 0, -1 do
+        if not bemVindoGui or not bemVindoGui.Parent then break end
+        bvBarFill.Size = UDim2.new(i / passos, 0, 1, 0)
+        task.wait(intervalo)
+    end
+    bvRgbConn:Disconnect()
+    if bemVindoGui and bemVindoGui.Parent then
+        bemVindoGui:Destroy()
+    end
+end)
+
+-- ============================================================
 --  CONTADOR DE PROGRESSO LITE
 -- ============================================================
 local progressGui = Instance.new("Frame")
