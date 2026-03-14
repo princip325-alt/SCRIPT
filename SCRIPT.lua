@@ -469,7 +469,7 @@ local PAD_Y = 5
 local START_Y = 30
 
 local FRAME_W = PAD_X + 3 * (BTN_W + PAD_X)
-local FRAME_H = START_Y + 3 * (BTN_H + PAD_Y) + PAD_Y
+local FRAME_H = START_Y + 4 * (BTN_H + PAD_Y) + PAD_Y
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, FRAME_W, 0, FRAME_H)
@@ -735,6 +735,13 @@ serverHopBtn.MouseButton1Click:Connect(function()
     serverHopLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
     serverHopLabel.Text = "SERVER HOP"
 end)
+
+-- ============================================================
+--  LINHA 3: Vaga | Vaga | Vaga
+-- ============================================================
+createBtn2(0, 3, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
+createBtn2(1, 3, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
+createBtn2(2, 3, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
 
 -- ============================================================
 --  TELA DE CONFIRMAÇÃO (FECHAR)
