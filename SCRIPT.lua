@@ -1469,18 +1469,24 @@ task.spawn(function()
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if not hrp or not hum then return end
 
-                -- Procura baús no workspace
+                -- Procura baús reais em _WorldOrigin (onde aparecem quando spawnam)
                 local baus = {}
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    local nome = string.lower(obj.Name)
-                    if obj:IsA("Model") or obj:IsA("BasePart") then
-                        if nome == "silver chest" or nome == "golden chest"
-                            or nome == "diamond chest" or nome == "fragment chest" then
-                            local pos = obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart")
-                                or (obj:IsA("Model") and obj.PrimaryPart)
-                                or (obj:IsA("BasePart") and obj)
-                            if pos then
-                                table.insert(baus, {obj = obj, pos = pos.Position})
+                local worldOrigin = workspace:FindFirstChild("_WorldOrigin")
+                local locais = { workspace, worldOrigin }
+
+                for _, local_ in ipairs(locais) do
+                    if local_ then
+                        for _, obj in ipairs(local_:GetDescendants()) do
+                            local nome = string.lower(obj.Name)
+                            if obj:IsA("BasePart") and (
+                                nome == "silver" or nome == "gold" or
+                                nome == "diamond" or nome == "fragment" or
+                                nome == "silverlock" or nome == "goldlock" or
+                                nome == "diamondlock" or nome == "fragmentlock" or
+                                string.find(nome, "chest1") or string.find(nome, "chest2") or
+                                string.find(nome, "chest3")
+                            ) then
+                                table.insert(baus, obj)
                             end
                         end
                     end
@@ -1495,43 +1501,40 @@ task.spawn(function()
                 local maisProximo = nil
                 local menorDist = math.huge
                 for _, b in ipairs(baus) do
-                    local dist = (b.pos - hrp.Position).Magnitude
-                    if dist < menorDist then
-                        menorDist = dist
-                        maisProximo = b
+                    local ok, pos = pcall(function() return b.Position end)
+                    if ok then
+                        local dist = (pos - hrp.Position).Magnitude
+                        if dist < menorDist then
+                            menorDist = dist
+                            maisProximo = b
+                        end
                     end
                 end
 
-                if maisProximo then
-                    -- Ativa voar automaticamente
-                    voarActive = true
+                if maisProximo and menorDist < 2000 then
+                    -- Teleporta em cima do baú para tocar (touch mechanic)
+                    local bauPos = maisProximo.Position
+                    hrp.CFrame = CFrame.new(bauPos + Vector3.new(0, 3, 0))
+                    task.wait(0.3)
 
-                    -- Voa em direção ao baú gradualmente (sem teleporte)
-                    local t = 0
-                    while pegarBausActive and t < 15 do
-                        local dist = (hrp.Position - maisProximo.pos).Magnitude
-                        if dist < 8 then break end
-
-                        -- Move suavemente em direção ao baú
-                        local dir = (maisProximo.pos - hrp.Position).Unit
-                        local novaPos = hrp.Position + dir * 10
-                        hum:MoveTo(novaPos)
-
-                        task.wait(0.2)
-                        t = t + 0.2
-                    end
-
-                    -- Chegou — tenta pegar
-                    if pegarBausActive then
-                        pcall(function()
-                            for _, v in ipairs(maisProximo.obj:GetDescendants()) do
-                                if v:IsA("ProximityPrompt") then
-                                    fireproximityprompt(v)
-                                end
+                    -- Tenta fireproximityprompt se tiver
+                    pcall(function()
+                        for _, v in ipairs(maisProximo.Parent:GetDescendants()) do
+                            if v:IsA("ProximityPrompt") then
+                                fireproximityprompt(v)
                             end
+                        end
+                    end)
+
+                    -- Toca o baú várias vezes (touch mechanic)
+                    for i = 1, 5 do
+                        pcall(function()
+                            hrp.CFrame = CFrame.new(bauPos + Vector3.new(0, 2, 0))
                         end)
-                        task.wait(1.5)
+                        task.wait(0.1)
                     end
+
+                    task.wait(1)
                 end
             end)
             task.wait(0.5)
@@ -1540,8 +1543,7 @@ task.spawn(function()
         end
     end
 end)
-
--- ============================================================
+                -- ============================================================
 --  LOOP PRINCIPAL DE DETECÇÃO
 -- ============================================================
 print("👑 BF Notify - VERSÃO FINAL! FPS: 120")
