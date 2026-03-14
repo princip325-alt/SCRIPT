@@ -462,8 +462,8 @@ end
 -- ============================================================
 --  FRAME PRINCIPAL
 -- ============================================================
-local BTN_W = 88
-local BTN_H = 36
+local BTN_W = 100
+local BTN_H = 42
 local PAD_X = 8
 local PAD_Y = 5
 local START_Y = 30
@@ -604,13 +604,13 @@ local function createBtn2(col, row, dotColor, labelText, labelColor)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 1, 0)
-    lbl.Position = UDim2.new(0, 0, 0, 0)
+    lbl.Size = UDim2.new(1, -4, 1, 0)
+    lbl.Position = UDim2.new(0, 2, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = labelColor
     lbl.Text = labelText
-    lbl.TextSize = 13
-    lbl.Font = Enum.Font.ArialBold
+    lbl.TextScaled = true
+    lbl.Font = Enum.Font.GothamBold
     lbl.TextXAlignment = Enum.TextXAlignment.Center
     lbl.TextYAlignment = Enum.TextYAlignment.Center
     lbl.Parent = btn
@@ -691,7 +691,286 @@ end)
 
 local closeBtn, closeLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "FECHAR", Color3.fromRGB(255,50,50))
 
-createBtn2(2, 1, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
+local mostrarIlhasBtn, mostrarIlhasLabel = createBtn2(2, 1, Color3.fromRGB(255,185,0), "MOSTRAR ILHAS", Color3.fromRGB(255,185,0))
+
+-- ============================================================
+--  PAINEL DE ILHAS — DETECTA O MAR AUTOMATICAMENTE
+-- ============================================================
+
+-- Função para detectar qual mar o jogador está
+local function getMarAtual()
+    -- Tenta ler valor oficial do jogo
+    local seaValue = RS:FindFirstChild("Sea") or RS:FindFirstChild("CurrentSea")
+    if seaValue and seaValue:IsA("IntValue") then
+        return seaValue.Value
+    end
+    -- Tenta pelo nome do workspace
+    local wsName = string.lower(workspace.Name)
+    if string.find(wsName, "sea3") or string.find(wsName, "third") then return 3 end
+    if string.find(wsName, "sea2") or string.find(wsName, "second") then return 2 end
+    if string.find(wsName, "sea1") or string.find(wsName, "first") then return 1 end
+    -- Tenta pelo objeto "Sea" no workspace
+    local seaObj = workspace:FindFirstChild("Sea") or workspace:FindFirstChild("ThirdSea")
+        or workspace:FindFirstChild("SecondSea") or workspace:FindFirstChild("FirstSea")
+    if seaObj then
+        local n = string.lower(seaObj.Name)
+        if string.find(n, "third") or string.find(n, "3") then return 3 end
+        if string.find(n, "second") or string.find(n, "2") then return 2 end
+        return 1
+    end
+    -- Última alternativa: verifica se ilhas do Sea 3 existem no workspace
+    if workspace:FindFirstChild("Port Town", true)
+        or workspace:FindFirstChild("Floating Turtle", true)
+        or workspace:FindFirstChild("Tiki Outpost", true) then
+        return 3
+    end
+    if workspace:FindFirstChild("Haunted Castle", true)
+        or workspace:FindFirstChild("Dark Arena", true) then
+        return 2
+    end
+    return 1
+end
+
+local TODAS_ILHAS = {
+    [1] = {
+        { nome = "Ilha dos Bandidos",       pos = Vector3.new(977, 0, 1186)   },
+        { nome = "Ilha das Espadas",        pos = Vector3.new(1463, 0, 1382)  },
+        { nome = "Ilha do Naufrágio",       pos = Vector3.new(1506, 0, -338)  },
+        { nome = "Ilha do Deserto",         pos = Vector3.new(2280, 0, -1300) },
+        { nome = "Ilha Fria",               pos = Vector3.new(2600, 0, 1600)  },
+        { nome = "Ilha dos Piratas",        pos = Vector3.new(3200, 0, 200)   },
+        { nome = "Ilha dos Marines",        pos = Vector3.new(3900, 0, -400)  },
+        { nome = "Ilha do Skylands",        pos = Vector3.new(4500, 0, 800)   },
+    },
+    [2] = {
+        { nome = "Ilha das Flores",         pos = Vector3.new(-300, 0, 1200)  },
+        { nome = "Ilha do Cogumelo",        pos = Vector3.new(-900, 0, 400)   },
+        { nome = "Ilha do Gelo",            pos = Vector3.new(-1400, 0, -600) },
+        { nome = "Ilha Quente",             pos = Vector3.new(-700, 0, 1800)  },
+        { nome = "Ilha do Castelo",         pos = Vector3.new(-200, 0, -900)  },
+        { nome = "Ilha do Dragão",          pos = Vector3.new(-1800, 0, 700)  },
+        { nome = "Ilha dos Zumbis",         pos = Vector3.new(-500, 0, -1500) },
+        { nome = "Ilha do Céu",             pos = Vector3.new(-1100, 0, 2000) },
+    },
+    [3] = {
+        { nome = "Port Town",         pos = Vector3.new(-611, 0, 6436)    },
+        { nome = "Hydra Island",      pos = Vector3.new(5298, 0, 344)     },
+        { nome = "Great Tree",        pos = Vector3.new(3036, 0, -7150)   },
+        { nome = "Sea of Treats",     pos = Vector3.new(-1506, 0, -10725) },
+        { nome = "Castle on the Sea", pos = Vector3.new(-5437, 0, -2702)  },
+        { nome = "Floating Turtle",   pos = Vector3.new(-12165, 0, -8455) },
+        { nome = "Haunted Castle",    pos = Vector3.new(-9531, 0, 5763)   },
+        { nome = "Tiki Outpost",      pos = Vector3.new(-16642, 0, 435)   },
+        { nome = "Submerged Island",  pos = Vector3.new(10533, 0, 9940)   },
+        { nome = "Sealed Cavern",     pos = Vector3.new(10437, 0, 9670)   },
+    },
+}
+
+local ilhasFrame = Instance.new("Frame")
+ilhasFrame.Size = UDim2.new(0, 220, 0, 400)
+ilhasFrame.Position = UDim2.new(0.5, -110, 0.5, -200)
+ilhasFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
+ilhasFrame.BorderSizePixel = 0
+ilhasFrame.Visible = false
+ilhasFrame.ZIndex = 15
+ilhasFrame.Parent = screenGui
+Instance.new("UICorner", ilhasFrame).CornerRadius = UDim.new(0, 12)
+
+local ilhasStroke = Instance.new("UIStroke")
+ilhasStroke.Color = Color3.fromRGB(255, 185, 0)
+ilhasStroke.Thickness = 2
+ilhasStroke.Parent = ilhasFrame
+
+-- Título (atualiza com o mar)
+local ilhasTitulo = Instance.new("TextLabel")
+ilhasTitulo.Size = UDim2.new(1, -40, 0, 30)
+ilhasTitulo.Position = UDim2.new(0, 10, 0, 8)
+ilhasTitulo.BackgroundTransparency = 1
+ilhasTitulo.TextColor3 = Color3.fromRGB(255, 185, 0)
+ilhasTitulo.Text = "🗺️ ILHAS DO SEA ?"
+ilhasTitulo.TextScaled = true
+ilhasTitulo.Font = Enum.Font.GothamBold
+ilhasTitulo.ZIndex = 16
+ilhasTitulo.Parent = ilhasFrame
+
+-- Botão fechar X
+local ilhasFechar = Instance.new("TextButton")
+ilhasFechar.Size = UDim2.new(0, 24, 0, 24)
+ilhasFechar.Position = UDim2.new(1, -30, 0, 7)
+ilhasFechar.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+ilhasFechar.BorderSizePixel = 0
+ilhasFechar.Text = "X"
+ilhasFechar.TextColor3 = Color3.fromRGB(255, 255, 255)
+ilhasFechar.TextScaled = true
+ilhasFechar.Font = Enum.Font.GothamBold
+ilhasFechar.ZIndex = 17
+ilhasFechar.Parent = ilhasFrame
+Instance.new("UICorner", ilhasFechar).CornerRadius = UDim.new(0, 6)
+
+ilhasFechar.MouseButton1Click:Connect(function()
+    ilhasFrame.Visible = false
+end)
+
+-- ScrollingFrame para a lista
+local ilhasScroll = Instance.new("ScrollingFrame")
+ilhasScroll.Size = UDim2.new(1, -16, 1, -50)
+ilhasScroll.Position = UDim2.new(0, 8, 0, 44)
+ilhasScroll.BackgroundTransparency = 1
+ilhasScroll.BorderSizePixel = 0
+ilhasScroll.ScrollBarThickness = 4
+ilhasScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 185, 0)
+ilhasScroll.ZIndex = 16
+ilhasScroll.Parent = ilhasFrame
+
+local ilhasLayout = Instance.new("UIListLayout")
+ilhasLayout.Padding = UDim.new(0, 4)
+ilhasLayout.Parent = ilhasScroll
+
+-- Função que popula a lista com as ilhas do mar atual
+local todosItens = {}
+local ilhaSelecionada = nil
+local voandoParaIlha = false
+
+local function popularIlhas()
+    -- Limpa itens anteriores
+    for _, v in ipairs(todosItens) do
+        if v and v.Parent then v:Destroy() end
+    end
+    todosItens = {}
+
+    local mar = getMarAtual()
+    ilhasTitulo.Text = "🗺️ ILHAS DO SEA " .. mar
+    local lista = TODAS_ILHAS[mar] or TODAS_ILHAS[3]
+
+    for _, ilha in ipairs(lista) do
+        local item = Instance.new("TextButton")
+        item.Size = UDim2.new(1, 0, 0, 28)
+        item.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+        item.BorderSizePixel = 0
+        item.TextColor3 = Color3.fromRGB(255, 255, 255)
+        item.Text = "  " .. ilha.nome
+        item.TextSize = 13
+        item.Font = Enum.Font.GothamBold
+        item.TextXAlignment = Enum.TextXAlignment.Left
+        item.AutoButtonColor = false
+        item.ZIndex = 16
+        item.Parent = ilhasScroll
+        Instance.new("UICorner", item).CornerRadius = UDim.new(0, 6)
+        table.insert(todosItens, item)
+
+        item.MouseButton1Click:Connect(function()
+            ilhasFrame.Visible = false
+            mostrarIlhasLabel.Text = ilha.nome
+            mostrarIlhasLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+            ilhaSelecionada = ilha
+            voandoParaIlha = true
+
+            -- Captura destino fixo no momento do clique
+            local destinoFixo = Vector3.new(ilha.pos.X, 80, ilha.pos.Z)
+
+            task.spawn(function()
+                local VELOCIDADE = 270 -- studs por segundo
+                local bpIlha = nil
+                local bgIlha = nil
+
+                -- Desativa colisão do personagem para atravessar paredes
+                local partesComColisao = {}
+                pcall(function()
+                    local char = Players.LocalPlayer.Character
+                    if char then
+                        for _, p in ipairs(char:GetDescendants()) do
+                            if p:IsA("BasePart") and p.CanCollide then
+                                p.CanCollide = false
+                                table.insert(partesComColisao, p)
+                            end
+                        end
+                    end
+                end)
+
+                while voandoParaIlha and running do
+                    pcall(function()
+                        local char = Players.LocalPlayer.Character
+                        if not char then return end
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        if not hrp or not hum then return end
+
+                        -- Mantém colisão desativada durante o voo
+                        for _, p in ipairs(char:GetDescendants()) do
+                            if p:IsA("BasePart") then
+                                p.CanCollide = false
+                            end
+                        end
+
+                        local posAtual = hrp.Position
+                        local dist2D = Vector2.new(posAtual.X - destinoFixo.X, posAtual.Z - destinoFixo.Z).Magnitude
+
+                        if dist2D < 60 then
+                            -- Chegou!
+                            voandoParaIlha = false
+                            -- Restaura colisão
+                            for _, p in ipairs(char:GetDescendants()) do
+                                if p:IsA("BasePart") then p.CanCollide = true end
+                            end
+                            if bpIlha then bpIlha:Destroy() bpIlha = nil end
+                            if bgIlha then bgIlha:Destroy() bgIlha = nil end
+                            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+                            mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
+                            mostrarIlhasLabel.TextColor3 = Color3.fromRGB(255, 185, 0)
+                            ilhaSelecionada = nil
+                            return
+                        end
+
+                        -- Direção horizontal para a ilha
+                        local dir = Vector3.new(
+                            destinoFixo.X - posAtual.X,
+                            0,
+                            destinoFixo.Z - posAtual.Z
+                        ).Unit
+
+                        -- Move direto no CFrame sem física — sem tremor
+                        local passo = VELOCIDADE * 0.05
+                        hrp.CFrame = CFrame.new(
+                            posAtual.X + dir.X * passo,
+                            80,
+                            posAtual.Z + dir.Z * passo
+                        ) * CFrame.Angles(0, math.atan2(dir.X, dir.Z), 0)
+                    end)
+                    task.wait(0.05)
+                end
+
+                -- Cancelado — restaura colisão e limpa
+                pcall(function()
+                    local char = Players.LocalPlayer.Character
+                    if not char then return end
+                    for _, p in ipairs(char:GetDescendants()) do
+                        if p:IsA("BasePart") then p.CanCollide = true end
+                    end
+                    if bpIlha then bpIlha:Destroy() end
+                    if bgIlha then bgIlha:Destroy() end
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+                end)
+            end)
+        end)
+    end
+
+    ilhasScroll.CanvasSize = UDim2.new(0, 0, 0, #lista * 32)
+end
+
+mostrarIlhasBtn.MouseButton1Click:Connect(function()
+    if voandoParaIlha then
+        -- Cancela o voo
+        voandoParaIlha = false
+        mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
+        mostrarIlhasLabel.TextColor3 = Color3.fromRGB(255, 185, 0)
+        ilhaSelecionada = nil
+    else
+        -- Atualiza lista com o mar atual e abre
+        popularIlhas()
+        ilhasFrame.Visible = not ilhasFrame.Visible
+    end
+end)
 
 -- ============================================================
 --  LINHA 2: Lite | Vaga | Vaga
