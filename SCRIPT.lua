@@ -1456,94 +1456,116 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  PEGAR BAÚS
+--  PEGAR BAÚS — COM CONTADOR E 3S ENTRE BAÚS
 -- ============================================================
+
+-- Label contador de baús
+local bauContadorLabel = Instance.new("TextLabel")
+bauContadorLabel.Size = UDim2.new(1, 0, 1, 0)
+bauContadorLabel.Position = UDim2.new(0, 0, 0, 0)
+bauContadorLabel.BackgroundTransparency = 1
+bauContadorLabel.TextColor3 = Color3.fromRGB(255, 185, 0)
+bauContadorLabel.Text = ""
+bauContadorLabel.TextSize = 10
+bauContadorLabel.Font = Enum.Font.GothamBold
+bauContadorLabel.ZIndex = pegarBausBtn.ZIndex + 1
+bauContadorLabel.Parent = pegarBausBtn
+
 task.spawn(function()
+    local totalPegos = 0
+
     while running do
         if pegarBausActive then
             pcall(function()
-                local player = Players.LocalPlayer
-                local char = player.Character
+                local char = Players.LocalPlayer.Character
                 if not char then return end
                 local hrp = char:FindFirstChild("HumanoidRootPart")
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                if not hrp or not hum then return end
+                if not hrp then return end
 
-                -- Procura baús reais em _WorldOrigin (onde aparecem quando spawnam)
+                -- Procura baús em todo workspace
                 local baus = {}
-                local worldOrigin = workspace:FindFirstChild("_WorldOrigin")
-                local locais = { workspace, worldOrigin }
-
-                for _, local_ in ipairs(locais) do
-                    if local_ then
-                        for _, obj in ipairs(local_:GetDescendants()) do
-                            local nome = string.lower(obj.Name)
-                            if obj:IsA("BasePart") and (
-                                nome == "silver" or nome == "gold" or
-                                nome == "diamond" or nome == "fragment" or
-                                nome == "silverlock" or nome == "goldlock" or
-                                nome == "diamondlock" or nome == "fragmentlock" or
-                                string.find(nome, "chest1") or string.find(nome, "chest2") or
-                                string.find(nome, "chest3")
-                            ) then
-                                table.insert(baus, obj)
-                            end
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") then
+                        local n = obj.Name
+                        if n == "Silver" or n == "Gold"
+                            or n == "Diamond" or n == "Fragment"
+                            or n == "Chest1" or n == "Chest2" or n == "Chest3"
+                            or n == "SilverLock" or n == "GoldLock"
+                            or n == "DiamondLock" or n == "Treasure" then
+                            pcall(function()
+                                table.insert(baus, {obj = obj, pos = obj.Position})
+                            end)
                         end
                     end
                 end
 
                 if #baus == 0 then
-                    task.wait(3)
+                    pegarBausLabel.Text = "SEM BAUS"
+                    bauContadorLabel.Text = ""
+                    task.wait(5)
+                    pegarBausLabel.Text = "PEGAR BAUS"
                     return
                 end
 
-                -- Pega o baú mais próximo
-                local maisProximo = nil
-                local menorDist = math.huge
-                for _, b in ipairs(baus) do
-                    local ok, pos = pcall(function() return b.Position end)
-                    if ok then
-                        local dist = (pos - hrp.Position).Magnitude
-                        if dist < menorDist then
-                            menorDist = dist
-                            maisProximo = b
-                        end
-                    end
-                end
+                -- Ordena por distância
+                table.sort(baus, function(a, b)
+                    local ok1, da = pcall(function() return (a.pos - hrp.Position).Magnitude end)
+                    local ok2, db = pcall(function() return (b.pos - hrp.Position).Magnitude end)
+                    if ok1 and ok2 then return da < db end
+                    return false
+                end)
 
-                if maisProximo and menorDist < 2000 then
-                    -- Teleporta em cima do baú para tocar (touch mechanic)
-                    local bauPos = maisProximo.Position
-                    hrp.CFrame = CFrame.new(bauPos + Vector3.new(0, 3, 0))
-                    task.wait(0.3)
+                -- Pega cada baú
+                for i, bau in ipairs(baus) do
+                    if not pegarBausActive then break end
+                    if not bau.obj or not bau.obj.Parent then continue end
 
-                    -- Tenta fireproximityprompt se tiver
+                    pegarBausLabel.Text = "PEGANDO..."
+                    bauContadorLabel.Text = ""
+
+                    -- Teleporta para o baú
                     pcall(function()
-                        for _, v in ipairs(maisProximo.Parent:GetDescendants()) do
-                            if v:IsA("ProximityPrompt") then
-                                fireproximityprompt(v)
-                            end
-                        end
+                        char = Players.LocalPlayer.Character
+                        if not char then return end
+                        hrp = char:FindFirstChild("HumanoidRootPart")
+                        if not hrp then return end
+                        hrp.CFrame = CFrame.new(bau.obj.Position + Vector3.new(0, 3, 0))
                     end)
 
-                    -- Toca o baú várias vezes (touch mechanic)
-                    for i = 1, 5 do
-                        pcall(function()
-                            hrp.CFrame = CFrame.new(bauPos + Vector3.new(0, 2, 0))
-                        end)
-                        task.wait(0.1)
-                    end
+                    task.wait(0.5)
 
-                    task.wait(1)
+                    -- Abre o baú
+                    pcall(function()
+                        char = Players.LocalPlayer.Character
+                        if not char then return end
+                        hrp = char:FindFirstChild("HumanoidRootPart")
+                        if not hrp then return end
+                        firetouchinterest(hrp, bau.obj, 0)
+                        task.wait(0.1)
+                        firetouchinterest(hrp, bau.obj, 1)
+                    end)
+
+                    totalPegos = totalPegos + 1
+
+                    -- Contador regressivo de 3 segundos
+                    for s = 3, 1, -1 do
+                        if not pegarBausActive then break end
+                        bauContadorLabel.Text = "Prox: " .. s .. "s"
+                        task.wait(1)
+                    end
                 end
             end)
-            task.wait(0.5)
+            task.wait(1)
         else
+            totalPegos = 0
+            pegarBausLabel.Text = "PEGAR BAUS"
+            bauContadorLabel.Text = ""
             task.wait(0.5)
         end
     end
 end)
-                -- ============================================================
+
+-- ============================================================
 --  LOOP PRINCIPAL DE DETECÇÃO
 -- ============================================================
 print("👑 BF Notify - VERSÃO FINAL! FPS: 120")
