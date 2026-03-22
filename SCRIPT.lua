@@ -462,10 +462,10 @@ end
 -- ============================================================
 --  FRAME PRINCIPAL — ABAS ESQUERDA / CONTEÚDO DIREITA
 -- ============================================================
-local FRAME_W   = 360
-local FRAME_H   = 420
-local TAB_W     = 100  -- largura coluna esquerda
-local TITLE_H   = 30
+local FRAME_W   = 320
+local FRAME_H   = 300
+local TAB_W     = 90
+local TITLE_H   = 28
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, FRAME_W, 0, FRAME_H)
@@ -487,7 +487,7 @@ title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.Text = "👑 Celestial Hub X 👑"
-title.TextScaled = true
+title.TextSize = 14
 title.Font = Enum.Font.GothamBold
 title.BorderSizePixel = 0
 title.Active = true
@@ -503,13 +503,24 @@ titleSep.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
 titleSep.BorderSizePixel = 0
 titleSep.Parent = frame
 
--- Coluna esquerda (abas)
-local tabCol = Instance.new("Frame")
-tabCol.Size = UDim2.new(0, TAB_W, 1, -TITLE_H - 1)
-tabCol.Position = UDim2.new(0, 0, 0, TITLE_H + 1)
-tabCol.BackgroundColor3 = Color3.fromRGB(12, 12, 17)
-tabCol.BorderSizePixel = 0
-tabCol.Parent = frame
+-- Coluna esquerda — ScrollingFrame para as abas
+local tabScroll = Instance.new("ScrollingFrame")
+tabScroll.Size = UDim2.new(0, TAB_W, 1, -TITLE_H - 1)
+tabScroll.Position = UDim2.new(0, 0, 0, TITLE_H + 1)
+tabScroll.BackgroundColor3 = Color3.fromRGB(12, 12, 17)
+tabScroll.BorderSizePixel = 0
+tabScroll.ScrollBarThickness = 2
+tabScroll.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 80)
+tabScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+tabScroll.ClipsDescendants = true
+tabScroll.Parent = frame
+
+local tabCol = tabScroll -- alias para compatibilidade
+
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabLayout.Parent = tabScroll
 
 -- Linha divisória vertical
 local divLine = Instance.new("Frame")
@@ -519,34 +530,48 @@ divLine.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
 divLine.BorderSizePixel = 0
 divLine.Parent = frame
 
--- Coluna direita (conteúdo)
-local contentCol = Instance.new("Frame")
-contentCol.Size = UDim2.new(1, -TAB_W - 1, 1, -TITLE_H - 1)
-contentCol.Position = UDim2.new(0, TAB_W + 1, 0, TITLE_H + 1)
-contentCol.BackgroundTransparency = 1
-contentCol.BorderSizePixel = 0
-contentCol.Parent = frame
+-- Coluna direita — ScrollingFrame para o conteúdo
+local contentScroll = Instance.new("ScrollingFrame")
+contentScroll.Size = UDim2.new(1, -TAB_W - 1, 1, -TITLE_H - 1)
+contentScroll.Position = UDim2.new(0, TAB_W + 1, 0, TITLE_H + 1)
+contentScroll.BackgroundTransparency = 1
+contentScroll.BorderSizePixel = 0
+contentScroll.ScrollBarThickness = 3
+contentScroll.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 80)
+contentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+contentScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+contentScroll.ClipsDescendants = true
+contentScroll.Parent = frame
+
+local contentCol = contentScroll -- alias para compatibilidade
 
 -- Abas e painéis
-local ABAS = {"STATUS", "AUTO FARM", "JOGADOR", "VISUAL", "FARM", "ADM"}
+local ABAS = {"STATUS", "AUTO FARM", "JOGADOR", "VISUAL", "FARM", "FRUTAS", "ADM"}
 local abaAtiva = "STATUS"
 local paineis = {}
 local abaBtns = {}
 local TAB_H = 44
 
 for i, nome in ipairs(ABAS) do
-    -- Botão da aba (esquerda)
+    -- Container da aba (para separador funcionar com UIListLayout)
+    local abaContainer = Instance.new("Frame")
+    abaContainer.Size = UDim2.new(1, 0, 0, TAB_H)
+    abaContainer.BackgroundTransparency = 1
+    abaContainer.BorderSizePixel = 0
+    abaContainer.LayoutOrder = i
+    abaContainer.Parent = tabScroll
+
+    -- Botão da aba
     local abaBtn = Instance.new("TextButton")
-    abaBtn.Size = UDim2.new(1, 0, 0, TAB_H)
-    abaBtn.Position = UDim2.new(0, 0, 0, (i-1) * TAB_H)
+    abaBtn.Size = UDim2.new(1, 0, 1, 0)
     abaBtn.BackgroundTransparency = 1
     abaBtn.BorderSizePixel = 0
     abaBtn.Text = nome
-    abaBtn.TextSize = 15
+    abaBtn.TextSize = 13
     abaBtn.Font = Enum.Font.GothamBold
     abaBtn.TextColor3 = Color3.fromRGB(100, 100, 120)
     abaBtn.TextWrapped = true
-    abaBtn.Parent = tabCol
+    abaBtn.Parent = abaContainer
     abaBtns[nome] = abaBtn
 
     -- Indicador ativo (barra direita da aba)
@@ -559,17 +584,17 @@ for i, nome in ipairs(ABAS) do
     indicator.Parent = abaBtn
     Instance.new("UICorner", indicator).CornerRadius = UDim.new(1, 0)
 
-    -- Linha separadora entre abas
+    -- Linha separadora
     if i < #ABAS then
         local abaSep = Instance.new("Frame")
         abaSep.Size = UDim2.new(0.7, 0, 0, 1)
-        abaSep.Position = UDim2.new(0.15, 0, 0, i * TAB_H)
+        abaSep.Position = UDim2.new(0.15, 0, 1, -1)
         abaSep.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
         abaSep.BorderSizePixel = 0
-        abaSep.Parent = tabCol
+        abaSep.Parent = abaContainer
     end
 
-    -- Painel conteúdo (direita)
+    -- Painel conteúdo (direita) — cada painel tem seu próprio scroll interno
     local painel = Instance.new("Frame")
     painel.Size = UDim2.new(1, 0, 1, 0)
     painel.BackgroundTransparency = 1
@@ -580,6 +605,8 @@ for i, nome in ipairs(ABAS) do
 
     abaBtn.MouseButton1Click:Connect(function()
         abaAtiva = nome
+        -- Reset scroll do conteúdo ao trocar aba
+        contentScroll.CanvasPosition = Vector2.new(0, 0)
         for _, n in ipairs(ABAS) do
             paineis[n].Visible = n == nome
             abaBtns[n].TextColor3 = n == nome
@@ -596,6 +623,34 @@ end
 abaBtns[abaAtiva].TextColor3 = Color3.fromRGB(255, 255, 255)
 abaBtns[abaAtiva].BackgroundTransparency = 0.7
 abaBtns[abaAtiva].BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+
+-- Faz o contentScroll crescer com o conteúdo dos painéis
+local function atualizarScrollConteudo()
+    local painel = paineis[abaAtiva]
+    if not painel then return end
+    -- Calcula altura total dos filhos
+    local maxY = 0
+    for _, c in ipairs(painel:GetChildren()) do
+        if c:IsA("GuiObject") then
+            local bottom = c.Position.Y.Offset + c.Size.Y.Offset
+            if bottom > maxY then maxY = bottom end
+        end
+    end
+    -- Só ativa scroll se conteúdo for maior que o frame
+    if maxY > FRAME_H - TITLE_H - 10 then
+        contentScroll.CanvasSize = UDim2.new(0, 0, 0, maxY + 10)
+    else
+        contentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    end
+end
+
+-- Atualiza scroll ao trocar aba
+for _, nome in ipairs(ABAS) do
+    abaBtns[nome].MouseButton1Click:Connect(function()
+        task.wait(0.05)
+        atualizarScrollConteudo()
+    end)
+end
 
 -- ============================================================
 --  CRIAR ITEM — nome esquerda | linha | botão ON/OFF direita
@@ -971,8 +1026,230 @@ liteBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================================
---  ABA ADM
+--  ABA FRUTAS — GetFeaturedFruits sem precisar abrir loja
 -- ============================================================
+
+-- Preços conhecidos das frutas (do spy)
+local FRUIT_PRICES = {
+    ["Rocket-Rocket"] = "$5,000", ["Spin-Spin"] = "$7,500",
+    ["Blade-Blade"] = "$30,000", ["Bomb-Bomb"] = "$30,000",
+    ["Smoke-Smoke"] = "$30,000", ["Spring-Spring"] = "$60,000",
+    ["Spike-Spike"] = "$75,000", ["Flame-Flame"] = "$250,000",
+    ["Ice-Ice"] = "$375,000", ["Sand-Sand"] = "$420,000",
+    ["Dark-Dark"] = "$500,000", ["Eagle-Eagle"] = "$530,000",
+    ["Diamond-Diamond"] = "$600,000", ["Light-Light"] = "$650,000",
+    ["Rubber-Rubber"] = "$750,000", ["Ghost-Ghost"] = "$900,000",
+    ["Magma-Magma"] = "$850,000", ["Quake-Quake"] = "$1,000,000",
+    ["Buddha-Buddha"] = "$1,200,000", ["Love-Love"] = "$1,300,000",
+    ["Spider-Spider"] = "$1,500,000", ["Sound-Sound"] = "$1,700,000",
+    ["Phoenix-Phoenix"] = "$1,800,000", ["Portal-Portal"] = "$1,900,000",
+    ["Lightning-Lightning"] = "$2,000,000", ["Pain-Pain"] = "$2,100,000",
+    ["Blizzard-Blizzard"] = "$2,100,000", ["Gravity-Gravity"] = "$2,500,000",
+    ["Mammoth-Mammoth"] = "$2,700,000", ["T-Rex-T-Rex"] = "$2,700,000",
+    ["Dough-Dough"] = "$2,800,000", ["Shadow-Shadow"] = "$2,900,000",
+    ["Venom-Venom"] = "$3,000,000", ["Gas-Gas"] = "$3,200,000",
+    ["Spirit-Spirit"] = "$3,400,000", ["Tiger-Tiger"] = "$3,500,000",
+    ["Yeti-Yeti"] = "$3,500,000", ["Kitsune-Kitsune"] = "$4,000,000",
+    ["Control-Control"] = "$3,800,000", ["Dragon-Dragon"] = "$3,500,000",
+    ["Creation-Creation"] = "$300,000",
+}
+
+-- Botão atualizar frutas
+local frutasTimerLabel = Instance.new("TextButton")
+frutasTimerLabel.Size = UDim2.new(1, -12, 0, 28)
+frutasTimerLabel.Position = UDim2.new(0, 6, 0, 4)
+frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+frutasTimerLabel.BorderSizePixel = 0
+frutasTimerLabel.Text = "🔄 Toque para atualizar"
+frutasTimerLabel.TextSize = 12
+frutasTimerLabel.Font = Enum.Font.GothamBold
+frutasTimerLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+frutasTimerLabel.TextXAlignment = Enum.TextXAlignment.Center
+frutasTimerLabel.Active = true
+frutasTimerLabel.ZIndex = 5
+frutasTimerLabel.Parent = paineis["FRUTAS"]
+Instance.new("UICorner", frutasTimerLabel).CornerRadius = UDim.new(0, 6)
+
+-- ScrollingFrame para lista de frutas (começa depois do botão)
+local frutasScroll = Instance.new("ScrollingFrame")
+frutasScroll.Size = UDim2.new(1, -12, 1, -40)
+frutasScroll.Position = UDim2.new(0, 6, 0, 38)
+frutasScroll.BackgroundTransparency = 1
+frutasScroll.BorderSizePixel = 0
+frutasScroll.ScrollBarThickness = 3
+frutasScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
+frutasScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+frutasScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+frutasScroll.ZIndex = 2
+frutasScroll.Parent = paineis["FRUTAS"]
+
+Instance.new("UIListLayout", frutasScroll).Padding = UDim.new(0, 3)
+
+
+local function criarFrutaCard(nome, preco, disponivel, layoutOrder)
+    local nomeSimples = nome:match("^(.-)%-") or nome
+
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -4, 0, 36)
+    card.BackgroundColor3 = disponivel
+        and Color3.fromRGB(15, 40, 20)
+        or Color3.fromRGB(22, 22, 30)
+    card.BorderSizePixel = 0
+    card.LayoutOrder = layoutOrder
+    card.Parent = frutasScroll
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 7)
+    local cs = Instance.new("UIStroke", card)
+    cs.Color = disponivel
+        and Color3.fromRGB(0, 180, 60)
+        or Color3.fromRGB(38, 38, 52)
+    cs.Thickness = 1
+
+    local nomeLbl = Instance.new("TextLabel")
+    nomeLbl.Size = UDim2.new(0.6, 0, 1, 0)
+    nomeLbl.Position = UDim2.new(0, 8, 0, 0)
+    nomeLbl.BackgroundTransparency = 1
+    nomeLbl.TextColor3 = disponivel
+        and Color3.fromRGB(0, 255, 80)
+        or Color3.fromRGB(150, 150, 150)
+    nomeLbl.Text = nomeSimples
+    nomeLbl.TextSize = 13
+    nomeLbl.Font = Enum.Font.GothamBold
+    nomeLbl.TextXAlignment = Enum.TextXAlignment.Left
+    nomeLbl.Parent = card
+
+    local precoLbl = Instance.new("TextLabel")
+    precoLbl.Size = UDim2.new(0.38, 0, 1, 0)
+    precoLbl.Position = UDim2.new(0.62, 0, 0, 0)
+    precoLbl.BackgroundTransparency = 1
+    precoLbl.TextColor3 = disponivel and COR_GOLD or Color3.fromRGB(80, 80, 80)
+    precoLbl.Text = disponivel and (preco or "?") or "Esgotado"
+    precoLbl.TextSize = 12
+    precoLbl.Font = Enum.Font.GothamBold
+    precoLbl.TextXAlignment = Enum.TextXAlignment.Right
+    precoLbl.Parent = card
+end
+
+local COOLDOWN_FRUTAS = 60
+local ultimaAtualizacaoFrutas = 0
+
+-- Label do contador de cooldown (por cima do botão)
+local frutasCooldownLabel = Instance.new("TextLabel")
+frutasCooldownLabel.Size = UDim2.new(1, 0, 1, 0)
+frutasCooldownLabel.Position = UDim2.new(0, 0, 0, 0)
+frutasCooldownLabel.BackgroundTransparency = 1
+frutasCooldownLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+frutasCooldownLabel.Text = ""
+frutasCooldownLabel.TextSize = 14
+frutasCooldownLabel.Font = Enum.Font.GothamBold
+frutasCooldownLabel.TextXAlignment = Enum.TextXAlignment.Center
+frutasCooldownLabel.TextYAlignment = Enum.TextYAlignment.Center
+frutasCooldownLabel.ZIndex = 10
+frutasCooldownLabel.Visible = false
+frutasCooldownLabel.Parent = frutasTimerLabel
+
+local function iniciarCooldown()
+    frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    frutasTimerLabel.TextColor3 = Color3.fromRGB(50, 50, 60) -- apaga o texto
+    frutasCooldownLabel.Visible = true
+    task.spawn(function()
+        local restante = COOLDOWN_FRUTAS
+        while restante > 0 do
+            frutasCooldownLabel.Text = tostring(restante)
+            task.wait(1)
+            restante = restante - 1
+        end
+        -- Reseta botão
+        frutasCooldownLabel.Visible = false
+        frutasCooldownLabel.Text = ""
+        frutasTimerLabel.Text = "🔄 Toque para atualizar"
+        frutasTimerLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+        frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    end)
+end
+
+local function carregarFrutas(iniciarCD)
+    local agora = tick()
+    if (agora - ultimaAtualizacaoFrutas) < COOLDOWN_FRUTAS and ultimaAtualizacaoFrutas ~= 0 then
+        return
+    end
+    -- Limpa lista
+    for _, c in ipairs(frutasScroll:GetChildren()) do
+        if c:IsA("Frame") then c:Destroy() end
+    end
+
+    frutasTimerLabel.Text = "⌛ Carregando..."
+    frutasTimerLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+
+    local disponiveisSet = {}
+
+    pcall(function()
+        local gff = require(RS.Modules.Asset.GetFeaturedFruits)
+        if type(gff) == "function" then
+            local lista = gff()
+            if type(lista) == "table" then
+                for _, nome in ipairs(lista) do
+                    disponiveisSet[nome] = true
+                end
+            end
+        end
+    end)
+
+    local todasFrutas = {}
+    pcall(function()
+        local fi = require(RS.FruitInfo)
+        todasFrutas = fi.getNames() or {}
+    end)
+
+    if #todasFrutas == 0 then
+        frutasTimerLabel.Text = "❌ Erro ao carregar!"
+        frutasTimerLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        return
+    end
+
+    table.sort(todasFrutas, function(a, b)
+        local da = disponiveisSet[a] and 1 or 0
+        local db = disponiveisSet[b] and 1 or 0
+        if da ~= db then return da > db end
+        return a < b
+    end)
+
+    local qtdDisponivel = 0
+    for i, nome in ipairs(todasFrutas) do
+        local disponivel = disponiveisSet[nome] == true
+        if disponivel then qtdDisponivel = qtdDisponivel + 1 end
+        criarFrutaCard(nome, FRUIT_PRICES[nome], disponivel, i)
+    end
+
+    frutasTimerLabel.Text = "🔄 Toque para atualizar"
+    frutasTimerLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+    ultimaAtualizacaoFrutas = tick()
+    if iniciarCD then iniciarCooldown() end
+end
+
+frutasTimerLabel.MouseButton1Click:Connect(function()
+    task.spawn(function() carregarFrutas(true) end)
+end)
+-- suporte mobile
+frutasTimerLabel.TouchTap:Connect(function()
+    task.spawn(function() carregarFrutas(true) end)
+end)
+frutasTimerLabel.Activated:Connect(function()
+    task.spawn(function() carregarFrutas(true) end)
+end)
+
+-- Carrega ao trocar para aba FRUTAS
+for _, abaBtn in pairs(abaBtns) do
+    if abaBtn.Text == "FRUTAS" then
+        abaBtn.MouseButton1Click:Connect(function()
+            if not frutasScroll:FindFirstChildOfClass("Frame") then
+                task.spawn(function() carregarFrutas(false) end)
+            end
+        end)
+    end
+end
+
+-- Carrega automaticamente ao iniciar
+task.spawn(function() carregarFrutas(false) end)
 local ativoBtn, _ = criarItem(paineis["ADM"], 0, "ATIVO 🔒", COR_GOLD)
 ativoBtn.Text = "🔒"
 ativoBtn.TextColor3 = COR_GOLD
