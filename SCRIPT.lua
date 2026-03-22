@@ -463,7 +463,7 @@ end
 --  FRAME PRINCIPAL — ABAS ESQUERDA / CONTEÚDO DIREITA
 -- ============================================================
 local FRAME_W   = 360
-local FRAME_H   = 330
+local FRAME_H   = 420
 local TAB_W     = 100  -- largura coluna esquerda
 local TITLE_H   = 30
 
@@ -528,8 +528,8 @@ contentCol.BorderSizePixel = 0
 contentCol.Parent = frame
 
 -- Abas e painéis
-local ABAS = {"AUTO FARM", "JOGADOR", "VISUAL", "ADM"}
-local abaAtiva = "AUTO FARM"
+local ABAS = {"STATUS", "AUTO FARM", "JOGADOR", "VISUAL", "FARM", "ADM"}
+local abaAtiva = "STATUS"
 local paineis = {}
 local abaBtns = {}
 local TAB_H = 44
@@ -691,8 +691,218 @@ local function criarItemSimples(painel, row, nomeTexto, corNome)
 end
 
 -- ============================================================
---  ABA AUTO FARM
+--  ABA STATUS — Contador de tempo + stats
 -- ============================================================
+local scriptStartTime = tick()
+
+-- Título Status
+local statusTitulo = Instance.new("TextLabel")
+statusTitulo.Size = UDim2.new(1, -12, 0, 30)
+statusTitulo.Position = UDim2.new(0, 6, 0, 8)
+statusTitulo.BackgroundTransparency = 1
+statusTitulo.TextColor3 = Color3.fromRGB(255, 215, 0)
+statusTitulo.Text = "⏱️ Tempo Ativo"
+statusTitulo.TextSize = 15
+statusTitulo.Font = Enum.Font.GothamBold
+statusTitulo.TextXAlignment = Enum.TextXAlignment.Left
+statusTitulo.Parent = paineis["STATUS"]
+
+-- Card contador
+local cardTempo = Instance.new("Frame")
+cardTempo.Size = UDim2.new(1, -12, 0, 44)
+cardTempo.Position = UDim2.new(0, 6, 0, 42)
+cardTempo.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+cardTempo.BorderSizePixel = 0
+cardTempo.Parent = paineis["STATUS"]
+Instance.new("UICorner", cardTempo).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", cardTempo).Color = Color3.fromRGB(38, 38, 52)
+
+local tempoNome = Instance.new("TextLabel")
+tempoNome.Size = UDim2.new(0.5, 0, 1, 0)
+tempoNome.Position = UDim2.new(0, 10, 0, 0)
+tempoNome.BackgroundTransparency = 1
+tempoNome.TextColor3 = Color3.fromRGB(180, 180, 180)
+tempoNome.Text = "Tempo no servidor"
+tempoNome.TextSize = 14
+tempoNome.Font = Enum.Font.GothamBold
+tempoNome.TextXAlignment = Enum.TextXAlignment.Left
+tempoNome.Parent = cardTempo
+
+local tempoValor = Instance.new("TextLabel")
+tempoValor.Size = UDim2.new(0.45, 0, 1, 0)
+tempoValor.Position = UDim2.new(0.53, 0, 0, 0)
+tempoValor.BackgroundTransparency = 1
+tempoValor.TextColor3 = Color3.fromRGB(0, 255, 80)
+tempoValor.Text = "00:00:00"
+tempoValor.TextSize = 15
+tempoValor.Font = Enum.Font.GothamBold
+tempoValor.TextXAlignment = Enum.TextXAlignment.Right
+tempoValor.Parent = cardTempo
+
+-- Card Players
+local cardPlayers = Instance.new("Frame")
+cardPlayers.Size = UDim2.new(1, -12, 0, 44)
+cardPlayers.Position = UDim2.new(0, 6, 0, 92)
+cardPlayers.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+cardPlayers.BorderSizePixel = 0
+cardPlayers.Parent = paineis["STATUS"]
+Instance.new("UICorner", cardPlayers).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", cardPlayers).Color = Color3.fromRGB(38, 38, 52)
+
+local playersNome = Instance.new("TextLabel")
+playersNome.Size = UDim2.new(0.5, 0, 1, 0)
+playersNome.Position = UDim2.new(0, 10, 0, 0)
+playersNome.BackgroundTransparency = 1
+playersNome.TextColor3 = Color3.fromRGB(180, 180, 180)
+playersNome.Text = "Jogadores no server"
+playersNome.TextSize = 14
+playersNome.Font = Enum.Font.GothamBold
+playersNome.TextXAlignment = Enum.TextXAlignment.Left
+playersNome.Parent = cardPlayers
+
+local playersValor = Instance.new("TextLabel")
+playersValor.Size = UDim2.new(0.45, 0, 1, 0)
+playersValor.Position = UDim2.new(0.53, 0, 0, 0)
+playersValor.BackgroundTransparency = 1
+playersValor.TextColor3 = Color3.fromRGB(80, 160, 230)
+playersValor.Text = "0"
+playersValor.TextSize = 15
+playersValor.Font = Enum.Font.GothamBold
+playersValor.TextXAlignment = Enum.TextXAlignment.Right
+playersValor.Parent = cardPlayers
+
+-- Loop atualiza status
+task.spawn(function()
+    while running do
+        pcall(function()
+            -- Tempo ativo
+            local elapsed = tick() - scriptStartTime
+            local h = math.floor(elapsed / 3600)
+            local m = math.floor((elapsed % 3600) / 60)
+            local s = math.floor(elapsed % 60)
+            tempoValor.Text = string.format("%02d:%02d:%02d", h, m, s)
+            -- Players
+            playersValor.Text = tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers)
+        end)
+        task.wait(1)
+    end
+end)
+
+-- ============================================================
+--  ABA FARM SETTINGS — Select Weapon
+-- ============================================================
+local weaponSelecionado = "Melee"
+local dropdownAberto = false
+
+-- Título
+local farmTitulo = Instance.new("TextLabel")
+farmTitulo.Size = UDim2.new(1, -12, 0, 30)
+farmTitulo.Position = UDim2.new(0, 6, 0, 8)
+farmTitulo.BackgroundTransparency = 1
+farmTitulo.TextColor3 = Color3.fromRGB(255, 215, 0)
+farmTitulo.Text = "⚔️ Weapon Settings"
+farmTitulo.TextSize = 15
+farmTitulo.Font = Enum.Font.GothamBold
+farmTitulo.TextXAlignment = Enum.TextXAlignment.Left
+farmTitulo.Parent = paineis["FARM"]
+
+-- Card Select Weapon
+local cardWeapon = Instance.new("Frame")
+cardWeapon.Size = UDim2.new(1, -12, 0, 44)
+cardWeapon.Position = UDim2.new(0, 6, 0, 42)
+cardWeapon.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+cardWeapon.BorderSizePixel = 0
+cardWeapon.Parent = paineis["FARM"]
+Instance.new("UICorner", cardWeapon).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", cardWeapon).Color = Color3.fromRGB(38, 38, 52)
+
+local weaponNome = Instance.new("TextLabel")
+weaponNome.Size = UDim2.new(0.45, 0, 1, 0)
+weaponNome.Position = UDim2.new(0, 10, 0, 0)
+weaponNome.BackgroundTransparency = 1
+weaponNome.TextColor3 = Color3.fromRGB(180, 180, 180)
+weaponNome.Text = "Select Weapon"
+weaponNome.TextSize = 14
+weaponNome.Font = Enum.Font.GothamBold
+weaponNome.TextXAlignment = Enum.TextXAlignment.Left
+weaponNome.Parent = cardWeapon
+
+-- Botão dropdown
+local weaponBtn = Instance.new("TextButton")
+weaponBtn.Size = UDim2.new(0.5, -8, 0.65, 0)
+weaponBtn.Position = UDim2.new(0.5, 4, 0.175, 0)
+weaponBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+weaponBtn.BorderSizePixel = 0
+weaponBtn.Text = "Melee  ›"
+weaponBtn.TextSize = 14
+weaponBtn.Font = Enum.Font.GothamBold
+weaponBtn.TextColor3 = Color3.fromRGB(210, 210, 210)
+weaponBtn.Active = true
+weaponBtn.Parent = cardWeapon
+Instance.new("UICorner", weaponBtn).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", weaponBtn).Color = Color3.fromRGB(55, 55, 70)
+
+-- Dropdown lista
+local dropFrame = Instance.new("Frame")
+dropFrame.Size = UDim2.new(0.5, -8, 0, 0)
+dropFrame.Position = UDim2.new(0.5, 4, 1, 4)
+dropFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+dropFrame.BorderSizePixel = 0
+dropFrame.Visible = false
+dropFrame.ZIndex = 20
+dropFrame.ClipsDescendants = true
+dropFrame.Parent = cardWeapon
+Instance.new("UICorner", dropFrame).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", dropFrame).Color = Color3.fromRGB(55, 55, 70)
+
+local WEAPONS = {"Melee", "Sword", "Gun", "Blox Fruit"}
+for i, w in ipairs(WEAPONS) do
+    local item = Instance.new("TextButton")
+    item.Size = UDim2.new(1, 0, 0, 36)
+    item.Position = UDim2.new(0, 0, 0, (i-1) * 36)
+    item.BackgroundTransparency = 1
+    item.BorderSizePixel = 0
+    item.Text = w
+    item.TextSize = 14
+    item.Font = Enum.Font.GothamBold
+    item.TextColor3 = w == weaponSelecionado and COR_ON or Color3.fromRGB(200, 200, 200)
+    item.ZIndex = 21
+    item.Parent = dropFrame
+
+    -- Linha separadora
+    if i < #WEAPONS then
+        local sep = Instance.new("Frame")
+        sep.Size = UDim2.new(0.85, 0, 0, 1)
+        sep.Position = UDim2.new(0.075, 0, 0, i * 36)
+        sep.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        sep.BorderSizePixel = 0
+        sep.ZIndex = 21
+        sep.Parent = dropFrame
+    end
+
+    item.MouseButton1Click:Connect(function()
+        weaponSelecionado = w
+        weaponBtn.Text = w .. "  ›"
+        -- Atualiza cores
+        for _, c in ipairs(dropFrame:GetChildren()) do
+            if c:IsA("TextButton") then
+                c.TextColor3 = c.Text == w and COR_ON or Color3.fromRGB(200, 200, 200)
+            end
+        end
+        -- Fecha dropdown
+        dropdownAberto = false
+        dropFrame.Visible = false
+        dropFrame.Size = UDim2.new(0.5, -8, 0, 0)
+    end)
+end
+
+weaponBtn.MouseButton1Click:Connect(function()
+    dropdownAberto = not dropdownAberto
+    dropFrame.Visible = dropdownAberto
+    dropFrame.Size = dropdownAberto
+        and UDim2.new(0.5, -8, 0, #WEAPONS * 36)
+        or UDim2.new(0.5, -8, 0, 0)
+end)
 local bringMobBtn, _ = criarItem(paineis["AUTO FARM"], 0, "PUXAR MOB", nil)
 toggleBtn(bringMobBtn, false)
 bringMobBtn.MouseButton1Click:Connect(function()
