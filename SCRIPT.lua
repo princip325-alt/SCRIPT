@@ -460,32 +460,32 @@ local function applyLiteMode(active)
 end
 
 -- ============================================================
---  FRAME PRINCIPAL
+--  FRAME PRINCIPAL — ABAS ESQUERDA / CONTEÚDO DIREITA
 -- ============================================================
-local BTN_W = 100
-local BTN_H = 42
-local PAD_X = 8
-local PAD_Y = 5
-local START_Y = 30
-
-local FRAME_W = PAD_X + 3 * (BTN_W + PAD_X)
-local FRAME_H = START_Y + 4 * (BTN_H + PAD_Y) + PAD_Y
+local FRAME_W   = 360
+local FRAME_H   = 330
+local TAB_W     = 100  -- largura coluna esquerda
+local TITLE_H   = 30
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, FRAME_W, 0, FRAME_H)
 frame.Position = UDim2.new(0.5, -FRAME_W/2, 0.5, -FRAME_H/2)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Visible = false
 frame.Parent = screenGui
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+local frameStroke = Instance.new("UIStroke", frame)
+frameStroke.Color = Color3.fromRGB(40, 40, 55)
+frameStroke.Thickness = 1.5
 
+-- Título no topo
 local title = Instance.new("TextButton")
-title.Size = UDim2.new(1, 0, 0, 22)
+title.Size = UDim2.new(1, 0, 0, TITLE_H)
 title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.Text = "👑 Celestial Hub X 👑"
 title.TextScaled = true
 title.Font = Enum.Font.GothamBold
@@ -493,7 +493,294 @@ title.BorderSizePixel = 0
 title.Active = true
 title.AutoButtonColor = false
 title.Parent = frame
-Instance.new("UICorner", title).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", title).CornerRadius = UDim.new(0, 12)
+
+-- Linha sob o título
+local titleSep = Instance.new("Frame")
+titleSep.Size = UDim2.new(1, 0, 0, 1)
+titleSep.Position = UDim2.new(0, 0, 0, TITLE_H)
+titleSep.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+titleSep.BorderSizePixel = 0
+titleSep.Parent = frame
+
+-- Coluna esquerda (abas)
+local tabCol = Instance.new("Frame")
+tabCol.Size = UDim2.new(0, TAB_W, 1, -TITLE_H - 1)
+tabCol.Position = UDim2.new(0, 0, 0, TITLE_H + 1)
+tabCol.BackgroundColor3 = Color3.fromRGB(12, 12, 17)
+tabCol.BorderSizePixel = 0
+tabCol.Parent = frame
+
+-- Linha divisória vertical
+local divLine = Instance.new("Frame")
+divLine.Size = UDim2.new(0, 1, 1, -TITLE_H - 1)
+divLine.Position = UDim2.new(0, TAB_W, 0, TITLE_H + 1)
+divLine.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+divLine.BorderSizePixel = 0
+divLine.Parent = frame
+
+-- Coluna direita (conteúdo)
+local contentCol = Instance.new("Frame")
+contentCol.Size = UDim2.new(1, -TAB_W - 1, 1, -TITLE_H - 1)
+contentCol.Position = UDim2.new(0, TAB_W + 1, 0, TITLE_H + 1)
+contentCol.BackgroundTransparency = 1
+contentCol.BorderSizePixel = 0
+contentCol.Parent = frame
+
+-- Abas e painéis
+local ABAS = {"AUTO FARM", "JOGADOR", "VISUAL", "ADM"}
+local abaAtiva = "AUTO FARM"
+local paineis = {}
+local abaBtns = {}
+local TAB_H = 44
+
+for i, nome in ipairs(ABAS) do
+    -- Botão da aba (esquerda)
+    local abaBtn = Instance.new("TextButton")
+    abaBtn.Size = UDim2.new(1, 0, 0, TAB_H)
+    abaBtn.Position = UDim2.new(0, 0, 0, (i-1) * TAB_H)
+    abaBtn.BackgroundTransparency = 1
+    abaBtn.BorderSizePixel = 0
+    abaBtn.Text = nome
+    abaBtn.TextSize = 15
+    abaBtn.Font = Enum.Font.GothamBold
+    abaBtn.TextColor3 = Color3.fromRGB(100, 100, 120)
+    abaBtn.TextWrapped = true
+    abaBtn.Parent = tabCol
+    abaBtns[nome] = abaBtn
+
+    -- Indicador ativo (barra direita da aba)
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 3, 0.6, 0)
+    indicator.Position = UDim2.new(1, -3, 0.2, 0)
+    indicator.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
+    indicator.BorderSizePixel = 0
+    indicator.Visible = nome == abaAtiva
+    indicator.Parent = abaBtn
+    Instance.new("UICorner", indicator).CornerRadius = UDim.new(1, 0)
+
+    -- Linha separadora entre abas
+    if i < #ABAS then
+        local abaSep = Instance.new("Frame")
+        abaSep.Size = UDim2.new(0.7, 0, 0, 1)
+        abaSep.Position = UDim2.new(0.15, 0, 0, i * TAB_H)
+        abaSep.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+        abaSep.BorderSizePixel = 0
+        abaSep.Parent = tabCol
+    end
+
+    -- Painel conteúdo (direita)
+    local painel = Instance.new("Frame")
+    painel.Size = UDim2.new(1, 0, 1, 0)
+    painel.BackgroundTransparency = 1
+    painel.BorderSizePixel = 0
+    painel.Visible = nome == abaAtiva
+    painel.Parent = contentCol
+    paineis[nome] = painel
+
+    abaBtn.MouseButton1Click:Connect(function()
+        abaAtiva = nome
+        for _, n in ipairs(ABAS) do
+            paineis[n].Visible = n == nome
+            abaBtns[n].TextColor3 = n == nome
+                and Color3.fromRGB(255, 255, 255)
+                or Color3.fromRGB(100, 100, 120)
+            abaBtns[n].BackgroundTransparency = n == nome and 0.7 or 1
+            abaBtns[n].BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+            abaBtns[n]:FindFirstChildOfClass("Frame").Visible = n == nome
+        end
+    end)
+end
+
+-- Destaca aba inicial
+abaBtns[abaAtiva].TextColor3 = Color3.fromRGB(255, 255, 255)
+abaBtns[abaAtiva].BackgroundTransparency = 0.7
+abaBtns[abaAtiva].BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+
+-- ============================================================
+--  CRIAR ITEM — nome esquerda | linha | botão ON/OFF direita
+-- ============================================================
+local ITEM_H   = 44
+local ITEM_PAD = 6
+
+local COR_OFF  = Color3.fromRGB(150, 150, 150)
+local COR_ON   = Color3.fromRGB(0, 255, 80)
+local COR_GOLD = Color3.fromRGB(255, 185, 0)
+
+local function toggleBtn(btn, estado)
+    if estado then
+        btn.Text = "ON"
+        btn.TextColor3 = COR_ON
+        btn.BackgroundColor3 = Color3.fromRGB(0, 55, 22)
+        btn:FindFirstChildOfClass("UIStroke").Color = COR_ON
+    else
+        btn.Text = "OFF"
+        btn.TextColor3 = COR_OFF
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        btn:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(55, 55, 70)
+    end
+end
+
+local function criarItem(painel, row, nomeTexto, corNome)
+    local itemY = ITEM_PAD + row * (ITEM_H + ITEM_PAD)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, -12, 0, ITEM_H)
+    bg.Position = UDim2.new(0, 6, 0, itemY)
+    bg.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    bg.BorderSizePixel = 0
+    bg.Parent = painel
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", bg).Color = Color3.fromRGB(38, 38, 52)
+    Instance.new("UIStroke", bg).Thickness = 1
+
+    local nomeLbl = Instance.new("TextLabel")
+    nomeLbl.Size = UDim2.new(0.58, 0, 1, 0)
+    nomeLbl.Position = UDim2.new(0, 10, 0, 0)
+    nomeLbl.BackgroundTransparency = 1
+    nomeLbl.TextColor3 = corNome or Color3.fromRGB(210, 210, 210)
+    nomeLbl.Text = nomeTexto
+    nomeLbl.TextSize = 15
+    nomeLbl.Font = Enum.Font.GothamBold
+    nomeLbl.TextXAlignment = Enum.TextXAlignment.Left
+    nomeLbl.Parent = bg
+
+    local div = Instance.new("Frame")
+    div.Size = UDim2.new(0, 1, 0.55, 0)
+    div.Position = UDim2.new(0.6, 0, 0.225, 0)
+    div.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+    div.BorderSizePixel = 0
+    div.Parent = bg
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.36, -8, 0.6, 0)
+    btn.Position = UDim2.new(0.62, 4, 0.2, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    btn.BorderSizePixel = 0
+    btn.Text = "OFF"
+    btn.TextSize = 15
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = COR_OFF
+    btn.Active = true
+    btn.Parent = bg
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    local s = Instance.new("UIStroke", btn)
+    s.Color = Color3.fromRGB(55, 55, 70)
+    s.Thickness = 1
+
+    return btn, nomeLbl
+end
+
+local function criarItemSimples(painel, row, nomeTexto, corNome)
+    local itemY = ITEM_PAD + row * (ITEM_H + ITEM_PAD)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -12, 0, ITEM_H)
+    btn.Position = UDim2.new(0, 6, 0, itemY)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    btn.BorderSizePixel = 0
+    btn.Text = nomeTexto
+    btn.TextSize = 15
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = corNome or COR_OFF
+    btn.Active = true
+    btn.Parent = painel
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+    local s = Instance.new("UIStroke", btn)
+    s.Color = Color3.fromRGB(38, 38, 52)
+    s.Thickness = 1
+    return btn
+end
+
+-- ============================================================
+--  ABA AUTO FARM
+-- ============================================================
+local bringMobBtn, _ = criarItem(paineis["AUTO FARM"], 0, "PUXAR MOB", nil)
+toggleBtn(bringMobBtn, false)
+bringMobBtn.MouseButton1Click:Connect(function()
+    bringMobActive = not bringMobActive
+    toggleBtn(bringMobBtn, bringMobActive)
+end)
+
+local pegarBausBtn, _ = criarItem(paineis["AUTO FARM"], 1, "PEGAR BAÚS", nil)
+toggleBtn(pegarBausBtn, false)
+
+local bauContadorLabel = Instance.new("TextLabel")
+bauContadorLabel.Size = UDim2.new(1, 0, 1, 0)
+bauContadorLabel.BackgroundTransparency = 1
+bauContadorLabel.TextColor3 = COR_GOLD
+bauContadorLabel.Text = ""
+bauContadorLabel.TextSize = 9
+bauContadorLabel.Font = Enum.Font.GothamBold
+bauContadorLabel.ZIndex = pegarBausBtn.ZIndex + 1
+bauContadorLabel.Parent = pegarBausBtn
+
+pegarBausBtn.MouseButton1Click:Connect(function()
+    pegarBausActive = not pegarBausActive
+    toggleBtn(pegarBausBtn, pegarBausActive)
+    if not pegarBausActive then bauContadorLabel.Text = "" end
+end)
+
+local serverHopBtn = criarItemSimples(paineis["AUTO FARM"], 2, "SERVER HOP", COR_OFF)
+serverHopBtn.MouseButton1Click:Connect(function()
+    serverHopBtn.Text = "TROCANDO..."
+    serverHopBtn.TextColor3 = Color3.fromRGB(255, 200, 0)
+    task.wait(0.5)
+    pcall(function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, Players.LocalPlayer)
+    end)
+    task.wait(3)
+    serverHopBtn.Text = "SERVER HOP"
+    serverHopBtn.TextColor3 = COR_OFF
+end)
+
+-- ============================================================
+--  ABA JOGADOR
+-- ============================================================
+local voarBtn, _ = criarItem(paineis["JOGADOR"], 0, "VOAR", nil)
+toggleBtn(voarBtn, false)
+voarBtn.MouseButton1Click:Connect(function()
+    voarActive = not voarActive
+    toggleBtn(voarBtn, voarActive)
+end)
+
+local autoClickBtn, _ = criarItem(paineis["JOGADOR"], 1, "SEM AFK", nil)
+toggleBtn(autoClickBtn, false)
+autoClickBtn.MouseButton1Click:Connect(function()
+    autoClickActive = not autoClickActive
+    toggleBtn(autoClickBtn, autoClickActive)
+end)
+
+-- ============================================================
+--  ABA VISUAL
+-- ============================================================
+local liteBtn, _ = criarItem(paineis["VISUAL"], 0, "MODO LITE", nil)
+toggleBtn(liteBtn, false)
+liteBtn.MouseButton1Click:Connect(function()
+    liteActive = not liteActive
+    toggleBtn(liteBtn, liteActive)
+    task.spawn(function() applyLiteMode(liteActive) end)
+end)
+
+-- ============================================================
+--  ABA ADM
+-- ============================================================
+local ativoBtn, _ = criarItem(paineis["ADM"], 0, "ATIVO 🔒", COR_GOLD)
+ativoBtn.Text = "🔒"
+ativoBtn.TextColor3 = COR_GOLD
+ativoBtn.MouseButton1Click:Connect(function()
+    avisoFrame.Visible = true
+    local som = Instance.new("Sound")
+    som.SoundId = "rbxasset://sounds/action_fail.mp3"
+    som.Volume = 0.5
+    som.Parent = avisoFrame
+    som:Play()
+    task.wait(2)
+    som:Destroy()
+end)
+
+local mostrarIlhasBtn = criarItemSimples(paineis["VISUAL"], 1, "MOSTRAR ILHAS", COR_GOLD)
+local mostrarIlhasLabel = mostrarIlhasBtn
+
+local closeBtn = criarItemSimples(paineis["ADM"], 2, "FECHAR", Color3.fromRGB(255, 80, 80))
 
 -- ============================================================
 --  BOTÃO MINIMIZADO
@@ -530,7 +817,7 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 -- ============================================================
---  TELA DE AVISO
+--  TELA DE AVISO (declarada antes do ativoBtn usá-la)
 -- ============================================================
 local avisoFrame = Instance.new("Frame")
 avisoFrame.Size = UDim2.new(0, 300, 0, 150)
@@ -586,59 +873,10 @@ avisoBtn.MouseButton1Click:Connect(function()
     avisoFrame.Visible = false
 end)
 
--- ============================================================
---  CRIAR BOTÃO
--- ============================================================
-local function createBtn2(col, row, dotColor, labelText, labelColor)
-    local x = PAD_X + col * (BTN_W + PAD_X)
-    local y = START_Y + row * (BTN_H + PAD_Y)
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, BTN_W, 0, BTN_H)
-    btn.Position = UDim2.new(0, x, 0, y)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.BorderSizePixel = 0
-    btn.Text = ""
-    btn.Active = true
-    btn.Parent = frame
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -4, 1, 0)
-    lbl.Position = UDim2.new(0, 2, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = labelColor
-    lbl.Text = labelText
-    lbl.TextScaled = true
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Center
-    lbl.TextYAlignment = Enum.TextYAlignment.Center
-    lbl.Parent = btn
-
-    return btn, lbl
-end
-
--- ============================================================
---  LINHA 0: Ativo | Puxar | Voar
--- ============================================================
-local ativoBtn, ativoLabel = createBtn2(0, 0, Color3.fromRGB(0,255,80), "ATIVO", Color3.fromRGB(0,255,80))
-
-local cadeadoLabel = Instance.new("TextLabel")
-cadeadoLabel.Size = UDim2.new(1, 0, 1, 0)
-cadeadoLabel.Position = UDim2.new(0, 0, 0, 0)
-cadeadoLabel.BackgroundTransparency = 1
-cadeadoLabel.Text = "🔒"
-cadeadoLabel.TextScaled = true
-cadeadoLabel.TextTransparency = 0.5
-cadeadoLabel.TextXAlignment = Enum.TextXAlignment.Center
-cadeadoLabel.TextYAlignment = Enum.TextYAlignment.Center
-cadeadoLabel.Font = Enum.Font.GothamBold
-cadeadoLabel.ZIndex = ativoBtn.ZIndex + 1
-cadeadoLabel.Parent = ativoBtn
-
-ativoLabel.Size = UDim2.new(1, 0, 1, 0)
-ativoLabel.Position = UDim2.new(0, 0, 0, 0)
-
+-- Agora conecta o ativoBtn (avisoFrame já existe)
+local ativoBtn, _ = criarItem(paineis["ADM"], 0, "ATIVO", COR_GOLD)
+ativoBtn.Text = "🔒"
+ativoBtn.TextColor3 = COR_GOLD
 ativoBtn.MouseButton1Click:Connect(function()
     avisoFrame.Visible = true
     local som = Instance.new("Sound")
@@ -649,50 +887,6 @@ ativoBtn.MouseButton1Click:Connect(function()
     task.wait(2)
     som:Destroy()
 end)
-
-local bringMobBtn, bringMobLabel = createBtn2(1, 0, Color3.fromRGB(255,50,50), "PUXAR", Color3.fromRGB(255,50,50))
-bringMobBtn.MouseButton1Click:Connect(function()
-    bringMobActive = not bringMobActive
-    if bringMobActive then
-        bringMobLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        bringMobLabel.Text = "PUXAR"
-    else
-        bringMobLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        bringMobLabel.Text = "PUXAR"
-    end
-end)
-
-local voarBtn, voarLabel = createBtn2(2, 0, Color3.fromRGB(255,50,50), "VOAR", Color3.fromRGB(255,50,50))
-voarBtn.MouseButton1Click:Connect(function()
-    voarActive = not voarActive
-    if voarActive then
-        voarLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        voarLabel.Text = "VOAR"
-    else
-        voarLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        voarLabel.Text = "VOAR"
-    end
-end)
-
--- ============================================================
---  LINHA 1: Sem Afk | Fechar | Vaga
--- ============================================================
-local autoClickBtn, autoClickLabel = createBtn2(0, 1, Color3.fromRGB(255,50,50), "SEM AFK", Color3.fromRGB(255,50,50))
-autoClickBtn.MouseButton1Click:Connect(function()
-    autoClickActive = not autoClickActive
-    if autoClickActive then
-        autoClickLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        autoClickLabel.Text = "SEM AFK"
-    else
-        autoClickLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        autoClickLabel.Text = "SEM AFK"
-    end
-end)
-
-local closeBtn, closeLabel = createBtn2(1, 1, Color3.fromRGB(255,50,50), "FECHAR", Color3.fromRGB(255,50,50))
-
-local mostrarIlhasBtn, mostrarIlhasLabel = createBtn2(2, 1, Color3.fromRGB(255,185,0), "MOSTRAR ILHAS", Color3.fromRGB(255,185,0))
-
 -- ============================================================
 --  PAINEL DE ILHAS — DETECTA O MAR AUTOMATICAMENTE
 -- ============================================================
@@ -971,56 +1165,6 @@ mostrarIlhasBtn.MouseButton1Click:Connect(function()
         ilhasFrame.Visible = not ilhasFrame.Visible
     end
 end)
-
--- ============================================================
---  LINHA 2: Lite | Vaga | Vaga
--- ============================================================
-local liteBtn, liteLabel = createBtn2(0, 2, Color3.fromRGB(255,50,50), "MODO LITE", Color3.fromRGB(255,50,50))
-liteBtn.MouseButton1Click:Connect(function()
-    liteActive = not liteActive
-    if liteActive then
-        liteLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        liteLabel.Text = "MODO LITE"
-    else
-        liteLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        liteLabel.Text = "MODO LITE"
-    end
-    task.spawn(function() applyLiteMode(liteActive) end)
-end)
-local pegarBausBtn, pegarBausLabel = createBtn2(1, 2, Color3.fromRGB(255,50,50), "PEGAR BAUS", Color3.fromRGB(255,50,50))
-pegarBausBtn.MouseButton1Click:Connect(function()
-    pegarBausActive = not pegarBausActive
-    if pegarBausActive then
-        pegarBausLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-        pegarBausLabel.Text = "PEGAR BAUS"
-    else
-        pegarBausLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        pegarBausLabel.Text = "PEGAR BAUS"
-    end
-end)
-local serverHopBtn, serverHopLabel = createBtn2(2, 2, Color3.fromRGB(255,50,50), "SERVER HOP", Color3.fromRGB(255,50,50))
-serverHopBtn.MouseButton1Click:Connect(function()
-    -- Muda cor para indicar que está trocando
-    serverHopLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
-    serverHopLabel.Text = "TROCANDO"
-    task.wait(0.5)
-    pcall(function()
-        local TeleportService = game:GetService("TeleportService")
-        local placeId = game.PlaceId
-        TeleportService:Teleport(placeId, Players.LocalPlayer)
-    end)
-    -- Se falhar, volta ao normal
-    task.wait(3)
-    serverHopLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-    serverHopLabel.Text = "SERVER HOP"
-end)
-
--- ============================================================
---  LINHA 3: Vaga | Vaga | Vaga
--- ============================================================
-createBtn2(0, 3, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
-createBtn2(1, 3, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
-createBtn2(2, 3, Color3.fromRGB(50,50,50), "VAGA", Color3.fromRGB(80,80,80))
 
 -- ============================================================
 --  TELA DE CONFIRMAÇÃO (FECHAR)
@@ -1518,7 +1662,7 @@ task.spawn(function()
                 -- Pega cada baú
                 for i, bau in ipairs(baus) do
                     if not pegarBausActive then break end
-                    if not bau.obj or not bau.obj.Parent then continue end
+                    if bau.obj and bau.obj.Parent then
 
                     pegarBausLabel.Text = "PEGANDO..."
                     bauContadorLabel.Text = ""
@@ -1553,6 +1697,9 @@ task.spawn(function()
                         bauContadorLabel.Text = "Prox: " .. s .. "s"
                         task.wait(1)
                     end
+                    bauContadorLabel.Text = ""
+
+                    end -- fecha if bau.obj
                 end
             end)
             task.wait(1)
