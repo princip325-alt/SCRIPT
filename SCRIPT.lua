@@ -1060,12 +1060,12 @@ frutasTimerLabel.Size = UDim2.new(1, -12, 0, 28)
 frutasTimerLabel.Position = UDim2.new(0, 6, 0, 4)
 frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 frutasTimerLabel.BorderSizePixel = 0
-frutasTimerLabel.Text = "🔄 Toque para atualizar"
+frutasTimerLabel.Text = ""
 frutasTimerLabel.TextSize = 12
 frutasTimerLabel.Font = Enum.Font.GothamBold
-frutasTimerLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
 frutasTimerLabel.TextXAlignment = Enum.TextXAlignment.Center
-frutasTimerLabel.Active = true
+frutasTimerLabel.Active = false
 frutasTimerLabel.ZIndex = 5
 frutasTimerLabel.Parent = paineis["FRUTAS"]
 Instance.new("UICorner", frutasTimerLabel).CornerRadius = UDim.new(0, 6)
@@ -1129,10 +1129,10 @@ local function criarFrutaCard(nome, preco, disponivel, layoutOrder)
     precoLbl.Parent = card
 end
 
-local COOLDOWN_FRUTAS = 60
+local COOLDOWN_FRUTAS = 900  -- 15 minutos
 local ultimaAtualizacaoFrutas = 0
 
--- Label do contador de cooldown (por cima do botão)
+-- Label do contador de cooldown (centralizado, sempre visivel)
 local frutasCooldownLabel = Instance.new("TextLabel")
 frutasCooldownLabel.Size = UDim2.new(1, 0, 1, 0)
 frutasCooldownLabel.Position = UDim2.new(0, 0, 0, 0)
@@ -1144,26 +1144,30 @@ frutasCooldownLabel.Font = Enum.Font.GothamBold
 frutasCooldownLabel.TextXAlignment = Enum.TextXAlignment.Center
 frutasCooldownLabel.TextYAlignment = Enum.TextYAlignment.Center
 frutasCooldownLabel.ZIndex = 10
-frutasCooldownLabel.Visible = false
+frutasCooldownLabel.Visible = true
 frutasCooldownLabel.Parent = frutasTimerLabel
 
+local cooldownAtivo = false
+
 local function iniciarCooldown()
+    if cooldownAtivo then return end
+    cooldownAtivo = true
     frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    frutasTimerLabel.TextColor3 = Color3.fromRGB(50, 50, 60) -- apaga o texto
+    frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
     frutasCooldownLabel.Visible = true
     task.spawn(function()
         local restante = COOLDOWN_FRUTAS
         while restante > 0 do
-            frutasCooldownLabel.Text = tostring(restante)
+            local m = math.floor(restante / 60)
+            local s = restante % 60
+            frutasCooldownLabel.Text = "🔄 " .. string.format("%02d:%02d", m, s)
             task.wait(1)
             restante = restante - 1
         end
-        -- Reseta botão
-        frutasCooldownLabel.Visible = false
-        frutasCooldownLabel.Text = ""
-        frutasTimerLabel.Text = "🔄 Toque para atualizar"
-        frutasTimerLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+        cooldownAtivo = false
+        frutasCooldownLabel.Text = "⌛"
         frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+        task.spawn(function() carregarFrutas(true) end)
     end)
 end
 
@@ -1177,8 +1181,8 @@ local function carregarFrutas(iniciarCD)
         if c:IsA("Frame") then c:Destroy() end
     end
 
-    frutasTimerLabel.Text = "⌛ Carregando..."
-    frutasTimerLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    frutasCooldownLabel.Text = "⌛"
+    frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
 
     local disponiveisSet = {}
 
@@ -1201,8 +1205,8 @@ local function carregarFrutas(iniciarCD)
     end)
 
     if #todasFrutas == 0 then
-        frutasTimerLabel.Text = "❌ Erro ao carregar!"
-        frutasTimerLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        frutasCooldownLabel.Text = "❌"
+        frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
         return
     end
 
@@ -1220,22 +1224,16 @@ local function carregarFrutas(iniciarCD)
         criarFrutaCard(nome, FRUIT_PRICES[nome], disponivel, i)
     end
 
-    frutasTimerLabel.Text = "🔄 Toque para atualizar"
-    frutasTimerLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+    frutasTimerLabel.Text = ""
+    frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
     ultimaAtualizacaoFrutas = tick()
-    if iniciarCD then iniciarCooldown() end
+    iniciarCooldown() -- sempre inicia o cooldown após carregar
 end
 
-frutasTimerLabel.MouseButton1Click:Connect(function()
-    task.spawn(function() carregarFrutas(true) end)
-end)
--- suporte mobile
-frutasTimerLabel.TouchTap:Connect(function()
-    task.spawn(function() carregarFrutas(true) end)
-end)
-frutasTimerLabel.Activated:Connect(function()
-    task.spawn(function() carregarFrutas(true) end)
-end)
+-- clique manual desativado: atualiza automaticamente a cada 15 minutos
+-- suporte mobile (desativado)
+-- frutasTimerLabel.TouchTap desativado
+-- frutasTimerLabel.Activated desativado
 
 -- Carrega ao trocar para aba FRUTAS
 for _, abaBtn in pairs(abaBtns) do
@@ -1264,8 +1262,8 @@ ativoBtn.MouseButton1Click:Connect(function()
     som:Destroy()
 end)
 
-local mostrarIlhasBtn = criarItemSimples(paineis["VISUAL"], 1, "MOSTRAR ILHAS", COR_GOLD)
-local mostrarIlhasLabel = mostrarIlhasBtn
+local mostrarIlhasBtn, mostrarIlhasLabel = criarItem(paineis["VISUAL"], 1, "MOSTRAR ILHAS", COR_GOLD)
+toggleBtn(mostrarIlhasBtn, false)
 
 local closeBtn = criarItemSimples(paineis["ADM"], 2, "FECHAR", Color3.fromRGB(255, 80, 80))
 
@@ -1490,6 +1488,11 @@ Instance.new("UICorner", ilhasFechar).CornerRadius = UDim.new(0, 6)
 
 ilhasFechar.MouseButton1Click:Connect(function()
     ilhasFrame.Visible = false
+    voandoParaIlha = false
+    ilhaSelecionada = nil
+    mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
+    mostrarIlhasLabel.TextColor3 = COR_GOLD
+    toggleBtn(mostrarIlhasBtn, false)
 end)
 
 -- ScrollingFrame para a lista
@@ -1543,6 +1546,7 @@ local function popularIlhas()
             ilhasFrame.Visible = false
             mostrarIlhasLabel.Text = ilha.nome
             mostrarIlhasLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
+            toggleBtn(mostrarIlhasBtn, true)
             ilhaSelecionada = ilha
             voandoParaIlha = true
 
@@ -1597,7 +1601,8 @@ local function popularIlhas()
                             if bgIlha then bgIlha:Destroy() bgIlha = nil end
                             hum:ChangeState(Enum.HumanoidStateType.GettingUp)
                             mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
-                            mostrarIlhasLabel.TextColor3 = Color3.fromRGB(255, 185, 0)
+                            mostrarIlhasLabel.TextColor3 = COR_GOLD
+                            toggleBtn(mostrarIlhasBtn, false)
                             ilhaSelecionada = nil
                             return
                         end
@@ -1643,13 +1648,15 @@ mostrarIlhasBtn.MouseButton1Click:Connect(function()
     if voandoParaIlha then
         -- Cancela o voo
         voandoParaIlha = false
+        toggleBtn(mostrarIlhasBtn, false)
         mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
-        mostrarIlhasLabel.TextColor3 = Color3.fromRGB(255, 185, 0)
+        mostrarIlhasLabel.TextColor3 = COR_GOLD
         ilhaSelecionada = nil
     else
         -- Atualiza lista com o mar atual e abre
         popularIlhas()
         ilhasFrame.Visible = not ilhasFrame.Visible
+        toggleBtn(mostrarIlhasBtn, ilhasFrame.Visible)
     end
 end)
 
