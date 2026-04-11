@@ -1,6 +1,6 @@
 -- ============================================================
 --  BLOX FRUITS — Discord Notify Script (VERSÃO FINAL)
---  Execute no Delta Executor
+--  Execute no Delta Executor v2147483647.716 or Delta X [2147483647.0]
 -- ============================================================
 
 repeat wait() until game:IsLoaded()
@@ -132,7 +132,7 @@ screenGui.Parent = game:GetService("CoreGui")
 -- ============================================================
 --  TELA DE SENHA
 -- ============================================================
-local SENHA_CORRETA = "159753"
+local SENHA_CORRETA = "5555"
 local senhaDesbloqueada = false
 
 local senhaGui = Instance.new("Frame")
@@ -462,9 +462,9 @@ end
 -- ============================================================
 --  FRAME PRINCIPAL — ABAS ESQUERDA / CONTEÚDO DIREITA
 -- ============================================================
-local FRAME_W   = 320
-local FRAME_H   = 300
-local TAB_W     = 90
+local FRAME_W   = 420
+local FRAME_H   = 320
+local TAB_W     = 110
 local TITLE_H   = 28
 
 local frame = Instance.new("Frame")
@@ -546,8 +546,8 @@ contentScroll.Parent = frame
 local contentCol = contentScroll -- alias para compatibilidade
 
 -- Abas e painéis
-local ABAS = {"STATUS", "AUTO FARM", "JOGADOR", "VISUAL", "FARM", "FRUTAS", "ADM"}
-local abaAtiva = "STATUS"
+local ABAS = {"🔎 STATUS", "AUTO FARM", "JOGADOR", "VISUAL", "FARM", "👑 ADM", "⚙️ CONFIG", "🛒 SHOP", "👤 PVP", "📌 TELEPORT", "🍏 FRUITS"}
+local abaAtiva = "🔎 STATUS"
 local paineis = {}
 local abaBtns = {}
 local TAB_H = 44
@@ -653,7 +653,7 @@ for _, nome in ipairs(ABAS) do
 end
 
 -- ============================================================
---  CRIAR ITEM — nome esquerda | linha | botão ON/OFF direita
+--  CRIAR ITEM — checkbox style
 -- ============================================================
 local ITEM_H   = 44
 local ITEM_PAD = 6
@@ -663,17 +663,41 @@ local COR_ON   = Color3.fromRGB(0, 255, 80)
 local COR_GOLD = Color3.fromRGB(255, 185, 0)
 
 local function toggleBtn(btn, estado)
-    if estado then
-        btn.Text = "ON"
-        btn.TextColor3 = COR_ON
-        btn.BackgroundColor3 = Color3.fromRGB(0, 55, 22)
-        btn:FindFirstChildOfClass("UIStroke").Color = COR_ON
-    else
-        btn.Text = "OFF"
-        btn.TextColor3 = COR_OFF
-        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        btn:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(55, 55, 70)
+    -- Remove tudo que tiver dentro
+    for _, child in ipairs(btn:GetChildren()) do
+        if child.Name ~= "UICorner" and child.Name ~= "UIStroke" then
+            child:Destroy()
+        end
     end
+    
+    local toggleSwitch = Instance.new("Frame")
+    toggleSwitch.Name = "ToggleSwitch"
+    toggleSwitch.Size = UDim2.new(0, 50, 0, 28)
+    toggleSwitch.Position = UDim2.new(1, -58, 0.5, -14)
+    toggleSwitch.BackgroundColor3 = estado and Color3.fromRGB(100, 180, 100) or Color3.fromRGB(150, 150, 150)
+    toggleSwitch.BorderSizePixel = 0
+    toggleSwitch.Parent = btn
+    Instance.new("UICorner", toggleSwitch).CornerRadius = UDim.new(0, 14)
+    
+    local bolinha = Instance.new("Frame")
+    bolinha.Name = "Bolinha"
+    bolinha.Size = UDim2.new(0, 24, 0, 24)
+    bolinha.Position = estado and UDim2.new(0, 24, 0.5, -12) or UDim2.new(0, 2, 0.5, -12)
+    bolinha.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    bolinha.BorderSizePixel = 0
+    bolinha.Parent = toggleSwitch
+    Instance.new("UICorner", bolinha).CornerRadius = UDim.new(0, 12)
+    
+    -- Animação suave da bolinha
+    local tweenInfo = TweenInfo.new(
+        0.2,
+        Enum.EasingStyle.Quad,
+        Enum.EasingDirection.InOut
+    )
+    local tween = TweenService:Create(bolinha, tweenInfo, {
+        Position = estado and UDim2.new(0, 24, 0.5, -12) or UDim2.new(0, 2, 0.5, -12)
+    })
+    tween:Play()
 end
 
 local function criarItem(painel, row, nomeTexto, corNome)
@@ -686,10 +710,9 @@ local function criarItem(painel, row, nomeTexto, corNome)
     bg.Parent = painel
     Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 8)
     Instance.new("UIStroke", bg).Color = Color3.fromRGB(38, 38, 52)
-    Instance.new("UIStroke", bg).Thickness = 1
 
     local nomeLbl = Instance.new("TextLabel")
-    nomeLbl.Size = UDim2.new(0.58, 0, 1, 0)
+    nomeLbl.Size = UDim2.new(0.72, 0, 1, 0)
     nomeLbl.Position = UDim2.new(0, 10, 0, 0)
     nomeLbl.BackgroundTransparency = 1
     nomeLbl.TextColor3 = corNome or Color3.fromRGB(210, 210, 210)
@@ -699,28 +722,31 @@ local function criarItem(painel, row, nomeTexto, corNome)
     nomeLbl.TextXAlignment = Enum.TextXAlignment.Left
     nomeLbl.Parent = bg
 
-    local div = Instance.new("Frame")
-    div.Size = UDim2.new(0, 1, 0.55, 0)
-    div.Position = UDim2.new(0.6, 0, 0.225, 0)
-    div.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-    div.BorderSizePixel = 0
-    div.Parent = bg
-
+    -- Checkbox quadrado
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.36, -8, 0.6, 0)
-    btn.Position = UDim2.new(0.62, 4, 0.2, 0)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    btn.Size = UDim2.new(0, 28, 0, 28)
+    btn.Position = UDim2.new(1, -38, 0.5, -14)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
     btn.BorderSizePixel = 0
-    btn.Text = "OFF"
-    btn.TextSize = 15
-    btn.Font = Enum.Font.GothamBold
-    btn.TextColor3 = COR_OFF
+    btn.Text = ""
     btn.Active = true
     btn.Parent = bg
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
     local s = Instance.new("UIStroke", btn)
     s.Color = Color3.fromRGB(55, 55, 70)
-    s.Thickness = 1
+    s.Thickness = 1.5
+
+    -- Checkmark (visto de confirmacao)
+    local check = Instance.new("TextLabel")
+    check.Name = "CheckMark"
+    check.Size = UDim2.new(1, 0, 1, 0)
+    check.BackgroundTransparency = 1
+    check.Text = "✓"
+    check.TextColor3 = COR_ON
+    check.TextScaled = true
+    check.Font = Enum.Font.GothamBold
+    check.Visible = false
+    check.Parent = btn
 
     return btn, nomeLbl
 end
@@ -760,7 +786,7 @@ statusTitulo.Text = "⏱️ Tempo Ativo"
 statusTitulo.TextSize = 15
 statusTitulo.Font = Enum.Font.GothamBold
 statusTitulo.TextXAlignment = Enum.TextXAlignment.Left
-statusTitulo.Parent = paineis["STATUS"]
+statusTitulo.Parent = paineis["🔎 STATUS"]
 
 -- Card contador
 local cardTempo = Instance.new("Frame")
@@ -768,7 +794,7 @@ cardTempo.Size = UDim2.new(1, -12, 0, 44)
 cardTempo.Position = UDim2.new(0, 6, 0, 42)
 cardTempo.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 cardTempo.BorderSizePixel = 0
-cardTempo.Parent = paineis["STATUS"]
+cardTempo.Parent = paineis["🔎 STATUS"]
 Instance.new("UICorner", cardTempo).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", cardTempo).Color = Color3.fromRGB(38, 38, 52)
 
@@ -800,7 +826,7 @@ cardPlayers.Size = UDim2.new(1, -12, 0, 44)
 cardPlayers.Position = UDim2.new(0, 6, 0, 92)
 cardPlayers.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 cardPlayers.BorderSizePixel = 0
-cardPlayers.Parent = paineis["STATUS"]
+cardPlayers.Parent = paineis["🔎 STATUS"]
 Instance.new("UICorner", cardPlayers).CornerRadius = UDim.new(0, 8)
 Instance.new("UIStroke", cardPlayers).Color = Color3.fromRGB(38, 38, 52)
 
@@ -826,11 +852,188 @@ playersValor.Font = Enum.Font.GothamBold
 playersValor.TextXAlignment = Enum.TextXAlignment.Right
 playersValor.Parent = cardPlayers
 
+-- Card Dispositivo (MOBILE ou PC)
+local cardDispositivo = Instance.new("Frame")
+cardDispositivo.Size = UDim2.new(1, -12, 0, 44)
+cardDispositivo.Position = UDim2.new(0, 6, 0, 142)
+cardDispositivo.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+cardDispositivo.BorderSizePixel = 0
+cardDispositivo.Parent = paineis["🔎 STATUS"]
+Instance.new("UICorner", cardDispositivo).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", cardDispositivo).Color = Color3.fromRGB(38, 38, 52)
+
+local dispositivoNome = Instance.new("TextLabel")
+dispositivoNome.Size = UDim2.new(0.5, 0, 1, 0)
+dispositivoNome.Position = UDim2.new(0, 10, 0, 0)
+dispositivoNome.BackgroundTransparency = 1
+dispositivoNome.TextColor3 = Color3.fromRGB(180, 180, 180)
+dispositivoNome.Text = "Dispositivo"
+dispositivoNome.TextSize = 14
+dispositivoNome.Font = Enum.Font.GothamBold
+dispositivoNome.TextXAlignment = Enum.TextXAlignment.Left
+dispositivoNome.Parent = cardDispositivo
+
+local dispositivoValor = Instance.new("TextLabel")
+dispositivoValor.Size = UDim2.new(0.45, 0, 1, 0)
+dispositivoValor.Position = UDim2.new(0.53, 0, 0, 0)
+dispositivoValor.BackgroundTransparency = 1
+dispositivoValor.TextColor3 = Color3.fromRGB(255, 200, 0)
+dispositivoValor.Text = "?"
+dispositivoValor.TextSize = 15
+dispositivoValor.Font = Enum.Font.GothamBold
+dispositivoValor.TextXAlignment = Enum.TextXAlignment.Right
+dispositivoValor.Parent = cardDispositivo
+
+-- ============================================================
+--  CARD: TEMPO DO SERVIDOR (uptime via DistributedGameTime)
+-- ============================================================
+local cardServidorUptime = Instance.new("Frame")
+cardServidorUptime.Size = UDim2.new(1, -12, 0, 44)
+cardServidorUptime.Position = UDim2.new(0, 6, 0, 192)
+cardServidorUptime.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+cardServidorUptime.BorderSizePixel = 0
+cardServidorUptime.Parent = paineis["🔎 STATUS"]
+Instance.new("UICorner", cardServidorUptime).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", cardServidorUptime).Color = Color3.fromRGB(38, 38, 52)
+
+local servidorUptimeNome = Instance.new("TextLabel")
+servidorUptimeNome.Size = UDim2.new(0.55, 0, 1, 0)
+servidorUptimeNome.Position = UDim2.new(0, 10, 0, 0)
+servidorUptimeNome.BackgroundTransparency = 1
+servidorUptimeNome.TextColor3 = Color3.fromRGB(180, 180, 180)
+servidorUptimeNome.Text = "Tempo do Servidor"
+servidorUptimeNome.TextSize = 13
+servidorUptimeNome.Font = Enum.Font.GothamBold
+servidorUptimeNome.TextXAlignment = Enum.TextXAlignment.Left
+servidorUptimeNome.Parent = cardServidorUptime
+
+local servidorUptimeValor = Instance.new("TextLabel")
+servidorUptimeValor.Size = UDim2.new(0.42, 0, 1, 0)
+servidorUptimeValor.Position = UDim2.new(0.56, 0, 0, 0)
+servidorUptimeValor.BackgroundTransparency = 1
+servidorUptimeValor.TextColor3 = Color3.fromRGB(255, 140, 0)
+servidorUptimeValor.Text = "00:00:00"
+servidorUptimeValor.TextSize = 15
+servidorUptimeValor.Font = Enum.Font.GothamBold
+servidorUptimeValor.TextXAlignment = Enum.TextXAlignment.Right
+servidorUptimeValor.Parent = cardServidorUptime
+
+-- ============================================================
+--  CARD: HORA ATUAL COM SELETOR DE FUSO HORARIO
+-- ============================================================
+local FUSOS = {
+    { nome = "Brasil (BRT -3)",          offset = -3   },
+    { nome = "Portugal (WET UTC+0)",     offset = 0    },
+    { nome = "EUA - New York (EST -5)",  offset = -5   },
+    { nome = "EUA - Los Angeles (-8)",   offset = -8   },
+    { nome = "Londres (GMT UTC+0)",      offset = 0    },
+    { nome = "Franca/Alemanha (CET +1)", offset = 1    },
+    { nome = "Russia - Moscou (+3)",     offset = 3    },
+    { nome = "Dubai (GST +4)",           offset = 4    },
+    { nome = "India (IST +5:30)",        offset = 5.5  },
+    { nome = "China (CST +8)",           offset = 8    },
+    { nome = "Japao (JST +9)",           offset = 9    },
+    { nome = "Australia - Sydney (+10)", offset = 10   },
+    { nome = "Africa do Sul (SAST +2)",  offset = 2    },
+    { nome = "Mexico (CST -6)",          offset = -6   },
+    { nome = "Argentina (ART -3)",       offset = -3   },
+    { nome = "Colombia/Peru (-5)",       offset = -5   },
+    { nome = "Chile (CLT -4)",           offset = -4   },
+    { nome = "UTC (Padrao Global)",      offset = 0    },
+}
+local fusoAtualIdx = 1
+
+local cardHora = Instance.new("Frame")
+cardHora.Size = UDim2.new(1, -12, 0, 80)
+cardHora.Position = UDim2.new(0, 6, 0, 242)
+cardHora.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+cardHora.BorderSizePixel = 0
+cardHora.Parent = paineis["🔎 STATUS"]
+Instance.new("UICorner", cardHora).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", cardHora).Color = Color3.fromRGB(38, 38, 52)
+
+local horaLabel = Instance.new("TextLabel")
+horaLabel.Size = UDim2.new(0.5, 0, 0, 28)
+horaLabel.Position = UDim2.new(0, 10, 0, 4)
+horaLabel.BackgroundTransparency = 1
+horaLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+horaLabel.Text = "Hora Atual"
+horaLabel.TextSize = 13
+horaLabel.Font = Enum.Font.GothamBold
+horaLabel.TextXAlignment = Enum.TextXAlignment.Left
+horaLabel.Parent = cardHora
+
+local horaValor = Instance.new("TextLabel")
+horaValor.Size = UDim2.new(0.42, 0, 0, 28)
+horaValor.Position = UDim2.new(0.56, 0, 0, 4)
+horaValor.BackgroundTransparency = 1
+horaValor.TextColor3 = Color3.fromRGB(100, 220, 255)
+horaValor.Text = "00:00:00"
+horaValor.TextSize = 15
+horaValor.Font = Enum.Font.GothamBold
+horaValor.TextXAlignment = Enum.TextXAlignment.Right
+horaValor.Parent = cardHora
+
+local fusoBtnEsq = Instance.new("TextButton")
+fusoBtnEsq.Size = UDim2.new(0, 28, 0, 26)
+fusoBtnEsq.Position = UDim2.new(0, 6, 0, 40)
+fusoBtnEsq.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+fusoBtnEsq.BorderSizePixel = 0
+fusoBtnEsq.Text = "<"
+fusoBtnEsq.TextColor3 = Color3.fromRGB(200, 200, 200)
+fusoBtnEsq.TextSize = 16
+fusoBtnEsq.Font = Enum.Font.GothamBold
+fusoBtnEsq.Parent = cardHora
+Instance.new("UICorner", fusoBtnEsq).CornerRadius = UDim.new(0, 6)
+
+local fusoBtnDir = Instance.new("TextButton")
+fusoBtnDir.Size = UDim2.new(0, 28, 0, 26)
+fusoBtnDir.Position = UDim2.new(1, -34, 0, 40)
+fusoBtnDir.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+fusoBtnDir.BorderSizePixel = 0
+fusoBtnDir.Text = ">"
+fusoBtnDir.TextColor3 = Color3.fromRGB(200, 200, 200)
+fusoBtnDir.TextSize = 16
+fusoBtnDir.Font = Enum.Font.GothamBold
+fusoBtnDir.Parent = cardHora
+Instance.new("UICorner", fusoBtnDir).CornerRadius = UDim.new(0, 6)
+
+local fusoNomeLabel = Instance.new("TextLabel")
+fusoNomeLabel.Size = UDim2.new(1, -76, 0, 26)
+fusoNomeLabel.Position = UDim2.new(0, 38, 0, 40)
+fusoNomeLabel.BackgroundTransparency = 1
+fusoNomeLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+fusoNomeLabel.Text = FUSOS[fusoAtualIdx].nome
+fusoNomeLabel.TextSize = 11
+fusoNomeLabel.Font = Enum.Font.GothamBold
+fusoNomeLabel.TextXAlignment = Enum.TextXAlignment.Center
+fusoNomeLabel.TextWrapped = true
+fusoNomeLabel.Parent = cardHora
+
+fusoBtnEsq.MouseButton1Click:Connect(function()
+    fusoAtualIdx = fusoAtualIdx - 1
+    if fusoAtualIdx < 1 then fusoAtualIdx = #FUSOS end
+    fusoNomeLabel.Text = FUSOS[fusoAtualIdx].nome
+end)
+fusoBtnDir.MouseButton1Click:Connect(function()
+    fusoAtualIdx = fusoAtualIdx + 1
+    if fusoAtualIdx > #FUSOS then fusoAtualIdx = 1 end
+    fusoNomeLabel.Text = FUSOS[fusoAtualIdx].nome
+end)
+
+local function formatarHoraFuso(utcTimestamp, offsetHoras)
+    local totalSeg = utcTimestamp + math.floor(offsetHoras * 3600)
+    local h = math.floor((totalSeg / 3600) % 24)
+    local m = math.floor((totalSeg / 60) % 60)
+    local s = math.floor(totalSeg % 60)
+    return string.format("%02d:%02d:%02d", h, m, s)
+end
+
 -- Loop atualiza status
 task.spawn(function()
     while running do
         pcall(function()
-            -- Tempo ativo
+            -- Tempo ativo do jogador
             local elapsed = tick() - scriptStartTime
             local h = math.floor(elapsed / 3600)
             local m = math.floor((elapsed % 3600) / 60)
@@ -838,6 +1041,23 @@ task.spawn(function()
             tempoValor.Text = string.format("%02d:%02d:%02d", h, m, s)
             -- Players
             playersValor.Text = tostring(#Players:GetPlayers()) .. "/" .. tostring(Players.MaxPlayers)
+            -- Dispositivo
+            local lastInput = UIS:GetLastInputType()
+            if lastInput == Enum.UserInputType.Touch or lastInput == Enum.UserInputType.Gamepad1 then
+                dispositivoValor.Text = "📲 MOBILE"
+                dispositivoValor.TextColor3 = Color3.fromRGB(100, 200, 255)
+            else
+                dispositivoValor.Text = "🖥️ PC"
+                dispositivoValor.TextColor3 = Color3.fromRGB(255, 185, 0)
+            end
+            -- Tempo do servidor (workspace.DistributedGameTime = segundos desde que o server abriu)
+            local serverUptime = workspace.DistributedGameTime
+            local su_h = math.floor(serverUptime / 3600)
+            local su_m = math.floor((serverUptime % 3600) / 60)
+            local su_s = math.floor(serverUptime % 60)
+            servidorUptimeValor.Text = string.format("%02d:%02d:%02d", su_h, su_m, su_s)
+            -- Hora atual no fuso selecionado
+            horaValor.Text = formatarHoraFuso(os.time(), FUSOS[fusoAtualIdx].offset)
         end)
         task.wait(1)
     end
@@ -855,7 +1075,7 @@ farmTitulo.Size = UDim2.new(1, -12, 0, 30)
 farmTitulo.Position = UDim2.new(0, 6, 0, 8)
 farmTitulo.BackgroundTransparency = 1
 farmTitulo.TextColor3 = Color3.fromRGB(255, 215, 0)
-farmTitulo.Text = "⚔️ Weapon Settings"
+farmTitulo.Text = "WEAPON SETTINGS"
 farmTitulo.TextSize = 15
 farmTitulo.Font = Enum.Font.GothamBold
 farmTitulo.TextXAlignment = Enum.TextXAlignment.Left
@@ -965,37 +1185,14 @@ bringMobBtn.MouseButton1Click:Connect(function()
     toggleBtn(bringMobBtn, bringMobActive)
 end)
 
-local pegarBausBtn, _ = criarItem(paineis["AUTO FARM"], 1, "PEGAR BAÚS", nil)
+local pegarBausBtn, pegarBausLabel = criarItem(paineis["AUTO FARM"], 1, "PEGAR BAÚS", nil)
 toggleBtn(pegarBausBtn, false)
-
-local bauContadorLabel = Instance.new("TextLabel")
-bauContadorLabel.Size = UDim2.new(1, 0, 1, 0)
-bauContadorLabel.BackgroundTransparency = 1
-bauContadorLabel.TextColor3 = COR_GOLD
-bauContadorLabel.Text = ""
-bauContadorLabel.TextSize = 9
-bauContadorLabel.Font = Enum.Font.GothamBold
-bauContadorLabel.ZIndex = pegarBausBtn.ZIndex + 1
-bauContadorLabel.Parent = pegarBausBtn
 
 pegarBausBtn.MouseButton1Click:Connect(function()
     pegarBausActive = not pegarBausActive
     toggleBtn(pegarBausBtn, pegarBausActive)
-    if not pegarBausActive then bauContadorLabel.Text = "" end
 end)
 
-local serverHopBtn = criarItemSimples(paineis["AUTO FARM"], 2, "SERVER HOP", COR_OFF)
-serverHopBtn.MouseButton1Click:Connect(function()
-    serverHopBtn.Text = "TROCANDO..."
-    serverHopBtn.TextColor3 = Color3.fromRGB(255, 200, 0)
-    task.wait(0.5)
-    pcall(function()
-        game:GetService("TeleportService"):Teleport(game.PlaceId, Players.LocalPlayer)
-    end)
-    task.wait(3)
-    serverHopBtn.Text = "SERVER HOP"
-    serverHopBtn.TextColor3 = COR_OFF
-end)
 
 -- ============================================================
 --  ABA JOGADOR
@@ -1025,247 +1222,230 @@ liteBtn.MouseButton1Click:Connect(function()
     task.spawn(function() applyLiteMode(liteActive) end)
 end)
 
--- ============================================================
---  ABA FRUTAS — GetFeaturedFruits sem precisar abrir loja
--- ============================================================
-
--- Preços conhecidos das frutas (do spy)
-local FRUIT_PRICES = {
-    ["Rocket-Rocket"] = "$5,000", ["Spin-Spin"] = "$7,500",
-    ["Blade-Blade"] = "$30,000", ["Bomb-Bomb"] = "$30,000",
-    ["Smoke-Smoke"] = "$30,000", ["Spring-Spring"] = "$60,000",
-    ["Spike-Spike"] = "$75,000", ["Flame-Flame"] = "$250,000",
-    ["Ice-Ice"] = "$375,000", ["Sand-Sand"] = "$420,000",
-    ["Dark-Dark"] = "$500,000", ["Eagle-Eagle"] = "$530,000",
-    ["Diamond-Diamond"] = "$600,000", ["Light-Light"] = "$650,000",
-    ["Rubber-Rubber"] = "$750,000", ["Ghost-Ghost"] = "$900,000",
-    ["Magma-Magma"] = "$850,000", ["Quake-Quake"] = "$1,000,000",
-    ["Buddha-Buddha"] = "$1,200,000", ["Love-Love"] = "$1,300,000",
-    ["Spider-Spider"] = "$1,500,000", ["Sound-Sound"] = "$1,700,000",
-    ["Phoenix-Phoenix"] = "$1,800,000", ["Portal-Portal"] = "$1,900,000",
-    ["Lightning-Lightning"] = "$2,000,000", ["Pain-Pain"] = "$2,100,000",
-    ["Blizzard-Blizzard"] = "$2,100,000", ["Gravity-Gravity"] = "$2,500,000",
-    ["Mammoth-Mammoth"] = "$2,700,000", ["T-Rex-T-Rex"] = "$2,700,000",
-    ["Dough-Dough"] = "$2,800,000", ["Shadow-Shadow"] = "$2,900,000",
-    ["Venom-Venom"] = "$3,000,000", ["Gas-Gas"] = "$3,200,000",
-    ["Spirit-Spirit"] = "$3,400,000", ["Tiger-Tiger"] = "$3,500,000",
-    ["Yeti-Yeti"] = "$3,500,000", ["Kitsune-Kitsune"] = "$4,000,000",
-    ["Control-Control"] = "$3,800,000", ["Dragon-Dragon"] = "$3,500,000",
-    ["Creation-Creation"] = "$300,000",
+-- REMOVER LAVA
+local removerLavaActive = false
+local lavaConn          = nil
+local lavaDescConn      = nil
+local LAVA_NOMES = {
+    "lava","magma","volcano","lavaflo","lavapool",
+    "lavablock","lavapart","lavafloor","magmablock",
+    "magmafloor","magmapart","hotblock","lavarock",
+    "lavaisle","prehistoriclava","lavatile",
 }
+local lavaRemovidos = {}
 
--- Botão atualizar frutas
-local frutasTimerLabel = Instance.new("TextButton")
-frutasTimerLabel.Size = UDim2.new(1, -12, 0, 28)
-frutasTimerLabel.Position = UDim2.new(0, 6, 0, 4)
-frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-frutasTimerLabel.BorderSizePixel = 0
-frutasTimerLabel.Text = ""
-frutasTimerLabel.TextSize = 12
-frutasTimerLabel.Font = Enum.Font.GothamBold
-frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
-frutasTimerLabel.TextXAlignment = Enum.TextXAlignment.Center
-frutasTimerLabel.Active = false
-frutasTimerLabel.ZIndex = 5
-frutasTimerLabel.Parent = paineis["FRUTAS"]
-Instance.new("UICorner", frutasTimerLabel).CornerRadius = UDim.new(0, 6)
-
--- ScrollingFrame para lista de frutas (começa depois do botão)
-local frutasScroll = Instance.new("ScrollingFrame")
-frutasScroll.Size = UDim2.new(1, -12, 1, -40)
-frutasScroll.Position = UDim2.new(0, 6, 0, 38)
-frutasScroll.BackgroundTransparency = 1
-frutasScroll.BorderSizePixel = 0
-frutasScroll.ScrollBarThickness = 3
-frutasScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 100)
-frutasScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-frutasScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-frutasScroll.ZIndex = 2
-frutasScroll.Parent = paineis["FRUTAS"]
-
-Instance.new("UIListLayout", frutasScroll).Padding = UDim.new(0, 3)
-
-
-local function criarFrutaCard(nome, preco, disponivel, layoutOrder)
-    local nomeSimples = nome:match("^(.-)%-") or nome
-
-    local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, -4, 0, 36)
-    card.BackgroundColor3 = disponivel
-        and Color3.fromRGB(15, 40, 20)
-        or Color3.fromRGB(22, 22, 30)
-    card.BorderSizePixel = 0
-    card.LayoutOrder = layoutOrder
-    card.Parent = frutasScroll
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 7)
-    local cs = Instance.new("UIStroke", card)
-    cs.Color = disponivel
-        and Color3.fromRGB(0, 180, 60)
-        or Color3.fromRGB(38, 38, 52)
-    cs.Thickness = 1
-
-    local nomeLbl = Instance.new("TextLabel")
-    nomeLbl.Size = UDim2.new(0.6, 0, 1, 0)
-    nomeLbl.Position = UDim2.new(0, 8, 0, 0)
-    nomeLbl.BackgroundTransparency = 1
-    nomeLbl.TextColor3 = disponivel
-        and Color3.fromRGB(0, 255, 80)
-        or Color3.fromRGB(150, 150, 150)
-    nomeLbl.Text = nomeSimples
-    nomeLbl.TextSize = 13
-    nomeLbl.Font = Enum.Font.GothamBold
-    nomeLbl.TextXAlignment = Enum.TextXAlignment.Left
-    nomeLbl.Parent = card
-
-    local precoLbl = Instance.new("TextLabel")
-    precoLbl.Size = UDim2.new(0.38, 0, 1, 0)
-    precoLbl.Position = UDim2.new(0.62, 0, 0, 0)
-    precoLbl.BackgroundTransparency = 1
-    precoLbl.TextColor3 = disponivel and COR_GOLD or Color3.fromRGB(80, 80, 80)
-    precoLbl.Text = disponivel and (preco or "?") or "Esgotado"
-    precoLbl.TextSize = 12
-    precoLbl.Font = Enum.Font.GothamBold
-    precoLbl.TextXAlignment = Enum.TextXAlignment.Right
-    precoLbl.Parent = card
+local function ehLava(obj)
+    if not obj:IsA("BasePart") then return false end
+    local nome = string.lower(obj.Name)
+    for _, n in ipairs(LAVA_NOMES) do
+        if string.find(nome, n) then return true end
+    end
+    -- Cor laranja/vermelha escura = lava
+    local r, g, b = obj.Color.R, obj.Color.G, obj.Color.B
+    if r > 0.6 and g < 0.35 and b < 0.15 then return true end
+    return false
 end
 
-local COOLDOWN_FRUTAS = 900  -- 15 minutos
-local ultimaAtualizacaoFrutas = 0
-
--- Label do contador de cooldown (centralizado, sempre visivel)
-local frutasCooldownLabel = Instance.new("TextLabel")
-frutasCooldownLabel.Size = UDim2.new(1, 0, 1, 0)
-frutasCooldownLabel.Position = UDim2.new(0, 0, 0, 0)
-frutasCooldownLabel.BackgroundTransparency = 1
-frutasCooldownLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-frutasCooldownLabel.Text = ""
-frutasCooldownLabel.TextSize = 14
-frutasCooldownLabel.Font = Enum.Font.GothamBold
-frutasCooldownLabel.TextXAlignment = Enum.TextXAlignment.Center
-frutasCooldownLabel.TextYAlignment = Enum.TextYAlignment.Center
-frutasCooldownLabel.ZIndex = 10
-frutasCooldownLabel.Visible = true
-frutasCooldownLabel.Parent = frutasTimerLabel
-
-local cooldownAtivo = false
-
-local function iniciarCooldown()
-    if cooldownAtivo then return end
-    cooldownAtivo = true
-    frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
-    frutasCooldownLabel.Visible = true
-    task.spawn(function()
-        local restante = COOLDOWN_FRUTAS
-        while restante > 0 do
-            local m = math.floor(restante / 60)
-            local s = restante % 60
-            frutasCooldownLabel.Text = "🔄 " .. string.format("%02d:%02d", m, s)
-            task.wait(1)
-            restante = restante - 1
-        end
-        cooldownAtivo = false
-        frutasCooldownLabel.Text = "⌛"
-        frutasTimerLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-        task.spawn(function() carregarFrutas(true) end)
-    end)
+local function esconderLava(obj)
+    if not ehLava(obj) then return end
+    table.insert(lavaRemovidos, {obj = obj, transparency = obj.Transparency, canCollide = obj.CanCollide})
+    obj.Transparency = 1
+    obj.CanCollide   = false
 end
 
-local function carregarFrutas(iniciarCD)
-    local agora = tick()
-    if (agora - ultimaAtualizacaoFrutas) < COOLDOWN_FRUTAS and ultimaAtualizacaoFrutas ~= 0 then
-        return
-    end
-    -- Limpa lista
-    for _, c in ipairs(frutasScroll:GetChildren()) do
-        if c:IsA("Frame") then c:Destroy() end
-    end
-
-    frutasCooldownLabel.Text = "⌛"
-    frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
-
-    local disponiveisSet = {}
-
-    pcall(function()
-        local gff = require(RS.Modules.Asset.GetFeaturedFruits)
-        if type(gff) == "function" then
-            local lista = gff()
-            if type(lista) == "table" then
-                for _, nome in ipairs(lista) do
-                    disponiveisSet[nome] = true
-                end
-            end
-        end
-    end)
-
-    local todasFrutas = {}
-    pcall(function()
-        local fi = require(RS.FruitInfo)
-        todasFrutas = fi.getNames() or {}
-    end)
-
-    if #todasFrutas == 0 then
-        frutasCooldownLabel.Text = "❌"
-        frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
-        return
-    end
-
-    table.sort(todasFrutas, function(a, b)
-        local da = disponiveisSet[a] and 1 or 0
-        local db = disponiveisSet[b] and 1 or 0
-        if da ~= db then return da > db end
-        return a < b
-    end)
-
-    local qtdDisponivel = 0
-    for i, nome in ipairs(todasFrutas) do
-        local disponivel = disponiveisSet[nome] == true
-        if disponivel then qtdDisponivel = qtdDisponivel + 1 end
-        criarFrutaCard(nome, FRUIT_PRICES[nome], disponivel, i)
-    end
-
-    frutasTimerLabel.Text = ""
-    frutasTimerLabel.TextColor3 = Color3.fromRGB(15, 15, 20)
-    ultimaAtualizacaoFrutas = tick()
-    iniciarCooldown() -- sempre inicia o cooldown após carregar
-end
-
--- clique manual desativado: atualiza automaticamente a cada 15 minutos
--- suporte mobile (desativado)
--- frutasTimerLabel.TouchTap desativado
--- frutasTimerLabel.Activated desativado
-
--- Carrega ao trocar para aba FRUTAS
-for _, abaBtn in pairs(abaBtns) do
-    if abaBtn.Text == "FRUTAS" then
-        abaBtn.MouseButton1Click:Connect(function()
-            if not frutasScroll:FindFirstChildOfClass("Frame") then
-                task.spawn(function() carregarFrutas(false) end)
+local function restaurarLava()
+    for _, entry in ipairs(lavaRemovidos) do
+        pcall(function()
+            if entry.obj and entry.obj.Parent then
+                entry.obj.Transparency = entry.transparency
+                entry.obj.CanCollide   = entry.canCollide
             end
         end)
     end
+    lavaRemovidos = {}
 end
 
--- Carrega automaticamente ao iniciar
-task.spawn(function() carregarFrutas(false) end)
-local ativoBtn, _ = criarItem(paineis["ADM"], 0, "ATIVO 🔒", COR_GOLD)
-ativoBtn.Text = "🔒"
-ativoBtn.TextColor3 = COR_GOLD
-ativoBtn.MouseButton1Click:Connect(function()
-    avisoFrame.Visible = true
-    local som = Instance.new("Sound")
-    som.SoundId = "rbxasset://sounds/action_fail.mp3"
-    som.Volume = 0.5
-    som.Parent = avisoFrame
-    som:Play()
-    task.wait(2)
-    som:Destroy()
+local removerLavaBtn, _ = criarItem(paineis["VISUAL"], 1, "REMOVER LAVA", nil)
+toggleBtn(removerLavaBtn, false)
+removerLavaBtn.MouseButton1Click:Connect(function()
+    removerLavaActive = not removerLavaActive
+    toggleBtn(removerLavaBtn, removerLavaActive)
+    if removerLavaActive then
+        -- Remove uma vez só tudo que já existe
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            pcall(esconderLava, obj)
+        end
+        -- Escuta novos objetos que forem adicionados (sem loop)
+        lavaDescConn = workspace.DescendantAdded:Connect(function(obj)
+            pcall(esconderLava, obj)
+        end)
+        -- Invulnerabilidade: só mantém vida cheia, leve
+        lavaConn = RunService.Heartbeat:Connect(function()
+            local char = Players.LocalPlayer.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health < hum.MaxHealth then
+                hum.Health = hum.MaxHealth
+            end
+        end)
+    else
+        if lavaConn     then lavaConn:Disconnect()     lavaConn     = nil end
+        if lavaDescConn then lavaDescConn:Disconnect() lavaDescConn = nil end
+        restaurarLava()
+        local char = Players.LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then hum.MaxHealth = 100 hum.Health = 100 end
+        end
+    end
 end)
 
-local mostrarIlhasBtn, mostrarIlhasLabel = criarItem(paineis["VISUAL"], 1, "MOSTRAR ILHAS", COR_GOLD)
-toggleBtn(mostrarIlhasBtn, false)
+-- ANDAR NA ÁGUA
+local andarAguaActive      = false
+local andarAguaConn        = nil
+local andarAguaRespawnConn = nil
+local plataformaAgua       = nil
 
-local closeBtn = criarItemSimples(paineis["ADM"], 2, "FECHAR", Color3.fromRGB(255, 80, 80))
+local function criarPlataforma()
+    local p = Instance.new("Part")
+    p.Name         = "PlataformaAgua"
+    p.Size         = Vector3.new(6, 0.5, 6)
+    p.Anchored     = true
+    p.CanCollide   = true
+    p.Transparency = 0
+    p.Color        = Color3.fromRGB(200, 0, 0)
+    p.Material     = Enum.Material.SmoothPlastic
+    p.CastShadow   = false
+    p.Parent       = workspace
+    return p
+end
+
+local function destruirPlataforma()
+    if plataformaAgua and plataformaAgua.Parent then
+        plataformaAgua:Destroy()
+    end
+    plataformaAgua = nil
+end
+
+local andarAguaBtn, _ = criarItem(paineis["VISUAL"], 2, "ANDAR NA AGUA", nil)
+toggleBtn(andarAguaBtn, false)
+andarAguaBtn.MouseButton1Click:Connect(function()
+    andarAguaActive = not andarAguaActive
+    toggleBtn(andarAguaBtn, andarAguaActive)
+    if andarAguaActive then
+        plataformaAgua = criarPlataforma()
+
+        local char0 = Players.LocalPlayer.Character
+        local hrp0  = char0 and char0:FindFirstChild("HumanoidRootPart")
+
+        -- Offset do HumanoidRootPart até os pés (ajuste se pés atravessarem)
+        local OFFSET_Y = 3.25
+
+        -- platY começa embaixo dos pés atuais
+        local platY = hrp0 and (hrp0.Position.Y - OFFSET_Y) or 0
+
+        plataformaAgua.CFrame = CFrame.new(
+            hrp0 and hrp0.Position.X or 0,
+            platY,
+            hrp0 and hrp0.Position.Z or 0
+        )
+
+        andarAguaConn = RunService.Heartbeat:Connect(function()
+            local char = Players.LocalPlayer.Character
+            if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            local feetY = hrp.Position.Y - OFFSET_Y
+
+            -- REGRA: plataforma SÓ desce, nunca sobe.
+            -- Se o boneco cair (feetY menor que platY), a plataforma segue pra baixo.
+            -- Se o boneco subir (pular, subir ilha), a plataforma fica parada → sem voo!
+            if feetY < platY then
+                platY = feetY
+            end
+
+            -- Só X e Z seguem sempre; Y só desce
+            plataformaAgua.CFrame = CFrame.new(hrp.Position.X, platY, hrp.Position.Z)
+        end)
+
+        andarAguaRespawnConn = Players.LocalPlayer.CharacterAdded:Connect(function(char)
+            task.wait(0.3)
+            if not andarAguaActive then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                pcall(function()
+                    hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+                end)
+            end
+        end)
+    else
+        if andarAguaConn        then andarAguaConn:Disconnect()        andarAguaConn        = nil end
+        if andarAguaRespawnConn then andarAguaRespawnConn:Disconnect() andarAguaRespawnConn = nil end
+        destruirPlataforma()
+        local char = Players.LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                pcall(function()
+                    hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+                end)
+            end
+        end
+    end
+end)
+
+-- REMOVER ESTRELAS
+local removerEstrelasActive = false
+local removerEstrelasBtn, _ = criarItem(paineis["VISUAL"], 3, "REMOVER ESTRELAS", nil)
+toggleBtn(removerEstrelasBtn, false)
+removerEstrelasBtn.MouseButton1Click:Connect(function()
+    removerEstrelasActive = not removerEstrelasActive
+    toggleBtn(removerEstrelasBtn, removerEstrelasActive)
+    if removerEstrelasActive then
+        for _, obj in ipairs(Lighting:GetChildren()) do
+            if obj:IsA("Sky") then obj.StarCount = 0 end
+        end
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if string.find(string.lower(obj.Name), "star") then
+                if obj:IsA("BasePart") then
+                    obj.Transparency = 1
+                    obj.CanCollide  = false
+                end
+            end
+        end
+    else
+        for _, obj in ipairs(Lighting:GetChildren()) do
+            if obj:IsA("Sky") then obj.StarCount = 3000 end
+        end
+    end
+end)
+
+-- SEMPRE DIA
+local sempreDiaActive = false
+local sempreDiaConn   = nil
+local sempreDiaBtn, _ = criarItem(paineis["VISUAL"], 4, "SEMPRE DIA", nil)
+toggleBtn(sempreDiaBtn, false)
+sempreDiaBtn.MouseButton1Click:Connect(function()
+    sempreDiaActive = not sempreDiaActive
+    toggleBtn(sempreDiaBtn, sempreDiaActive)
+    if sempreDiaActive then
+        Lighting.TimeOfDay     = "12:00:00"
+        Lighting.Brightness    = 2
+        Lighting.GlobalShadows = false
+        sempreDiaConn = RunService.Heartbeat:Connect(function()
+            Lighting.TimeOfDay = "12:00:00"
+            Lighting.ClockTime = 12
+        end)
+    else
+        if sempreDiaConn then sempreDiaConn:Disconnect() sempreDiaConn = nil end
+        Lighting.Brightness    = 1
+        Lighting.GlobalShadows = true
+    end
+end)
+
+
+local closeBtn = criarItemSimples(paineis["👑 ADM"], 1, "FECHAR", Color3.fromRGB(255, 80, 80))
 
 -- ============================================================
 --  BOTÃO MINIMIZADO
@@ -1294,6 +1474,15 @@ miniBtn2.TextScaled = true
 miniBtn2.Font = Enum.Font.GothamBold
 miniBtn2.Active = true
 miniBtn2.Parent = miniFrame
+
+-- Conexão do click
+miniBtn2.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if not minimized then
+        frame.Position = UDim2.new(0.5, -FRAME_W/2, 0.5, -FRAME_H/2)
+    end
+    frame.Visible = not minimized
+end)
 
 local rgbHue = 0
 RunService.Heartbeat:Connect(function(dt)
@@ -1358,10 +1547,15 @@ avisoBtn.MouseButton1Click:Connect(function()
     avisoFrame.Visible = false
 end)
 
--- Agora conecta o ativoBtn (avisoFrame já existe)
-local ativoBtn, _ = criarItem(paineis["ADM"], 0, "ATIVO", COR_GOLD)
-ativoBtn.Text = "🔒"
-ativoBtn.TextColor3 = COR_GOLD
+-- ============================================================
+--  PAINEL DE ILHAS — DETECTA O MAR AUTOMATICAMENTE
+-- ============================================================
+local ativoBtn, ativoLbl = criarItem(paineis["👑 ADM"], 0, "ATIVO", COR_GOLD)
+-- Centraliza o texto ATIVO e esconde o checkbox
+ativoLbl.Size = UDim2.new(1, 0, 1, 0)
+ativoLbl.Position = UDim2.new(0, 0, 0, 0)
+ativoLbl.TextXAlignment = Enum.TextXAlignment.Center
+ativoBtn.Visible = false  -- esconde o cadeado/checkbox
 ativoBtn.MouseButton1Click:Connect(function()
     avisoFrame.Visible = true
     local som = Instance.new("Sound")
@@ -1372,294 +1566,25 @@ ativoBtn.MouseButton1Click:Connect(function()
     task.wait(2)
     som:Destroy()
 end)
--- ============================================================
---  PAINEL DE ILHAS — DETECTA O MAR AUTOMATICAMENTE
--- ============================================================
-
--- Função para detectar qual mar o jogador está
-local function getMarAtual()
-    -- Tenta ler valor oficial do jogo
-    local seaValue = RS:FindFirstChild("Sea") or RS:FindFirstChild("CurrentSea")
-    if seaValue and seaValue:IsA("IntValue") then
-        return seaValue.Value
-    end
-    -- Tenta pelo nome do workspace
-    local wsName = string.lower(workspace.Name)
-    if string.find(wsName, "sea3") or string.find(wsName, "third") then return 3 end
-    if string.find(wsName, "sea2") or string.find(wsName, "second") then return 2 end
-    if string.find(wsName, "sea1") or string.find(wsName, "first") then return 1 end
-    -- Tenta pelo objeto "Sea" no workspace
-    local seaObj = workspace:FindFirstChild("Sea") or workspace:FindFirstChild("ThirdSea")
-        or workspace:FindFirstChild("SecondSea") or workspace:FindFirstChild("FirstSea")
-    if seaObj then
-        local n = string.lower(seaObj.Name)
-        if string.find(n, "third") or string.find(n, "3") then return 3 end
-        if string.find(n, "second") or string.find(n, "2") then return 2 end
-        return 1
-    end
-    -- Última alternativa: verifica se ilhas do Sea 3 existem no workspace
-    if workspace:FindFirstChild("Port Town", true)
-        or workspace:FindFirstChild("Floating Turtle", true)
-        or workspace:FindFirstChild("Tiki Outpost", true) then
-        return 3
-    end
-    if workspace:FindFirstChild("Haunted Castle", true)
-        or workspace:FindFirstChild("Dark Arena", true) then
-        return 2
-    end
-    return 1
-end
-
-local TODAS_ILHAS = {
-    [1] = {
-        { nome = "Ilha dos Bandidos",       pos = Vector3.new(977, 0, 1186)   },
-        { nome = "Ilha das Espadas",        pos = Vector3.new(1463, 0, 1382)  },
-        { nome = "Ilha do Naufrágio",       pos = Vector3.new(1506, 0, -338)  },
-        { nome = "Ilha do Deserto",         pos = Vector3.new(2280, 0, -1300) },
-        { nome = "Ilha Fria",               pos = Vector3.new(2600, 0, 1600)  },
-        { nome = "Ilha dos Piratas",        pos = Vector3.new(3200, 0, 200)   },
-        { nome = "Ilha dos Marines",        pos = Vector3.new(3900, 0, -400)  },
-        { nome = "Ilha do Skylands",        pos = Vector3.new(4500, 0, 800)   },
-    },
-    [2] = {
-        { nome = "Ilha das Flores",         pos = Vector3.new(-300, 0, 1200)  },
-        { nome = "Ilha do Cogumelo",        pos = Vector3.new(-900, 0, 400)   },
-        { nome = "Ilha do Gelo",            pos = Vector3.new(-1400, 0, -600) },
-        { nome = "Ilha Quente",             pos = Vector3.new(-700, 0, 1800)  },
-        { nome = "Ilha do Castelo",         pos = Vector3.new(-200, 0, -900)  },
-        { nome = "Ilha do Dragão",          pos = Vector3.new(-1800, 0, 700)  },
-        { nome = "Ilha dos Zumbis",         pos = Vector3.new(-500, 0, -1500) },
-        { nome = "Ilha do Céu",             pos = Vector3.new(-1100, 0, 2000) },
-    },
-    [3] = {
-        { nome = "Port Town",         pos = Vector3.new(-611, 0, 6436)    },
-        { nome = "Hydra Island",      pos = Vector3.new(5298, 0, 344)     },
-        { nome = "Great Tree",        pos = Vector3.new(3036, 0, -7150)   },
-        { nome = "Sea of Treats",     pos = Vector3.new(-1506, 0, -10725) },
-        { nome = "Castle on the Sea", pos = Vector3.new(-5437, 0, -2702)  },
-        { nome = "Floating Turtle",   pos = Vector3.new(-12165, 0, -8455) },
-        { nome = "Haunted Castle",    pos = Vector3.new(-9531, 0, 5763)   },
-        { nome = "Tiki Outpost",      pos = Vector3.new(-16642, 0, 435)   },
-        { nome = "Submerged Island",  pos = Vector3.new(10533, 0, 9940)   },
-        { nome = "Sealed Cavern",     pos = Vector3.new(10437, 0, 9670)   },
-    },
-}
-
-local ilhasFrame = Instance.new("Frame")
-ilhasFrame.Size = UDim2.new(0, 220, 0, 400)
-ilhasFrame.Position = UDim2.new(0.5, -110, 0.5, -200)
-ilhasFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-ilhasFrame.BorderSizePixel = 0
-ilhasFrame.Visible = false
-ilhasFrame.ZIndex = 15
-ilhasFrame.Parent = screenGui
-Instance.new("UICorner", ilhasFrame).CornerRadius = UDim.new(0, 12)
-
-local ilhasStroke = Instance.new("UIStroke")
-ilhasStroke.Color = Color3.fromRGB(255, 185, 0)
-ilhasStroke.Thickness = 2
-ilhasStroke.Parent = ilhasFrame
-
--- Título (atualiza com o mar)
-local ilhasTitulo = Instance.new("TextLabel")
-ilhasTitulo.Size = UDim2.new(1, -40, 0, 30)
-ilhasTitulo.Position = UDim2.new(0, 10, 0, 8)
-ilhasTitulo.BackgroundTransparency = 1
-ilhasTitulo.TextColor3 = Color3.fromRGB(255, 185, 0)
-ilhasTitulo.Text = "🗺️ ILHAS DO SEA ?"
-ilhasTitulo.TextScaled = true
-ilhasTitulo.Font = Enum.Font.GothamBold
-ilhasTitulo.ZIndex = 16
-ilhasTitulo.Parent = ilhasFrame
-
--- Botão fechar X
-local ilhasFechar = Instance.new("TextButton")
-ilhasFechar.Size = UDim2.new(0, 24, 0, 24)
-ilhasFechar.Position = UDim2.new(1, -30, 0, 7)
-ilhasFechar.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
-ilhasFechar.BorderSizePixel = 0
-ilhasFechar.Text = "X"
-ilhasFechar.TextColor3 = Color3.fromRGB(255, 255, 255)
-ilhasFechar.TextScaled = true
-ilhasFechar.Font = Enum.Font.GothamBold
-ilhasFechar.ZIndex = 17
-ilhasFechar.Parent = ilhasFrame
-Instance.new("UICorner", ilhasFechar).CornerRadius = UDim.new(0, 6)
-
-ilhasFechar.MouseButton1Click:Connect(function()
-    ilhasFrame.Visible = false
-    voandoParaIlha = false
-    ilhaSelecionada = nil
-    mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
-    mostrarIlhasLabel.TextColor3 = COR_GOLD
-    toggleBtn(mostrarIlhasBtn, false)
+-- Botão invisível sobre o item inteiro para capturar clique
+local ativoBtnOver = Instance.new("TextButton")
+ativoBtnOver.Size = UDim2.new(1, 0, 1, 0)
+ativoBtnOver.BackgroundTransparency = 1
+ativoBtnOver.Text = ""
+ativoBtnOver.ZIndex = 5
+ativoBtnOver.Parent = ativoLbl.Parent
+ativoBtnOver.MouseButton1Click:Connect(function()
+    avisoFrame.Visible = true
+    local som = Instance.new("Sound")
+    som.SoundId = "rbxasset://sounds/action_fail.mp3"
+    som.Volume = 0.5
+    som.Parent = avisoFrame
+    som:Play()
+    task.wait(2)
+    som:Destroy()
 end)
 
--- ScrollingFrame para a lista
-local ilhasScroll = Instance.new("ScrollingFrame")
-ilhasScroll.Size = UDim2.new(1, -16, 1, -50)
-ilhasScroll.Position = UDim2.new(0, 8, 0, 44)
-ilhasScroll.BackgroundTransparency = 1
-ilhasScroll.BorderSizePixel = 0
-ilhasScroll.ScrollBarThickness = 4
-ilhasScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 185, 0)
-ilhasScroll.ZIndex = 16
-ilhasScroll.Parent = ilhasFrame
-
-local ilhasLayout = Instance.new("UIListLayout")
-ilhasLayout.Padding = UDim.new(0, 4)
-ilhasLayout.Parent = ilhasScroll
-
--- Função que popula a lista com as ilhas do mar atual
-local todosItens = {}
-local ilhaSelecionada = nil
-local voandoParaIlha = false
-
-local function popularIlhas()
-    -- Limpa itens anteriores
-    for _, v in ipairs(todosItens) do
-        if v and v.Parent then v:Destroy() end
-    end
-    todosItens = {}
-
-    local mar = getMarAtual()
-    ilhasTitulo.Text = "🗺️ ILHAS DO SEA " .. mar
-    local lista = TODAS_ILHAS[mar] or TODAS_ILHAS[3]
-
-    for _, ilha in ipairs(lista) do
-        local item = Instance.new("TextButton")
-        item.Size = UDim2.new(1, 0, 0, 28)
-        item.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
-        item.BorderSizePixel = 0
-        item.TextColor3 = Color3.fromRGB(255, 255, 255)
-        item.Text = "  " .. ilha.nome
-        item.TextSize = 13
-        item.Font = Enum.Font.GothamBold
-        item.TextXAlignment = Enum.TextXAlignment.Left
-        item.AutoButtonColor = false
-        item.ZIndex = 16
-        item.Parent = ilhasScroll
-        Instance.new("UICorner", item).CornerRadius = UDim.new(0, 6)
-        table.insert(todosItens, item)
-
-        item.MouseButton1Click:Connect(function()
-            ilhasFrame.Visible = false
-            mostrarIlhasLabel.Text = ilha.nome
-            mostrarIlhasLabel.TextColor3 = Color3.fromRGB(0, 255, 80)
-            toggleBtn(mostrarIlhasBtn, true)
-            ilhaSelecionada = ilha
-            voandoParaIlha = true
-
-            -- Captura destino fixo no momento do clique
-            local destinoFixo = Vector3.new(ilha.pos.X, 80, ilha.pos.Z)
-
-            task.spawn(function()
-                local VELOCIDADE = 270 -- studs por segundo
-                local bpIlha = nil
-                local bgIlha = nil
-
-                -- Desativa colisão do personagem para atravessar paredes
-                local partesComColisao = {}
-                pcall(function()
-                    local char = Players.LocalPlayer.Character
-                    if char then
-                        for _, p in ipairs(char:GetDescendants()) do
-                            if p:IsA("BasePart") and p.CanCollide then
-                                p.CanCollide = false
-                                table.insert(partesComColisao, p)
-                            end
-                        end
-                    end
-                end)
-
-                while voandoParaIlha and running do
-                    pcall(function()
-                        local char = Players.LocalPlayer.Character
-                        if not char then return end
-                        local hrp = char:FindFirstChild("HumanoidRootPart")
-                        local hum = char:FindFirstChildOfClass("Humanoid")
-                        if not hrp or not hum then return end
-
-                        -- Mantém colisão desativada durante o voo
-                        for _, p in ipairs(char:GetDescendants()) do
-                            if p:IsA("BasePart") then
-                                p.CanCollide = false
-                            end
-                        end
-
-                        local posAtual = hrp.Position
-                        local dist2D = Vector2.new(posAtual.X - destinoFixo.X, posAtual.Z - destinoFixo.Z).Magnitude
-
-                        if dist2D < 60 then
-                            -- Chegou!
-                            voandoParaIlha = false
-                            -- Restaura colisão
-                            for _, p in ipairs(char:GetDescendants()) do
-                                if p:IsA("BasePart") then p.CanCollide = true end
-                            end
-                            if bpIlha then bpIlha:Destroy() bpIlha = nil end
-                            if bgIlha then bgIlha:Destroy() bgIlha = nil end
-                            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-                            mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
-                            mostrarIlhasLabel.TextColor3 = COR_GOLD
-                            toggleBtn(mostrarIlhasBtn, false)
-                            ilhaSelecionada = nil
-                            return
-                        end
-
-                        -- Direção horizontal para a ilha
-                        local dir = Vector3.new(
-                            destinoFixo.X - posAtual.X,
-                            0,
-                            destinoFixo.Z - posAtual.Z
-                        ).Unit
-
-                        -- Move direto no CFrame sem física — sem tremor
-                        local passo = VELOCIDADE * 0.05
-                        hrp.CFrame = CFrame.new(
-                            posAtual.X + dir.X * passo,
-                            80,
-                            posAtual.Z + dir.Z * passo
-                        ) * CFrame.Angles(0, math.atan2(dir.X, dir.Z), 0)
-                    end)
-                    task.wait(0.05)
-                end
-
-                -- Cancelado — restaura colisão e limpa
-                pcall(function()
-                    local char = Players.LocalPlayer.Character
-                    if not char then return end
-                    for _, p in ipairs(char:GetDescendants()) do
-                        if p:IsA("BasePart") then p.CanCollide = true end
-                    end
-                    if bpIlha then bpIlha:Destroy() end
-                    if bgIlha then bgIlha:Destroy() end
-                    local hum = char:FindFirstChildOfClass("Humanoid")
-                    if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
-                end)
-            end)
-        end)
-    end
-
-    ilhasScroll.CanvasSize = UDim2.new(0, 0, 0, #lista * 32)
-end
-
-mostrarIlhasBtn.MouseButton1Click:Connect(function()
-    if voandoParaIlha then
-        -- Cancela o voo
-        voandoParaIlha = false
-        toggleBtn(mostrarIlhasBtn, false)
-        mostrarIlhasLabel.Text = "MOSTRAR ILHAS"
-        mostrarIlhasLabel.TextColor3 = COR_GOLD
-        ilhaSelecionada = nil
-    else
-        -- Atualiza lista com o mar atual e abre
-        popularIlhas()
-        ilhasFrame.Visible = not ilhasFrame.Visible
-        toggleBtn(mostrarIlhasBtn, ilhasFrame.Visible)
-    end
-end)
-
+-- ============================================================
 -- ============================================================
 --  TELA DE CONFIRMAÇÃO (FECHAR)
 -- ============================================================
@@ -1704,7 +1629,7 @@ cfNao.Size = UDim2.new(0, 65, 0, 28)
 cfNao.Position = UDim2.new(0, 84, 0, 52)
 cfNao.BackgroundColor3 = Color3.fromRGB(30, 100, 30)
 cfNao.BorderSizePixel = 0
-cfNao.Text = "Nao"
+cfNao.Text = "Não"
 cfNao.TextColor3 = Color3.fromRGB(255, 255, 255)
 cfNao.TextScaled = true
 cfNao.Font = Enum.Font.GothamBold
@@ -1740,7 +1665,6 @@ local function toggleMinimize()
     frame.Visible = not minimized
 end
 
-miniBtn2.MouseButton1Click:Connect(toggleMinimize)
 makeDraggable(title, frame, FRAME_W, FRAME_H)
 makeDraggableHold(miniFrame, 25, 25, rgbStroke)
 
@@ -1885,6 +1809,44 @@ task.spawn(function()
 end)
 
 -- ============================================================
+--  ANTI CHEAT — DETECTA VELOCIDADE ANORMAL E EXPLOITS
+-- ============================================================
+local antiCheatActive = true
+local lastPosCheck = nil
+local lastTimeCheck = tick()
+
+task.spawn(function()
+    while running do
+        if antiCheatActive then
+            pcall(function()
+                local player = Players.LocalPlayer
+                local char = player.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                local currentTime = tick()
+                local timeDelta = currentTime - lastTimeCheck
+                
+                if lastPosCheck and timeDelta > 0.05 then
+                    local dist = (hrp.Position - lastPosCheck).Magnitude
+                    local velocity = dist / timeDelta
+                    
+                    -- Limite de velocidade: 500 studs/s (muito acima do normal)
+                    if velocity > 500 and not voarActive then
+                        warn("⚠️ VELOCIDADE SUSPEITA DETECTADA: " .. math.floor(velocity) .. " studs/s")
+                    end
+                end
+                
+                lastPosCheck = hrp.Position
+                lastTimeCheck = currentTime
+            end)
+        end
+        task.wait(0.1)
+    end
+end)
+
+-- ============================================================
 --  BRING MOB
 -- ============================================================
 task.spawn(function()
@@ -1940,21 +1902,28 @@ task.spawn(function()
             "military","detective","strange","esquisito",
             -- ADICIONADO: NPCs da Marinha que não devem ser puxados
             "recrutador","recruta","marinha","marine","recruit","pirata","pirate","tort","titles","specialist","titulo","títulos",
+            -- ADICIONADO: outros NPCs que não devem ser puxados
+            "outros","other","others",
         }
         for _, p in ipairs(palavras) do
             if string.find(nome, p) then return true end
         end
+        -- REGRA PRINCIPAL: só puxar NPCs que tenham BillboardGui com [Lv (inimigos com level)
+        local temLevelTag = false
         for _, v in ipairs(obj:GetChildren()) do
             if v:IsA("BillboardGui") then
-                local hasLevel = false
                 for _, lbl in ipairs(v:GetDescendants()) do
                     if lbl:IsA("TextLabel") and string.find(lbl.Text, "%[Lv") then
-                        hasLevel = true
+                        temLevelTag = true
                         break
                     end
                 end
-                if not hasLevel then return true end
             end
+            if temLevelTag then break end
+        end
+        if not temLevelTag then return true end
+
+        for _, v in ipairs(obj:GetChildren()) do
             if v:IsA("Highlight") then
                 local fc = v.FillColor
                 local oc = v.OutlineColor
@@ -2036,57 +2005,107 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  VOAR
+--  VOAR — PARADO NO AR, CONTROLE PELO JOYSTICK / WASD
+--  Camera olhando pra cima = voa pra cima; total 3D
 -- ============================================================
 task.spawn(function()
-    local bodyGyro = nil
-    local bodyPos = nil
-    local voarAnterior = false
+    local bodyGyro    = nil
+    local bodyPos     = nil
+    local voarAnt     = false
+    local posLocked   = nil
+
+    local VEL = 120              -- velocidade aumentada
 
     while running do
         if voarActive then
             pcall(function()
                 local char = Players.LocalPlayer.Character
                 if not char then return end
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                local hum = char:FindFirstChildOfClass("Humanoid")
+                local hrp  = char:FindFirstChild("HumanoidRootPart")
+                local hum  = char:FindFirstChildOfClass("Humanoid")
                 if not hrp or not hum then return end
 
-                if not bodyGyro or not bodyGyro.Parent then
-                    bodyGyro = Instance.new("BodyGyro")
-                    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-                    bodyGyro.P = 9999
-                    bodyGyro.D = 100
-                    bodyGyro.CFrame = CFrame.new(hrp.Position)
-                    bodyGyro.Parent = hrp
-                end
-
                 if not bodyPos or not bodyPos.Parent then
-                    bodyPos = Instance.new("BodyPosition")
-                    bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                    bodyPos.P = 9999
-                    bodyPos.D = 1000
-                    bodyPos.Parent = hrp
+                    posLocked = hrp.Position + Vector3.new(0, 15, 0)
+                    hum.WalkSpeed  = 0
+                    hum.JumpPower  = 0
+                    hum.AutoRotate = false
+
+                    bodyPos          = Instance.new("BodyPosition")
+                    bodyPos.MaxForce = Vector3.new(1,1,1) * 1e5
+                    bodyPos.P        = 80000
+                    bodyPos.D        = 4000
+                    bodyPos.Position = posLocked
+                    bodyPos.Parent   = hrp
+
+                    bodyGyro           = Instance.new("BodyGyro")
+                    bodyGyro.MaxTorque = Vector3.new(0,1,0) * 1e5
+                    bodyGyro.P         = 80000
+                    bodyGyro.D         = 400
+                    bodyGyro.CFrame    = hrp.CFrame
+                    bodyGyro.Parent    = hrp
                 end
 
-                -- Sobe reto para cima
-                bodyPos.Position = Vector3.new(hrp.Position.X, hrp.Position.Y + 25, hrp.Position.Z)
-                bodyGyro.CFrame = CFrame.new(hrp.Position)
+                local cam  = workspace.CurrentCamera
+                local dt   = 0.05
+                local move = Vector3.new(0, 0, 0)
+
+                -- PC: WASD usa o LookVector COMPLETO (inclui angulo vertical da camera)
+                if UIS:IsKeyDown(Enum.KeyCode.W) then
+                    move = move + cam.CFrame.LookVector        -- inclui cima/baixo da camera
+                end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then
+                    move = move - cam.CFrame.LookVector
+                end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then
+                    move = move - cam.CFrame.RightVector
+                end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then
+                    move = move + cam.CFrame.RightVector
+                end
+                if UIS:IsKeyDown(Enum.KeyCode.Space) then
+                    move = move + Vector3.new(0,1,0)
+                end
+                if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
+                    move = move - Vector3.new(0,1,0)
+                end
+
+                -- MOBILE: joystick avanca na direcao da camera (inclui eixo vertical)
+                local md = hum.MoveDirection
+                if md.Magnitude > 0.05 then
+                    -- move na direcao da camera usando o joystick como intensidade
+                    local forward = cam.CFrame.LookVector * md.Z
+                    local right   = cam.CFrame.RightVector * md.X
+                    move = forward + right
+                end
+
+                if move.Magnitude > 0 then
+                    posLocked = posLocked + move.Unit * VEL * dt
+                end
+
+                bodyPos.Position = posLocked
+                bodyGyro.CFrame  = CFrame.new(posLocked,
+                    posLocked + cam.CFrame.LookVector)
             end)
-            voarAnterior = true
+            voarAnt = true
             task.wait(0.05)
         else
-            -- Só limpa quando acabou de desligar
-            if voarAnterior then
+            if voarAnt then
                 pcall(function()
                     local char = Players.LocalPlayer.Character
                     if not char then return end
-                    local hum = char:FindFirstChildOfClass("Humanoid")
-                    if bodyPos then bodyPos:Destroy() bodyPos = nil end
+                    local hum  = char:FindFirstChildOfClass("Humanoid")
+                    if bodyPos  then bodyPos:Destroy()  bodyPos  = nil end
                     if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
-                    if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+                    posLocked = nil
+                    if hum then
+                        hum.WalkSpeed  = 16
+                        hum.JumpPower  = 50
+                        hum.AutoRotate = true
+                        hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+                    end
                 end)
-                voarAnterior = false
+                voarAnt = false
             end
             task.wait(0.1)
         end
@@ -2094,113 +2113,281 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  PEGAR BAÚS — COM CONTADOR E 3S ENTRE BAÚS
+--  TIME GUI — substituido por aba TIME (ver acima)
+-- ============================================================
+local timeGui = Instance.new("Frame") -- stub vazio para compatibilidade
+timeGui.Size = UDim2.new(0,0,0,0)
+timeGui.Visible = false
+timeGui.Parent = screenGui
+
+-- ============================================================
+--  PEGAR BAÚS — VARREDURA POR ILHA (Mar 1, 2 e 3)
 -- ============================================================
 
--- Label contador de baús
-local bauContadorLabel = Instance.new("TextLabel")
-bauContadorLabel.Size = UDim2.new(1, 0, 1, 0)
-bauContadorLabel.Position = UDim2.new(0, 0, 0, 0)
-bauContadorLabel.BackgroundTransparency = 1
-bauContadorLabel.TextColor3 = Color3.fromRGB(255, 185, 0)
-bauContadorLabel.Text = ""
-bauContadorLabel.TextSize = 10
-bauContadorLabel.Font = Enum.Font.GothamBold
-bauContadorLabel.ZIndex = pegarBausBtn.ZIndex + 1
-bauContadorLabel.Parent = pegarBausBtn
+local NOMES_BAU = {
+    "Chest1","Chest2","Chest3",
+    "Silver","Gold","Diamond",
+    "SilverLock","GoldLock","DiamondLock",
+}
+
+-- Todas as ilhas dos 3 mares com suas posições
+local ILHAS = {
+    -- ===== MAR 1 =====
+    { nome = "Starter Island",      pos = Vector3.new(999,   124, 1553)  },
+    { nome = "Marine Starter",      pos = Vector3.new(-2172,  10, 1498)  },
+    { nome = "Jungle",              pos = Vector3.new(-680,  244, 2114)  },
+    { nome = "Pirate Village",      pos = Vector3.new(-1310, 100,  330)  },
+    { nome = "Desert",              pos = Vector3.new(941,    70, -570)  },
+    { nome = "Snow Mountain",       pos = Vector3.new(1175,  207,-2400)  },
+    { nome = "Marine Fortress",     pos = Vector3.new(-3079,  61,  534)  },
+    { nome = "Skylands (Mar 1)",    pos = Vector3.new(927,   843,-1293)  },
+    { nome = "Fountain City",       pos = Vector3.new(-4750, 375, 3120)  },
+    -- ===== MAR 2 =====
+    { nome = "Kingdom of Rose",     pos = Vector3.new(-232,    9,-3588)  },
+    { nome = "Green Zone",          pos = Vector3.new(1507,    9,-4360)  },
+    { nome = "Graveyard",           pos = Vector3.new(4232,    9,-3461)  },
+    { nome = "Snow Island",         pos = Vector3.new(3959,    9, -827)  },
+    { nome = "Hot and Cold",        pos = Vector3.new(4280,    9,  804)  },
+    { nome = "Magma Village",       pos = Vector3.new(3553,    9, 2025)  },
+    { nome = "Underwater City",     pos = Vector3.new(918,  -1000,-1670) },
+    { nome = "Skylands (Mar 2)",    pos = Vector3.new(2800,  800,-3200)  },
+    { nome = "Dark Arena",          pos = Vector3.new(-2027,   9,-3753)  },
+    -- ===== MAR 3 =====
+    { nome = "Port Town",           pos = Vector3.new(-5887, 295,-3744)  },
+    { nome = "Hydra Island",        pos = Vector3.new(-7234,  96,-2349)  },
+    { nome = "Great Tree",          pos = Vector3.new(-9083, 400,-2024)  },
+    { nome = "Floating Turtle",     pos = Vector3.new(-12655,800,-2024)  },
+    { nome = "Haunted Castle",      pos = Vector3.new(-7613,   9, 1079)  },
+    { nome = "Sea of Treats",       pos = Vector3.new(-11963,  9, 1442)  },
+    { nome = "Castle on the Sea",   pos = Vector3.new(-6250, 350, 3200)  },
+    { nome = "Ice Castle (Mar 3)",  pos = Vector3.new(-8700, 200,-3800)  },
+}
+
+local function ehNomeBau(nome)
+    for _, n in ipairs(NOMES_BAU) do
+        if nome == n then return true end
+    end
+    return false
+end
+
+-- Encontra baús num raio de 600 studs ao redor de uma posição
+local function encontrarBausProximos(centro)
+    local baus  = {}
+    local vistos = {}
+    local RAIO  = 5000
+
+    local function processarObj(obj)
+        if not obj:IsA("BasePart") then return end
+        if not ehNomeBau(obj.Name) then return end
+        if (obj.Position - centro).Magnitude > RAIO then return end
+        local root = (obj.Parent and obj.Parent:IsA("Model")) and obj.Parent or obj
+        if vistos[root] then return end
+        if root:IsA("Model") and root:FindFirstChildOfClass("Humanoid") then return end
+        vistos[root] = true
+        table.insert(baus, {root = root, parte = obj})
+    end
+
+    local worldOrigin = workspace:FindFirstChild("_WorldOrigin")
+    if worldOrigin then
+        for _, obj in ipairs(worldOrigin:GetDescendants()) do
+            processarObj(obj)
+        end
+    end
+
+    for _, child in ipairs(workspace:GetChildren()) do
+        if child.Name ~= "_WorldOrigin"
+            and child.Name ~= "Camera"
+            and not Players:GetPlayerFromCharacter(child) then
+            for _, obj in ipairs(child:GetDescendants()) do
+                processarObj(obj)
+            end
+        end
+    end
+
+    return baus
+end
+
+-- Voa passo a passo via CFrame — sem oscilação, velocidade controlada
+local function voarAte(hrp, destino, timeoutMax)
+    local char = Players.LocalPlayer.Character
+    if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+
+    if hum then
+        hum.WalkSpeed  = 0
+        hum.JumpPower  = 0
+        hum.AutoRotate = false
+    end
+
+    -- Noclip contínuo durante todo o voo
+    local noclipConn = RunService.Stepped:Connect(function()
+        if not char or not char.Parent then return end
+        for _, p in ipairs(char:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+    end)
+
+    local VELOCIDADE = 110  -- studs por segundo
+    local PASSO      = 0.05
+
+    local chegou = false
+    local t      = 0
+
+    while t < (timeoutMax or 60) do
+        if not pegarBausActive then break end
+        if not hrp or not hrp.Parent then break end
+
+        local dist = (hrp.Position - destino).Magnitude
+        if dist < 4 then
+            chegou = true
+            break
+        end
+
+        -- Move uma fatia em direção ao destino
+        local dir       = (destino - hrp.Position).Unit
+        local movimento = math.min(VELOCIDADE * PASSO, dist)
+        hrp.CFrame      = CFrame.new(hrp.Position + dir * movimento)
+
+        task.wait(PASSO)
+        t = t + PASSO
+    end
+
+    -- Para o noclip e restaura colisão
+    noclipConn:Disconnect()
+    if char and char.Parent then
+        for _, p in ipairs(char:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = true end
+        end
+    end
+
+    if hum then
+        hum.WalkSpeed  = 16
+        hum.JumpPower  = 50
+        hum.AutoRotate = true
+    end
+
+    return chegou
+end
+
+-- Voa até o baú e fica até ele ser coletado
+local function coletarBau(hrp, bau)
+    local char = Players.LocalPlayer.Character
+    if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+
+    if not bau.parte or not bau.parte.Parent then return false end
+
+    local pos     = bau.parte.Position
+    local destino = Vector3.new(pos.X, pos.Y + 2, pos.Z)
+
+    -- Voa fisicamente até o baú
+    voarAte(hrp, destino, 20)
+
+    if not hrp or not hrp.Parent then return false end
+    if not bau.parte or not bau.parte.Parent then return true end
+
+    -- Monta lista de todas as partes do modelo
+    local partes = {}
+    if bau.root and bau.root:IsA("Model") then
+        for _, p in ipairs(bau.root:GetDescendants()) do
+            if p:IsA("BasePart") then
+                table.insert(partes, p)
+            end
+        end
+    end
+    if #partes == 0 then table.insert(partes, bau.parte) end
+
+    if hum then
+        hum.WalkSpeed = 0
+        hum.JumpPower = 0
+    end
+
+    -- Dispara firetouchinterest em todas as partes até o baú sumir
+    local coletado = false
+    local timeout  = 0
+    while timeout < 5 do
+        if not pegarBausActive then break end
+        if not bau.parte or not bau.parte.Parent then
+            coletado = true
+            break
+        end
+        if not hrp or not hrp.Parent then break end
+
+        pcall(function()
+            for _, parte in ipairs(partes) do
+                firetouchinterest(hrp, parte, 0)
+            end
+            task.wait(0.05)
+            for _, parte in ipairs(partes) do
+                firetouchinterest(hrp, parte, 1)
+            end
+        end)
+
+        task.wait(0.2)
+        timeout = timeout + 0.25
+    end
+
+    if hum then
+        hum.WalkSpeed  = 16
+        hum.JumpPower  = 50
+        hum.AutoRotate = true
+    end
+
+    return coletado
+end
 
 task.spawn(function()
-    local totalPegos = 0
-
+    local ilhaIdx = 1
     while running do
         if pegarBausActive then
-            pcall(function()
-                local char = Players.LocalPlayer.Character
-                if not char then return end
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if not hrp then return end
+            local char = Players.LocalPlayer.Character
+            local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+            if not char or not hrp then
+                task.wait(1)
+            else
+                local ilha = ILHAS[ilhaIdx]
 
-                -- Procura baús em todo workspace
-                local baus = {}
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj:IsA("BasePart") then
-                        local n = obj.Name
-                        if n == "Silver" or n == "Gold"
-                            or n == "Diamond" or n == "Fragment"
-                            or n == "Chest1" or n == "Chest2" or n == "Chest3"
-                            or n == "SilverLock" or n == "GoldLock"
-                            or n == "DiamondLock" or n == "Treasure" then
-                            pcall(function()
-                                table.insert(baus, {obj = obj, pos = obj.Position})
-                            end)
+                -- Voa fisicamente até a ilha
+                pegarBausLabel.Text = "✈ " .. ilha.nome
+                voarAte(hrp, ilha.pos, 25)
+
+                if not pegarBausActive then
+                    ilhaIdx = 1
+                else
+                    -- Busca baús nessa ilha
+                    char = Players.LocalPlayer.Character
+                    hrp  = char and char:FindFirstChild("HumanoidRootPart")
+                    if char and hrp then
+                        local baus = encontrarBausProximos(ilha.pos)
+
+                        if #baus > 0 then
+                            pegarBausLabel.Text = ilha.nome .. " (" .. #baus .. ")"
+                            for i, bau in ipairs(baus) do
+                                if not pegarBausActive then break end
+                                char = Players.LocalPlayer.Character
+                                hrp  = char and char:FindFirstChild("HumanoidRootPart")
+                                if not char or not hrp then break end
+
+                                if bau.parte and bau.parte.Parent then
+                                    pegarBausLabel.Text = ilha.nome .. " " .. i .. "/" .. #baus
+                                    coletarBau(hrp, bau)
+                                end
+                            end
                         end
                     end
-                end
 
-                if #baus == 0 then
-                    pegarBausLabel.Text = "SEM BAUS"
-                    bauContadorLabel.Text = ""
-                    task.wait(5)
-                    pegarBausLabel.Text = "PEGAR BAUS"
-                    return
-                end
-
-                -- Ordena por distância
-                table.sort(baus, function(a, b)
-                    local ok1, da = pcall(function() return (a.pos - hrp.Position).Magnitude end)
-                    local ok2, db = pcall(function() return (b.pos - hrp.Position).Magnitude end)
-                    if ok1 and ok2 then return da < db end
-                    return false
-                end)
-
-                -- Pega cada baú
-                for i, bau in ipairs(baus) do
-                    if not pegarBausActive then break end
-                    if bau.obj and bau.obj.Parent then
-
-                    pegarBausLabel.Text = "PEGANDO..."
-                    bauContadorLabel.Text = ""
-
-                    -- Teleporta para o baú
-                    pcall(function()
-                        char = Players.LocalPlayer.Character
-                        if not char then return end
-                        hrp = char:FindFirstChild("HumanoidRootPart")
-                        if not hrp then return end
-                        hrp.CFrame = CFrame.new(bau.obj.Position + Vector3.new(0, 3, 0))
-                    end)
-
-                    task.wait(0.5)
-
-                    -- Abre o baú
-                    pcall(function()
-                        char = Players.LocalPlayer.Character
-                        if not char then return end
-                        hrp = char:FindFirstChild("HumanoidRootPart")
-                        if not hrp then return end
-                        firetouchinterest(hrp, bau.obj, 0)
-                        task.wait(0.1)
-                        firetouchinterest(hrp, bau.obj, 1)
-                    end)
-
-                    totalPegos = totalPegos + 1
-
-                    -- Contador regressivo de 3 segundos
-                    for s = 3, 1, -1 do
-                        if not pegarBausActive then break end
-                        bauContadorLabel.Text = "Prox: " .. s .. "s"
-                        task.wait(1)
+                    -- Avança para a próxima ilha
+                    ilhaIdx = ilhaIdx + 1
+                    if ilhaIdx > #ILHAS then
+                        ilhaIdx = 1
+                        pegarBausLabel.Text = "🔄 Reiniciando rota..."
+                        task.wait(2)
                     end
-                    bauContadorLabel.Text = ""
-
-                    end -- fecha if bau.obj
                 end
-            end)
-            task.wait(1)
+            end
         else
-            totalPegos = 0
-            pegarBausLabel.Text = "PEGAR BAUS"
-            bauContadorLabel.Text = ""
+            ilhaIdx = 1
+            pegarBausLabel.Text = "PEGAR BAÚS"
             task.wait(0.5)
         end
     end
@@ -2211,12 +2398,461 @@ end)
 -- ============================================================
 print("👑 BF Notify - VERSÃO FINAL! FPS: 120")
 
-while running do
-    pcall(checkMirage)
-    pcall(checkPrehistoric)
-    pcall(checkFullMoon)
-    pcall(checkBosses)
-    pcall(checkLegendarySword)
-    pcall(checkHaki)
-    task.wait(5)
+-- ✅ CORREÇÃO: task.spawn para não bloquear o resto do script
+task.spawn(function()
+    while running do
+        pcall(checkMirage)
+        pcall(checkPrehistoric)
+        pcall(checkFullMoon)
+        pcall(checkBosses)
+        pcall(checkLegendarySword)
+        pcall(checkHaki)
+        task.wait(5)
+    end
+end)
+
+-- ============================================================
+--  ABA ⚙️ CONFIG — Settings Farming (igual ao redz Hub)
+-- ============================================================
+
+local cfgPanel = paineis["⚙️ CONFIG"]
+local cfgY = 6
+
+-- Helper: cria toggle row no painel de config
+local function criarCfgToggle(labelText, subText, yPos)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -12, 0, 44)
+    row.Position = UDim2.new(0, 6, 0, yPos)
+    row.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    row.BorderSizePixel = 0
+    row.Parent = cfgPanel
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", row).Color = Color3.fromRGB(38, 38, 52)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.72, 0, subText ~= "" and 0.52 or 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, subText ~= "" and 4 or 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(210, 210, 210)
+    lbl.Text = labelText
+    lbl.TextSize = 14
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = row
+
+    if subText ~= "" then
+        local sub = Instance.new("TextLabel")
+        sub.Size = UDim2.new(0.72, 0, 0.4, 0)
+        sub.Position = UDim2.new(0, 10, 0.55, 0)
+        sub.BackgroundTransparency = 1
+        sub.TextColor3 = Color3.fromRGB(120, 120, 120)
+        sub.Text = subText
+        sub.TextSize = 11
+        sub.Font = Enum.Font.Gotham
+        sub.TextXAlignment = Enum.TextXAlignment.Left
+        sub.Parent = row
+    end
+
+    local toggleBg = Instance.new("Frame")
+    toggleBg.Size = UDim2.new(0, 46, 0, 26)
+    toggleBg.Position = UDim2.new(1, -56, 0.5, -13)
+    toggleBg.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+    toggleBg.BorderSizePixel = 0
+    toggleBg.Parent = row
+    Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(0, 13)
+
+    local ball = Instance.new("Frame")
+    ball.Size = UDim2.new(0, 22, 0, 22)
+    ball.Position = UDim2.new(0, 2, 0.5, -11)
+    ball.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    ball.BorderSizePixel = 0
+    ball.Parent = toggleBg
+    Instance.new("UICorner", ball).CornerRadius = UDim.new(0, 11)
+
+    local estado = false
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.Parent = row
+
+    btn.MouseButton1Click:Connect(function()
+        estado = not estado
+        if estado then
+            toggleBg.BackgroundColor3 = Color3.fromRGB(100, 180, 100)
+            ball.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            TweenService:Create(ball, TweenInfo.new(0.15), {Position = UDim2.new(0, 22, 0.5, -11)}):Play()
+        else
+            toggleBg.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+            ball.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+            TweenService:Create(ball, TweenInfo.new(0.15), {Position = UDim2.new(0, 2, 0.5, -11)}):Play()
+        end
+    end)
+
+    return row, btn, function() return estado end
 end
+
+-- Helper: cria botão de ação (seta >) no painel de config
+local function criarCfgBotao(labelText, subText, yPos)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -12, 0, 44)
+    row.Position = UDim2.new(0, 6, 0, yPos)
+    row.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    row.BorderSizePixel = 0
+    row.Parent = cfgPanel
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", row).Color = Color3.fromRGB(38, 38, 52)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.82, 0, subText ~= "" and 0.52 or 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, subText ~= "" and 4 or 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(210, 210, 210)
+    lbl.Text = labelText
+    lbl.TextSize = 14
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = row
+
+    if subText ~= "" then
+        local sub = Instance.new("TextLabel")
+        sub.Size = UDim2.new(0.82, 0, 0.4, 0)
+        sub.Position = UDim2.new(0, 10, 0.55, 0)
+        sub.BackgroundTransparency = 1
+        sub.TextColor3 = Color3.fromRGB(120, 120, 120)
+        sub.Text = subText
+        sub.TextSize = 11
+        sub.Font = Enum.Font.Gotham
+        sub.TextXAlignment = Enum.TextXAlignment.Left
+        sub.Parent = row
+    end
+
+    local arrow = Instance.new("TextLabel")
+    arrow.Size = UDim2.new(0, 20, 1, 0)
+    arrow.Position = UDim2.new(1, -28, 0, 0)
+    arrow.BackgroundTransparency = 1
+    arrow.TextColor3 = Color3.fromRGB(150, 150, 150)
+    arrow.Text = "›"
+    arrow.TextSize = 22
+    arrow.Font = Enum.Font.GothamBold
+    arrow.Parent = row
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.Parent = row
+
+    return row, btn
+end
+
+-- Helper: cria título de seção
+local function criarCfgSecao(texto, yPos)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -12, 0, 26)
+    lbl.Position = UDim2.new(0, 6, 0, yPos)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+    lbl.Text = texto
+    lbl.TextSize = 14
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = cfgPanel
+    return lbl
+end
+
+-- ---- Settings Farming ----
+local cfgTitulo = Instance.new("TextLabel")
+cfgTitulo.Size = UDim2.new(1, -12, 0, 28)
+cfgTitulo.Position = UDim2.new(0, 6, 0, cfgY)
+cfgTitulo.BackgroundTransparency = 1
+cfgTitulo.TextColor3 = Color3.fromRGB(255, 215, 0)
+cfgTitulo.Text = "⚙️ Settings Farming"
+cfgTitulo.TextSize = 15
+cfgTitulo.Font = Enum.Font.GothamBold
+cfgTitulo.TextXAlignment = Enum.TextXAlignment.Left
+cfgTitulo.Parent = cfgPanel
+cfgY = cfgY + 32
+
+-- 1) Unban Fast Attack - M1 Fruit (sem toggle, só label cinza)
+local ufa = Instance.new("Frame")
+ufa.Size = UDim2.new(1, -12, 0, 44)
+ufa.Position = UDim2.new(0, 6, 0, cfgY)
+ufa.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+ufa.BorderSizePixel = 0
+ufa.Parent = cfgPanel
+Instance.new("UICorner", ufa).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", ufa).Color = Color3.fromRGB(38, 38, 52)
+local ufaLbl = Instance.new("TextLabel")
+ufaLbl.Size = UDim2.new(1, -20, 1, 0)
+ufaLbl.Position = UDim2.new(0, 10, 0, 0)
+ufaLbl.BackgroundTransparency = 1
+ufaLbl.TextColor3 = Color3.fromRGB(180, 180, 180)
+ufaLbl.Text = "Unban Fast Attack - M1 Fruit"
+ufaLbl.TextSize = 14
+ufaLbl.Font = Enum.Font.GothamBold
+ufaLbl.TextXAlignment = Enum.TextXAlignment.Left
+ufaLbl.Parent = ufa
+cfgY = cfgY + 50
+
+-- 2) Bring Mod — Tự Động Gom Quái (toggle ON por padrão igual à foto)
+criarCfgToggle("Bring Mod", "Tự Động Gom Quái", cfgY)
+cfgY = cfgY + 50
+
+-- 3) Set Home Point — Lưu Điểm Hồi Sinh
+criarCfgToggle("Set Home Point", "Lưu Điểm Hồi Sinh", cfgY)
+cfgY = cfgY + 50
+
+-- 4) Infinite Soru
+criarCfgToggle("Infinite Soru", "", cfgY)
+cfgY = cfgY + 50
+
+-- 5) Auto Active Race V3 — Tự Động Bật Tốc V3
+criarCfgToggle("Auto Active Race V3", "Tự Động Bật Tốc V3", cfgY)
+cfgY = cfgY + 50
+
+-- 6) Auto Active Race V4 — Tự Động Bật Tốc V4
+criarCfgToggle("Auto Active Race V4", "Tự Động Bật Tốc V4", cfgY)
+cfgY = cfgY + 50
+
+-- 7) Infinite Soru (segunda entrada)
+criarCfgToggle("Infinite Soru", "", cfgY)
+cfgY = cfgY + 50
+
+-- 8) Dodge No CD
+criarCfgToggle("Dodge No CD", "", cfgY)
+cfgY = cfgY + 50
+
+-- 9) Infinite Geppo
+criarCfgToggle("Infinite Geppo", "", cfgY)
+cfgY = cfgY + 50
+
+-- 10) Walk on Water
+criarCfgToggle("Walk on Water", "", cfgY)
+cfgY = cfgY + 60
+
+-- ---- Auto Increase Skill Points ----
+criarCfgSecao("Auto Increase Skill Points", cfgY)
+cfgY = cfgY + 30
+
+-- Melee — Tự Động Nâng Điểm Melee
+criarCfgToggle("Melee", "Tự Động Nâng Điểm Melee", cfgY)
+cfgY = cfgY + 50
+
+-- Defense — Tự Động Nâng Điểm Nặng Lượng
+criarCfgToggle("Defense", "Tự Động Nâng Điểm Nặng Lượng", cfgY)
+cfgY = cfgY + 50
+
+-- Sword — Tự Động Nâng Điểm Kiếm
+criarCfgToggle("Sword", "Tự Động Nâng Điểm Kiếm", cfgY)
+cfgY = cfgY + 50
+
+-- Gun — Tự Động Nâng Điểm Súng
+criarCfgToggle("Gun", "Tự Động Nâng Điểm Súng", cfgY)
+cfgY = cfgY + 50
+
+-- Fruis — Tự Động Nâng Điểm Trái
+criarCfgToggle("Fruis", "Tự Động Nâng Điểm Trái", cfgY)
+cfgY = cfgY + 60
+
+-- ---- Sea 1,2,3 ----
+criarCfgSecao("Sea 1,2,3", cfgY)
+cfgY = cfgY + 30
+
+-- Join Sea 1
+criarCfgBotao("Join Sea 1", "", cfgY)
+cfgY = cfgY + 50
+
+-- Join Sea 2
+criarCfgBotao("Join Sea 2", "", cfgY)
+cfgY = cfgY + 50
+
+-- Join Sea 3
+criarCfgBotao("Join Sea 3", "", cfgY)
+cfgY = cfgY + 60
+
+-- ---- Other ----
+criarCfgSecao("Other", cfgY)
+cfgY = cfgY + 30
+
+-- Join Pirates Team
+criarCfgBotao("Join Pirates Team", "", cfgY)
+cfgY = cfgY + 50
+
+-- Join Marines Team
+criarCfgBotao("Join Marines Team", "", cfgY)
+cfgY = cfgY + 50
+
+-- Open Title Name
+criarCfgBotao("Open Title Name", "", cfgY)
+cfgY = cfgY + 50
+
+-- FPS Boost — Tăng Fps
+criarCfgBotao("FPS Boost", "Tăng Fps", cfgY)
+cfgY = cfgY + 60
+
+-- ---- Auto Codes ----
+criarCfgSecao("Auto Codes", cfgY)
+cfgY = cfgY + 30
+
+-- Codes — Tự Động Nhập Hết Code
+criarCfgBotao("Codes", "Tự Động Nhập Hết Code", cfgY)
+cfgY = cfgY + 60
+
+-- ---- Sever Hop ----
+criarCfgSecao("Sever Hop", cfgY)
+cfgY = cfgY + 30
+
+-- Rejoin Server
+criarCfgBotao("Rejoin Server", "", cfgY)
+cfgY = cfgY + 50
+
+-- Server Hop
+criarCfgBotao("Server Hop", "", cfgY)
+cfgY = cfgY + 50
+
+
+-- ============================================================
+--  ABA 🛒 SHOP — Buy items (igual ao redz Hub)
+-- ============================================================
+
+local shopPanel = paineis["🛒 SHOP"]
+local shopY = 6
+
+-- Helper: cria botão de ação (seta >) no painel de shop
+local function criarShopBotao(labelText, yPos)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -12, 0, 44)
+    row.Position = UDim2.new(0, 6, 0, yPos)
+    row.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    row.BorderSizePixel = 0
+    row.Parent = shopPanel
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", row).Color = Color3.fromRGB(38, 38, 52)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.85, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(210, 210, 210)
+    lbl.Text = labelText
+    lbl.TextSize = 13
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = row
+
+    local arrow = Instance.new("TextLabel")
+    arrow.Size = UDim2.new(0, 20, 1, 0)
+    arrow.Position = UDim2.new(1, -28, 0, 0)
+    arrow.BackgroundTransparency = 1
+    arrow.TextColor3 = Color3.fromRGB(150, 150, 150)
+    arrow.Text = "›"
+    arrow.TextSize = 22
+    arrow.Font = Enum.Font.GothamBold
+    arrow.Parent = row
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.Parent = row
+
+    return row, btn
+end
+
+-- Helper: cria título de seção no shop
+local function criarShopSecao(texto, yPos)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -12, 0, 26)
+    lbl.Position = UDim2.new(0, 6, 0, yPos)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+    lbl.Text = texto
+    lbl.TextSize = 14
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = shopPanel
+    return lbl
+end
+
+-- ---- Buy Melee V1 ----
+criarShopSecao("Buy Melee V1", shopY)
+shopY = shopY + 30
+
+criarShopBotao("Buy Black Leg $150,000", shopY)        shopY = shopY + 50
+criarShopBotao("Buy Electro $550,000", shopY)          shopY = shopY + 50
+criarShopBotao("Buy Water Kung Fu $750,000", shopY)    shopY = shopY + 50
+criarShopBotao("Buy Dragon Claw 1,500F", shopY)        shopY = shopY + 60
+
+-- ---- Buy Melee V2 ----
+criarShopSecao("Buy Melee V2", shopY)
+shopY = shopY + 30
+
+criarShopBotao("Buy Superhuman $3,000,000", shopY)             shopY = shopY + 50
+criarShopBotao("Buy Death Step $5,000,000 5,000F", shopY)      shopY = shopY + 50
+criarShopBotao("Buy Sharkman Karate $2,500,000 5,000F", shopY) shopY = shopY + 50
+criarShopBotao("Buy Electric Claw $3,000,000 5,000F", shopY)   shopY = shopY + 50
+criarShopBotao("Buy Dragon Talon $3,000,000 5,000F", shopY)    shopY = shopY + 50
+criarShopBotao("Buy God Human $5,000,000 5,000F", shopY)       shopY = shopY + 50
+criarShopBotao("Buy Sanguine Art $5,000,000 5,000F", shopY)    shopY = shopY + 60
+
+-- ---- Buy Sea Event Crafting ----
+criarShopSecao("Buy Sea Event Crafting", shopY)
+shopY = shopY + 30
+
+criarShopBotao("Craft Dragonheart", shopY)       shopY = shopY + 50
+criarShopBotao("Craft Dragonstorm", shopY)       shopY = shopY + 50
+criarShopBotao("Craft DinoHood", shopY)          shopY = shopY + 50
+criarShopBotao("Craft SharkTooth", shopY)        shopY = shopY + 50
+criarShopBotao("Craft TerrorJaw", shopY)         shopY = shopY + 50
+criarShopBotao("Craft SharkAnchor", shopY)       shopY = shopY + 50
+criarShopBotao("Craft LeviathanCrown", shopY)    shopY = shopY + 50
+criarShopBotao("Craft LeviathanShield", shopY)   shopY = shopY + 50
+criarShopBotao("Craft LeviathanBoat", shopY)     shopY = shopY + 50
+criarShopBotao("Craft LegendaryScroll", shopY)   shopY = shopY + 50
+criarShopBotao("Craft MythicalScroll", shopY)    shopY = shopY + 60
+
+-- ---- Buy Haki, Soru... ----
+criarShopSecao("Buy Haki,Soru...", shopY)
+shopY = shopY + 30
+
+criarShopBotao("Buy Geppo $10,000", shopY)               shopY = shopY + 50
+criarShopBotao("Buy Buso Haki $25,000", shopY)           shopY = shopY + 50
+criarShopBotao("Buy Soru $25,000", shopY)                shopY = shopY + 50
+criarShopBotao("Buy Observation Haki $750,000", shopY)   shopY = shopY + 60
+
+-- ---- Buy Sword, Gun ----
+criarShopSecao("Buy Sword,Gun", shopY)
+shopY = shopY + 30
+
+criarShopBotao("Buy Cutlass $1,000", shopY)              shopY = shopY + 50
+criarShopBotao("Buy Katana $1,000", shopY)               shopY = shopY + 50
+criarShopBotao("Buy Iron Mace $25,000", shopY)           shopY = shopY + 50
+criarShopBotao("Buy Dual Katana $12,000", shopY)         shopY = shopY + 50
+criarShopBotao("Buy Triple Katana $60,000", shopY)       shopY = shopY + 50
+criarShopBotao("Buy Pipe $100,000", shopY)               shopY = shopY + 50
+criarShopBotao("Buy Dual-Headed Blade $400,000", shopY)  shopY = shopY + 50
+criarShopBotao("Buy Bisento $1,200,000", shopY)          shopY = shopY + 50
+criarShopBotao("Buy Soul Cane $750,000", shopY)          shopY = shopY + 50
+criarShopBotao("Buy Pole V2 5,000F", shopY)              shopY = shopY + 50
+criarShopBotao("Buy Slingshot $5,000", shopY)            shopY = shopY + 50
+criarShopBotao("Buy Musket $8,000", shopY)               shopY = shopY + 50
+criarShopBotao("Buy Flintlock $10,500", shopY)           shopY = shopY + 50
+criarShopBotao("Refined Slingshot $30,000", shopY)       shopY = shopY + 50
+criarShopBotao("Buy Refined Flintlock $65,000", shopY)   shopY = shopY + 50
+criarShopBotao("Buy Cannon $100,000", shopY)             shopY = shopY + 50
+criarShopBotao("Buy Kabucha 1,500F", shopY)              shopY = shopY + 50
+criarShopBotao("Buy Bizarre Rifle 250 Ectoplasm", shopY) shopY = shopY + 50
+criarShopBotao("Buy Black Cape $50,000", shopY)          shopY = shopY + 50
+criarShopBotao("Swordsman Hat $150,000", shopY)          shopY = shopY + 50
+criarShopBotao("Buy Tomoe Ring $500,000", shopY)         shopY = shopY + 60
+
+-- ---- Reset Stats, Random Race ----
+criarShopSecao("Reset Stats , Random Race", shopY)
+shopY = shopY + 30
+
+criarShopBotao("Đổi Tộc Ghoul", shopY)      shopY = shopY + 50
+criarShopBotao("Đổi Tộc Cyborg", shopY)     shopY = shopY + 50
+criarShopBotao("Reset Stats 2,500F", shopY) shopY = shopY + 50
+criarShopBotao("Random Race 3,000F", shopY) shopY = shopY + 50
+
