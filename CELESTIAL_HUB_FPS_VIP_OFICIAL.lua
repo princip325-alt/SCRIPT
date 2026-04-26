@@ -129,7 +129,7 @@ addWhiteStroke(frame)
 -- ===================== TÍTULO DENTRO DO FRAME NO TOPO =====================
 
 local titleLabel = Instance.new("TextLabel", frame)
-titleLabel.Size = UDim2.new(1, -50, 0, 28)
+titleLabel.Size = UDim2.new(1, -82, 0, 28)
 titleLabel.Position = UDim2.new(0, 10, 0, 8)
 titleLabel.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 titleLabel.Text = "CELESTIAL HUB X FPS BOOSTER (VIP)"
@@ -138,6 +138,24 @@ titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextSize = 13
 titleLabel.BorderSizePixel = 0
 Instance.new("UICorner", titleLabel).CornerRadius = UDim.new(0, 6)
+
+-- Botão - para minimizar
+local minBtn = Instance.new("TextButton", frame)
+minBtn.Size = UDim2.new(0, 28, 0, 28)
+minBtn.Position = UDim2.new(1, -70, 0, 8)
+minBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+minBtn.Text = "-"
+minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 18
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
+addWhiteStroke(minBtn)
+
+minBtn.MouseButton1Click:Connect(function()
+    vibrar()
+    visivel = false
+    frame.Visible = false
+end)
 
 -- Botão X para fechar
 local closeBtn = Instance.new("TextButton", frame)
@@ -813,14 +831,14 @@ puloBtn.MouseButton1Click:Connect(function()
     if puloAtivo then
         if hum then
             origJumpPower = hum.JumpPower
-            hum.JumpPower = 180
+            hum.JumpPower = 250
         end
         -- Mantém o JumpPower ao trocar de personagem
         player.CharacterAdded:Connect(function(newChar)
             if not puloAtivo then return end
             task.wait(0.5)
             local newHum = newChar:FindFirstChildOfClass("Humanoid")
-            if newHum then newHum.JumpPower = 180 end
+            if newHum then newHum.JumpPower = 250 end
         end)
     else
         if hum then
