@@ -416,6 +416,27 @@ barFill.ZIndex = 12
 barFill.Parent = barBg
 Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
 
+-- Botão de fechar (X) na progressGui
+local progressCloseBtn = Instance.new("TextButton")
+progressCloseBtn.Size = UDim2.new(0, 30, 0, 30)
+progressCloseBtn.Position = UDim2.new(1, -40, 0, 8)
+progressCloseBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
+progressCloseBtn.BorderSizePixel = 0
+progressCloseBtn.Text = "❌"
+progressCloseBtn.TextSize = 16
+progressCloseBtn.Font = Enum.Font.GothamBold
+progressCloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+progressCloseBtn.ZIndex = 13
+progressCloseBtn.Parent = progressGui
+Instance.new("UICorner", progressCloseBtn).CornerRadius = UDim.new(0, 6)
+local progressCloseStroke = Instance.new("UIStroke", progressCloseBtn)
+progressCloseStroke.Color = Color3.fromRGB(100, 50, 50)
+progressCloseStroke.Thickness = 1.5
+
+progressCloseBtn.MouseButton1Click:Connect(function()
+    progressGui.Visible = false
+end)
+
 -- ============================================================
 --  MODO LEVE COM PROGRESSO
 -- ============================================================
@@ -469,7 +490,7 @@ local TITLE_H   = 28
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, FRAME_W, 0, FRAME_H)
-frame.Position = UDim2.new(0.5, -FRAME_W/2, 0.5, -FRAME_H/2)
+frame.Position = UDim2.new(0.5, -FRAME_W/2, 0, -10)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -546,14 +567,16 @@ contentScroll.Parent = frame
 local contentCol = contentScroll -- alias para compatibilidade
 
 -- Abas e painéis
-local ABAS = {"🔎 STATUS", "AUTO FARM", "JOGADOR", "VISUAL", "FARM", "👑 ADM", "⚙️ CONFIG", "🛒 SHOP", "👤 PVP", "📌 TELEPORT", "🍏 FRUITS"}
+local ABAS = {"🔎 STATUS", "🏠 Farming", "🎣 Auto Fishing", "⚔️ Quest ━ Items", "🌋 Volcano Dojo", "🌊 Sea Event", "👑 Raça V4", "🍒 Raid ━ Frutas", "🍏 Frutas ━ Ver Estoque", "📌 Teleportar", "👤 Pvp ━ Player", "🛒 Shop", "⚙️ Configurações", "👑 ADM"}
 local abaAtiva = "🔎 STATUS"
 local paineis = {}
 local abaBtns = {}
 local TAB_H = 44
 
+local indicadores = {}
+
 for i, nome in ipairs(ABAS) do
-    -- Container da aba (para separador funcionar com UIListLayout)
+    -- Container da aba
     local abaContainer = Instance.new("Frame")
     abaContainer.Size = UDim2.new(1, 0, 0, TAB_H)
     abaContainer.BackgroundTransparency = 1
@@ -561,40 +584,35 @@ for i, nome in ipairs(ABAS) do
     abaContainer.LayoutOrder = i
     abaContainer.Parent = tabScroll
 
-    -- Botão da aba
+    -- Botão da aba — fundo escuro arredondado igual Redz Hub
     local abaBtn = Instance.new("TextButton")
-    abaBtn.Size = UDim2.new(1, 0, 1, 0)
-    abaBtn.BackgroundTransparency = 1
+    abaBtn.Size = UDim2.new(1, -8, 0, TAB_H - 6)
+    abaBtn.Position = UDim2.new(0, 4, 0, 3)
+    abaBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+    abaBtn.BackgroundTransparency = 0.2
     abaBtn.BorderSizePixel = 0
     abaBtn.Text = nome
-    abaBtn.TextSize = 13
+    abaBtn.TextSize = 11
     abaBtn.Font = Enum.Font.GothamBold
-    abaBtn.TextColor3 = Color3.fromRGB(100, 100, 120)
+    abaBtn.TextColor3 = Color3.fromRGB(130, 130, 150)
     abaBtn.TextWrapped = true
+    abaBtn.TextXAlignment = Enum.TextXAlignment.Center
     abaBtn.Parent = abaContainer
+    Instance.new("UICorner", abaBtn).CornerRadius = UDim.new(0, 8)
     abaBtns[nome] = abaBtn
 
-    -- Indicador ativo (barra direita da aba)
+    -- Traço roxo na lateral ESQUERDA (igual Redz Hub)
     local indicator = Instance.new("Frame")
-    indicator.Size = UDim2.new(0, 3, 0.6, 0)
-    indicator.Position = UDim2.new(1, -3, 0.2, 0)
-    indicator.BackgroundColor3 = Color3.fromRGB(80, 160, 230)
+    indicator.Size = UDim2.new(0, 3, 0.55, 0)
+    indicator.Position = UDim2.new(0, 0, 0.225, 0)
+    indicator.BackgroundColor3 = Color3.fromRGB(100, 80, 220)
     indicator.BorderSizePixel = 0
     indicator.Visible = nome == abaAtiva
     indicator.Parent = abaBtn
     Instance.new("UICorner", indicator).CornerRadius = UDim.new(1, 0)
+    indicadores[nome] = indicator
 
-    -- Linha separadora
-    if i < #ABAS then
-        local abaSep = Instance.new("Frame")
-        abaSep.Size = UDim2.new(0.7, 0, 0, 1)
-        abaSep.Position = UDim2.new(0.15, 0, 1, -1)
-        abaSep.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
-        abaSep.BorderSizePixel = 0
-        abaSep.Parent = abaContainer
-    end
-
-    -- Painel conteúdo (direita) — cada painel tem seu próprio scroll interno
+    -- Painel conteúdo (direita)
     local painel = Instance.new("Frame")
     painel.Size = UDim2.new(1, 0, 1, 0)
     painel.BackgroundTransparency = 1
@@ -605,24 +623,27 @@ for i, nome in ipairs(ABAS) do
 
     abaBtn.MouseButton1Click:Connect(function()
         abaAtiva = nome
-        -- Reset scroll do conteúdo ao trocar aba
         contentScroll.CanvasPosition = Vector2.new(0, 0)
         for _, n in ipairs(ABAS) do
             paineis[n].Visible = n == nome
             abaBtns[n].TextColor3 = n == nome
                 and Color3.fromRGB(255, 255, 255)
-                or Color3.fromRGB(100, 100, 120)
-            abaBtns[n].BackgroundTransparency = n == nome and 0.7 or 1
-            abaBtns[n].BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-            abaBtns[n]:FindFirstChildOfClass("Frame").Visible = n == nome
+                or Color3.fromRGB(130, 130, 150)
+            abaBtns[n].BackgroundColor3 = n == nome
+                and Color3.fromRGB(35, 32, 55)
+                or Color3.fromRGB(22, 22, 30)
+            abaBtns[n].BackgroundTransparency = n == nome and 0 or 0.2
+            if indicadores[n] then
+                indicadores[n].Visible = n == nome
+            end
         end
     end)
 end
 
 -- Destaca aba inicial
 abaBtns[abaAtiva].TextColor3 = Color3.fromRGB(255, 255, 255)
-abaBtns[abaAtiva].BackgroundTransparency = 0.7
-abaBtns[abaAtiva].BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+abaBtns[abaAtiva].BackgroundColor3 = Color3.fromRGB(35, 32, 55)
+abaBtns[abaAtiva].BackgroundTransparency = 0
 
 -- Faz o contentScroll crescer com o conteúdo dos painéis
 local function atualizarScrollConteudo()
@@ -944,7 +965,7 @@ local FUSOS = {
 local fusoAtualIdx = 1
 
 local cardHora = Instance.new("Frame")
-cardHora.Size = UDim2.new(1, -12, 0, 80)
+cardHora.Size = UDim2.new(1, -12, 0, 110)
 cardHora.Position = UDim2.new(0, 6, 0, 242)
 cardHora.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 cardHora.BorderSizePixel = 0
@@ -974,9 +995,21 @@ horaValor.Font = Enum.Font.GothamBold
 horaValor.TextXAlignment = Enum.TextXAlignment.Right
 horaValor.Parent = cardHora
 
+-- Data + Dia da semana (linha abaixo da hora)
+local dataValor = Instance.new("TextLabel")
+dataValor.Size = UDim2.new(1, -12, 0, 20)
+dataValor.Position = UDim2.new(0, 6, 0, 34)
+dataValor.BackgroundTransparency = 1
+dataValor.TextColor3 = Color3.fromRGB(180, 255, 180)
+dataValor.Text = "Seg, 01/01/2026"
+dataValor.TextSize = 12
+dataValor.Font = Enum.Font.GothamBold
+dataValor.TextXAlignment = Enum.TextXAlignment.Right
+dataValor.Parent = cardHora
+
 local fusoBtnEsq = Instance.new("TextButton")
 fusoBtnEsq.Size = UDim2.new(0, 28, 0, 26)
-fusoBtnEsq.Position = UDim2.new(0, 6, 0, 40)
+fusoBtnEsq.Position = UDim2.new(0, 6, 0, 60)
 fusoBtnEsq.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 fusoBtnEsq.BorderSizePixel = 0
 fusoBtnEsq.Text = "<"
@@ -988,7 +1021,7 @@ Instance.new("UICorner", fusoBtnEsq).CornerRadius = UDim.new(0, 6)
 
 local fusoBtnDir = Instance.new("TextButton")
 fusoBtnDir.Size = UDim2.new(0, 28, 0, 26)
-fusoBtnDir.Position = UDim2.new(1, -34, 0, 40)
+fusoBtnDir.Position = UDim2.new(1, -34, 0, 60)
 fusoBtnDir.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 fusoBtnDir.BorderSizePixel = 0
 fusoBtnDir.Text = ">"
@@ -1000,7 +1033,7 @@ Instance.new("UICorner", fusoBtnDir).CornerRadius = UDim.new(0, 6)
 
 local fusoNomeLabel = Instance.new("TextLabel")
 fusoNomeLabel.Size = UDim2.new(1, -76, 0, 26)
-fusoNomeLabel.Position = UDim2.new(0, 38, 0, 40)
+fusoNomeLabel.Position = UDim2.new(0, 38, 0, 60)
 fusoNomeLabel.BackgroundTransparency = 1
 fusoNomeLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
 fusoNomeLabel.Text = FUSOS[fusoAtualIdx].nome
@@ -1021,12 +1054,21 @@ fusoBtnDir.MouseButton1Click:Connect(function()
     fusoNomeLabel.Text = FUSOS[fusoAtualIdx].nome
 end)
 
-local function formatarHoraFuso(utcTimestamp, offsetHoras)
+local DIAS_SEMANA = {"Dom","Seg","Ter","Qua","Qui","Sex","Sab"}
+local MESES = {"Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"}
+
+local function formatarFuso(utcTimestamp, offsetHoras)
     local totalSeg = utcTimestamp + math.floor(offsetHoras * 3600)
+    -- Hora
     local h = math.floor((totalSeg / 3600) % 24)
     local m = math.floor((totalSeg / 60) % 60)
     local s = math.floor(totalSeg % 60)
-    return string.format("%02d:%02d:%02d", h, m, s)
+    local hora = string.format("%02d:%02d:%02d", h, m, s)
+    -- Data via os.date com offset manual
+    local d = os.date("!*t", totalSeg)
+    local diaSemana = DIAS_SEMANA[d.wday]  -- wday: 1=Dom .. 7=Sab
+    local data = string.format("%s, %02d/%02d/%04d", diaSemana, d.day, d.month, d.year)
+    return hora, data
 end
 
 -- Loop atualiza status
@@ -1057,395 +1099,524 @@ task.spawn(function()
             local su_s = math.floor(serverUptime % 60)
             servidorUptimeValor.Text = string.format("%02d:%02d:%02d", su_h, su_m, su_s)
             -- Hora atual no fuso selecionado
-            horaValor.Text = formatarHoraFuso(os.time(), FUSOS[fusoAtualIdx].offset)
+            local horaStr, dataStr = formatarFuso(os.time(), FUSOS[fusoAtualIdx].offset)
+            horaValor.Text = horaStr
+            dataValor.Text = dataStr
         end)
         task.wait(1)
     end
 end)
 
 -- ============================================================
---  ABA FARM SETTINGS — Select Weapon
+--  ABA 🏠 Farming
 -- ============================================================
-local weaponSelecionado = "Melee"
-local dropdownAberto = false
+local farmingPanel = paineis["🏠 Farming"]
 
--- Título
-local farmTitulo = Instance.new("TextLabel")
-farmTitulo.Size = UDim2.new(1, -12, 0, 30)
-farmTitulo.Position = UDim2.new(0, 6, 0, 8)
-farmTitulo.BackgroundTransparency = 1
-farmTitulo.TextColor3 = Color3.fromRGB(255, 215, 0)
-farmTitulo.Text = "WEAPON SETTINGS"
-farmTitulo.TextSize = 15
-farmTitulo.Font = Enum.Font.GothamBold
-farmTitulo.TextXAlignment = Enum.TextXAlignment.Left
-farmTitulo.Parent = paineis["FARM"]
+local armamentos = {"Melee", "Sword", "Gun", "Blox Fruit"}
+local selectedArma = "Melee"
+local armaDropdownAberto = false
 
--- Card Select Weapon
-local cardWeapon = Instance.new("Frame")
-cardWeapon.Size = UDim2.new(1, -12, 0, 44)
-cardWeapon.Position = UDim2.new(0, 6, 0, 42)
-cardWeapon.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-cardWeapon.BorderSizePixel = 0
-cardWeapon.Parent = paineis["FARM"]
-Instance.new("UICorner", cardWeapon).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", cardWeapon).Color = Color3.fromRGB(38, 38, 52)
+-- Linha: "Selecionar Armamento" + botão Select
+local armaRow = Instance.new("Frame")
+armaRow.Size = UDim2.new(1, -12, 0, 44)
+armaRow.Position = UDim2.new(0, 6, 0, 10)
+armaRow.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+armaRow.BorderSizePixel = 0
+armaRow.Parent = farmingPanel
+Instance.new("UICorner", armaRow).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", armaRow).Color = Color3.fromRGB(38, 38, 52)
 
-local weaponNome = Instance.new("TextLabel")
-weaponNome.Size = UDim2.new(0.45, 0, 1, 0)
-weaponNome.Position = UDim2.new(0, 10, 0, 0)
-weaponNome.BackgroundTransparency = 1
-weaponNome.TextColor3 = Color3.fromRGB(180, 180, 180)
-weaponNome.Text = "Select Weapon"
-weaponNome.TextSize = 14
-weaponNome.Font = Enum.Font.GothamBold
-weaponNome.TextXAlignment = Enum.TextXAlignment.Left
-weaponNome.Parent = cardWeapon
+local armaLabel = Instance.new("TextLabel")
+armaLabel.Size = UDim2.new(0.55, 0, 1, 0)
+armaLabel.Position = UDim2.new(0, 10, 0, 0)
+armaLabel.BackgroundTransparency = 1
+armaLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+armaLabel.Text = "Selecionar Armamento"
+armaLabel.TextSize = 13
+armaLabel.Font = Enum.Font.GothamBold
+armaLabel.TextXAlignment = Enum.TextXAlignment.Left
+armaLabel.Parent = armaRow
 
--- Botão dropdown
-local weaponBtn = Instance.new("TextButton")
-weaponBtn.Size = UDim2.new(0.5, -8, 0.65, 0)
-weaponBtn.Position = UDim2.new(0.5, 4, 0.175, 0)
-weaponBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-weaponBtn.BorderSizePixel = 0
-weaponBtn.Text = "Melee  ›"
-weaponBtn.TextSize = 14
-weaponBtn.Font = Enum.Font.GothamBold
-weaponBtn.TextColor3 = Color3.fromRGB(210, 210, 210)
-weaponBtn.Active = true
-weaponBtn.Parent = cardWeapon
-Instance.new("UICorner", weaponBtn).CornerRadius = UDim.new(0, 6)
-Instance.new("UIStroke", weaponBtn).Color = Color3.fromRGB(55, 55, 70)
+local armaBtn = Instance.new("TextButton")
+armaBtn.Size = UDim2.new(0, 100, 0, 30)
+armaBtn.Position = UDim2.new(1, -108, 0.5, -15)
+armaBtn.BackgroundColor3 = Color3.fromRGB(35, 32, 55)
+armaBtn.BorderSizePixel = 0
+armaBtn.Text = selectedArma
+armaBtn.TextSize = 12
+armaBtn.Font = Enum.Font.GothamBold
+armaBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+armaBtn.Parent = armaRow
+Instance.new("UICorner", armaBtn).CornerRadius = UDim.new(0, 8)
+local armaBtnStroke = Instance.new("UIStroke", armaBtn)
+armaBtnStroke.Color = Color3.fromRGB(100, 80, 220)
+armaBtnStroke.Thickness = 1.5
 
--- Dropdown lista
-local dropFrame = Instance.new("Frame")
-dropFrame.Size = UDim2.new(0.5, -8, 0, 0)
-dropFrame.Position = UDim2.new(0.5, 4, 1, 4)
-dropFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
-dropFrame.BorderSizePixel = 0
-dropFrame.Visible = false
-dropFrame.ZIndex = 20
-dropFrame.ClipsDescendants = true
-dropFrame.Parent = cardWeapon
-Instance.new("UICorner", dropFrame).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", dropFrame).Color = Color3.fromRGB(55, 55, 70)
+-- Dropdown fora (screenGui)
+-- Cálculo exato: N itens × 32px + (N-1) gaps de 2px + 4px padding top/bottom
+local armaContentH = #armamentos * 32 + (#armamentos - 1) * 2 + 4
+local armaDropdownOuter = Instance.new("Frame")
+armaDropdownOuter.Size = UDim2.new(0, 160, 0, armaContentH)
+armaDropdownOuter.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+armaDropdownOuter.BorderSizePixel = 0
+armaDropdownOuter.Visible = false
+armaDropdownOuter.ZIndex = 50
+armaDropdownOuter.ClipsDescendants = true
+armaDropdownOuter.Parent = screenGui
+Instance.new("UICorner", armaDropdownOuter).CornerRadius = UDim.new(0, 10)
+local armaStroke = Instance.new("UIStroke", armaDropdownOuter)
+armaStroke.Color = Color3.fromRGB(100, 80, 220)
+armaStroke.Thickness = 1.5
 
-local WEAPONS = {"Melee", "Sword", "Gun", "Blox Fruit"}
-for i, w in ipairs(WEAPONS) do
-    local item = Instance.new("TextButton")
-    item.Size = UDim2.new(1, 0, 0, 36)
-    item.Position = UDim2.new(0, 0, 0, (i-1) * 36)
-    item.BackgroundTransparency = 1
-    item.BorderSizePixel = 0
-    item.Text = w
-    item.TextSize = 14
-    item.Font = Enum.Font.GothamBold
-    item.TextColor3 = w == weaponSelecionado and COR_ON or Color3.fromRGB(200, 200, 200)
-    item.ZIndex = 21
-    item.Parent = dropFrame
+local armaDropdown = Instance.new("ScrollingFrame")
+armaDropdown.Size = UDim2.new(1, 0, 1, 0)
+armaDropdown.BackgroundTransparency = 1
+armaDropdown.BorderSizePixel = 0
+armaDropdown.ScrollBarThickness = 3
+armaDropdown.ScrollBarImageColor3 = Color3.fromRGB(100, 80, 220)
+armaDropdown.CanvasSize = UDim2.new(0, 0, 0, armaContentH)
+armaDropdown.ElasticBehavior = Enum.ElasticBehavior.Never
+armaDropdown.ZIndex = 51
+armaDropdown.Parent = armaDropdownOuter
 
-    -- Linha separadora
-    if i < #WEAPONS then
-        local sep = Instance.new("Frame")
-        sep.Size = UDim2.new(0.85, 0, 0, 1)
-        sep.Position = UDim2.new(0.075, 0, 0, i * 36)
-        sep.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-        sep.BorderSizePixel = 0
-        sep.ZIndex = 21
-        sep.Parent = dropFrame
-    end
+local armaLayout = Instance.new("UIListLayout")
+armaLayout.Padding = UDim.new(0, 2)
+armaLayout.Parent = armaDropdown
 
-    item.MouseButton1Click:Connect(function()
-        weaponSelecionado = w
-        weaponBtn.Text = w .. "  ›"
-        -- Atualiza cores
-        for _, c in ipairs(dropFrame:GetChildren()) do
+local armaPad = Instance.new("UIPadding")
+armaPad.PaddingTop = UDim.new(0, 2)
+armaPad.PaddingBottom = UDim.new(0, 2)
+armaPad.PaddingLeft = UDim.new(0, 4)
+armaPad.PaddingRight = UDim.new(0, 4)
+armaPad.Parent = armaDropdown
+
+for _, arma in ipairs(armamentos) do
+    local opt = Instance.new("TextButton")
+    opt.Size = UDim2.new(1, 0, 0, 32)
+    opt.BackgroundColor3 = arma == selectedArma and Color3.fromRGB(35, 32, 55) or Color3.fromRGB(28, 26, 42)
+    opt.BorderSizePixel = 0
+    opt.Text = arma
+    opt.TextSize = 13
+    opt.Font = Enum.Font.GothamBold
+    opt.TextColor3 = arma == selectedArma and Color3.fromRGB(100, 80, 220) or Color3.fromRGB(210, 210, 210)
+    opt.ZIndex = 51
+    opt.Parent = armaDropdown
+    Instance.new("UICorner", opt).CornerRadius = UDim.new(0, 6)
+
+    opt.MouseButton1Click:Connect(function()
+        selectedArma = arma
+        armaBtn.Text = arma
+        -- NÃO fecha: apenas atualiza a seleção visual
+        for _, c in ipairs(armaDropdown:GetChildren()) do
             if c:IsA("TextButton") then
-                c.TextColor3 = c.Text == w and COR_ON or Color3.fromRGB(200, 200, 200)
+                c.TextColor3 = c.Text == arma and Color3.fromRGB(100, 80, 220) or Color3.fromRGB(210, 210, 210)
+                c.BackgroundColor3 = c.Text == arma and Color3.fromRGB(35, 32, 55) or Color3.fromRGB(28, 26, 42)
             end
         end
-        -- Fecha dropdown
-        dropdownAberto = false
-        dropFrame.Visible = false
-        dropFrame.Size = UDim2.new(0.5, -8, 0, 0)
     end)
 end
 
-weaponBtn.MouseButton1Click:Connect(function()
-    dropdownAberto = not dropdownAberto
-    dropFrame.Visible = dropdownAberto
-    dropFrame.Size = dropdownAberto
-        and UDim2.new(0.5, -8, 0, #WEAPONS * 36)
-        or UDim2.new(0.5, -8, 0, 0)
-end)
-local bringMobBtn, _ = criarItem(paineis["AUTO FARM"], 0, "PUXAR MOB", nil)
-toggleBtn(bringMobBtn, false)
-bringMobBtn.MouseButton1Click:Connect(function()
-    bringMobActive = not bringMobActive
-    toggleBtn(bringMobBtn, bringMobActive)
-end)
+-- Divisória decorativa
+local armaDivisoria = Instance.new("TextLabel")
+armaDivisoria.Size = UDim2.new(1, -12, 0, 24)
+armaDivisoria.Position = UDim2.new(0, 6, 0, 60)
+armaDivisoria.BackgroundTransparency = 1
+armaDivisoria.TextColor3 = Color3.fromRGB(130, 130, 150)
+armaDivisoria.Text = "─── ⋆⋅⋆⋅🌟⋅⋆⋅⋆ ───"
+armaDivisoria.TextSize = 13
+armaDivisoria.Font = Enum.Font.GothamBold
+armaDivisoria.TextXAlignment = Enum.TextXAlignment.Center
+armaDivisoria.Parent = farmingPanel
 
-local pegarBausBtn, pegarBausLabel = criarItem(paineis["AUTO FARM"], 1, "PEGAR BAÚS", nil)
-toggleBtn(pegarBausBtn, false)
+-- Fecha todos os dropdowns abertos (chamado ao ativar qualquer toggle/botão)
+local function fecharTodosDropdowns()
+    if armaDropdownAberto then
+        armaDropdownOuter.Visible = false
+        armaDropdownAberto = false
+    end
+    if bossDropdownAberto then
+        bossDropdownOuter.Visible = false
+        bossDropdownAberto = false
+    end
+end
 
-pegarBausBtn.MouseButton1Click:Connect(function()
-    pegarBausActive = not pegarBausActive
-    toggleBtn(pegarBausBtn, pegarBausActive)
-end)
+-- Toggle igual Redz Hub
+local function criarToggleRedz(painel, posY, texto)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, -12, 0, 44)
+    bg.Position = UDim2.new(0, 6, 0, posY)
+    bg.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    bg.BorderSizePixel = 0
+    bg.Parent = painel
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 8)
+    Instance.new("UIStroke", bg).Color = Color3.fromRGB(38, 38, 52)
 
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.65, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.fromRGB(210, 210, 210)
+    lbl.Text = texto
+    lbl.TextSize = 13
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextWrapped = true
+    lbl.Parent = bg
 
--- ============================================================
---  ABA JOGADOR
--- ============================================================
-local voarBtn, _ = criarItem(paineis["JOGADOR"], 0, "VOAR", nil)
-toggleBtn(voarBtn, false)
-voarBtn.MouseButton1Click:Connect(function()
-    voarActive = not voarActive
-    toggleBtn(voarBtn, voarActive)
-end)
+    -- Track (fundo do toggle)
+    local track = Instance.new("Frame")
+    track.Size = UDim2.new(0, 48, 0, 26)
+    track.Position = UDim2.new(1, -58, 0.5, -13)
+    track.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    track.BorderSizePixel = 0
+    track.Parent = bg
+    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
-local autoClickBtn, _ = criarItem(paineis["JOGADOR"], 1, "SEM AFK", nil)
-toggleBtn(autoClickBtn, false)
-autoClickBtn.MouseButton1Click:Connect(function()
-    autoClickActive = not autoClickActive
-    toggleBtn(autoClickBtn, autoClickActive)
-end)
+    -- Bolinha
+    local bolinha = Instance.new("Frame")
+    bolinha.Size = UDim2.new(0, 20, 0, 20)
+    bolinha.Position = UDim2.new(0, 3, 0.5, -10)
+    bolinha.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    bolinha.BorderSizePixel = 0
+    bolinha.Parent = track
+    Instance.new("UICorner", bolinha).CornerRadius = UDim.new(1, 0)
 
--- ============================================================
---  ABA VISUAL
--- ============================================================
-local liteBtn, _ = criarItem(paineis["VISUAL"], 0, "MODO LITE", nil)
-toggleBtn(liteBtn, false)
-liteBtn.MouseButton1Click:Connect(function()
-    liteActive = not liteActive
-    toggleBtn(liteBtn, liteActive)
-    task.spawn(function() applyLiteMode(liteActive) end)
-end)
+    local ativo = false
 
--- REMOVER LAVA
-local removerLavaActive = false
-local lavaConn          = nil
-local lavaDescConn      = nil
-local LAVA_NOMES = {
-    "lava","magma","volcano","lavaflo","lavapool",
-    "lavablock","lavapart","lavafloor","magmablock",
-    "magmafloor","magmapart","hotblock","lavarock",
-    "lavaisle","prehistoriclava","lavatile",
+    -- Botão invisível sobre tudo
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.Parent = bg
+
+    btn.MouseButton1Click:Connect(function()
+        fecharTodosDropdowns()
+        ativo = not ativo
+        track.BackgroundColor3 = ativo
+            and Color3.fromRGB(0, 120, 220)
+            or  Color3.fromRGB(60, 60, 70)
+        TweenService:Create(bolinha, TweenInfo.new(0.15), {
+            Position = ativo
+                and UDim2.new(0, 25, 0.5, -10)
+                or  UDim2.new(0, 3, 0.5, -10)
+        }):Play()
+    end)
+
+    return btn, ativo
+end
+
+local autoFarmLevelBtn  = criarToggleRedz(farmingPanel, 90,  "Auto Farm Level")
+local farmLevelNewBtn   = criarToggleRedz(farmingPanel, 140, "Farm Level New")
+local autoKillBtn       = criarToggleRedz(farmingPanel, 190, "Auto Kill Near ━ Mob Aura")
+
+-- Divisória decorativa 2
+local armaDivisoria2 = Instance.new("TextLabel")
+armaDivisoria2.Size = UDim2.new(1, -12, 0, 24)
+armaDivisoria2.Position = UDim2.new(0, 6, 0, 242)
+armaDivisoria2.BackgroundTransparency = 1
+armaDivisoria2.TextColor3 = Color3.fromRGB(130, 130, 150)
+armaDivisoria2.Text = "─── ⋆⋅⋆⋅🌟⋅⋆⋅⋆ ───"
+armaDivisoria2.TextSize = 13
+armaDivisoria2.Font = Enum.Font.GothamBold
+armaDivisoria2.TextXAlignment = Enum.TextXAlignment.Center
+armaDivisoria2.Parent = farmingPanel
+
+-- Boss Section
+local bosses = {
+    "Gorilla King", "Bobby", "Yeti", "Vice Admiral",
+    "Warden", "Chief Warden", "Flamingo", "Magma Admiral",
+    "Fishman Lord", "Cyborg", "Diamond", "Jeremy",
+    "Fajita", "Don Swan", "Greybeard", "Beautiful Pirate",
+    "Tide Keeper", "Longma", "Cake Queen", "Rip_Indra"
 }
-local lavaRemovidos = {}
+local selectedBoss = "Gorilla King"
+local bossDropdownAberto = false
 
-local function ehLava(obj)
-    if not obj:IsA("BasePart") then return false end
-    local nome = string.lower(obj.Name)
-    for _, n in ipairs(LAVA_NOMES) do
-        if string.find(nome, n) then return true end
-    end
-    -- Cor laranja/vermelha escura = lava
-    local r, g, b = obj.Color.R, obj.Color.G, obj.Color.B
-    if r > 0.6 and g < 0.35 and b < 0.15 then return true end
-    return false
-end
+-- Linha: "Auto Selecionar Boss" + botão
+local bossRow = Instance.new("Frame")
+bossRow.Size = UDim2.new(1, -12, 0, 44)
+bossRow.Position = UDim2.new(0, 6, 0, 272)
+bossRow.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+bossRow.BorderSizePixel = 0
+bossRow.Parent = farmingPanel
+Instance.new("UICorner", bossRow).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", bossRow).Color = Color3.fromRGB(38, 38, 52)
 
-local function esconderLava(obj)
-    if not ehLava(obj) then return end
-    table.insert(lavaRemovidos, {obj = obj, transparency = obj.Transparency, canCollide = obj.CanCollide})
-    obj.Transparency = 1
-    obj.CanCollide   = false
-end
+local bossLabel = Instance.new("TextLabel")
+bossLabel.Size = UDim2.new(0.55, 0, 1, 0)
+bossLabel.Position = UDim2.new(0, 10, 0, 0)
+bossLabel.BackgroundTransparency = 1
+bossLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+bossLabel.Text = "Auto Selecionar Boss"
+bossLabel.TextSize = 12
+bossLabel.Font = Enum.Font.GothamBold
+bossLabel.TextXAlignment = Enum.TextXAlignment.Left
+bossLabel.Parent = bossRow
 
-local function restaurarLava()
-    for _, entry in ipairs(lavaRemovidos) do
-        pcall(function()
-            if entry.obj and entry.obj.Parent then
-                entry.obj.Transparency = entry.transparency
-                entry.obj.CanCollide   = entry.canCollide
+local bossBtn = Instance.new("TextButton")
+bossBtn.Size = UDim2.new(0, 100, 0, 30)
+bossBtn.Position = UDim2.new(1, -108, 0.5, -15)
+bossBtn.BackgroundColor3 = Color3.fromRGB(35, 32, 55)
+bossBtn.BorderSizePixel = 0
+bossBtn.Text = selectedBoss
+bossBtn.TextSize = 11
+bossBtn.Font = Enum.Font.GothamBold
+bossBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+bossBtn.Parent = bossRow
+Instance.new("UICorner", bossBtn).CornerRadius = UDim.new(0, 8)
+local bossBtnStroke = Instance.new("UIStroke", bossBtn)
+bossBtnStroke.Color = Color3.fromRGB(100, 80, 220)
+bossBtnStroke.Thickness = 1.5
+
+-- Dropdown fora (screenGui)
+local bossDropdownOuter = Instance.new("Frame")
+bossDropdownOuter.Size = UDim2.new(0, 180, 0, math.min(#bosses * 36 + 8, 250))
+bossDropdownOuter.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+bossDropdownOuter.BorderSizePixel = 0
+bossDropdownOuter.Visible = false
+bossDropdownOuter.ZIndex = 50
+bossDropdownOuter.ClipsDescendants = true
+bossDropdownOuter.Parent = screenGui
+Instance.new("UICorner", bossDropdownOuter).CornerRadius = UDim.new(0, 10)
+local bossDDStroke = Instance.new("UIStroke", bossDropdownOuter)
+bossDDStroke.Color = Color3.fromRGB(100, 80, 220)
+bossDDStroke.Thickness = 1.5
+
+local bossDropdown = Instance.new("ScrollingFrame")
+bossDropdown.Size = UDim2.new(1, 0, 1, 0)
+bossDropdown.BackgroundTransparency = 1
+bossDropdown.BorderSizePixel = 0
+bossDropdown.ScrollBarThickness = 3
+bossDropdown.ScrollBarImageColor3 = Color3.fromRGB(100, 80, 220)
+bossDropdown.CanvasSize = UDim2.new(0, 0, 0, #bosses * 34 + 6)
+bossDropdown.ElasticBehavior = Enum.ElasticBehavior.Never
+bossDropdown.ZIndex = 51
+bossDropdown.Parent = bossDropdownOuter
+
+local bossLayout = Instance.new("UIListLayout")
+bossLayout.Padding = UDim.new(0, 2)
+bossLayout.Parent = bossDropdown
+
+local bossPad = Instance.new("UIPadding")
+bossPad.PaddingTop = UDim.new(0, 2)
+bossPad.PaddingBottom = UDim.new(0, 2)
+bossPad.PaddingLeft = UDim.new(0, 4)
+bossPad.PaddingRight = UDim.new(0, 4)
+bossPad.Parent = bossDropdown
+
+for _, boss in ipairs(bosses) do
+    local opt = Instance.new("TextButton")
+    opt.Size = UDim2.new(1, 0, 0, 32)
+    opt.BackgroundColor3 = boss == selectedBoss and Color3.fromRGB(35, 32, 55) or Color3.fromRGB(28, 26, 42)
+    opt.BorderSizePixel = 0
+    opt.Text = boss
+    opt.TextSize = 12
+    opt.Font = Enum.Font.GothamBold
+    opt.TextColor3 = boss == selectedBoss and Color3.fromRGB(100, 80, 220) or Color3.fromRGB(210, 210, 210)
+    opt.ZIndex = 51
+    opt.Parent = bossDropdown
+    Instance.new("UICorner", opt).CornerRadius = UDim.new(0, 6)
+
+    opt.MouseButton1Click:Connect(function()
+        selectedBoss = boss
+        bossBtn.Text = boss
+        -- NÃO fecha: apenas atualiza a seleção visual
+        for _, c in ipairs(bossDropdown:GetChildren()) do
+            if c:IsA("TextButton") then
+                c.TextColor3 = c.Text == boss and Color3.fromRGB(100, 80, 220) or Color3.fromRGB(210, 210, 210)
+                c.BackgroundColor3 = c.Text == boss and Color3.fromRGB(35, 32, 55) or Color3.fromRGB(28, 26, 42)
             end
-        end)
-    end
-    lavaRemovidos = {}
+        end
+    end)
 end
 
-local removerLavaBtn, _ = criarItem(paineis["VISUAL"], 1, "REMOVER LAVA", nil)
-toggleBtn(removerLavaBtn, false)
-removerLavaBtn.MouseButton1Click:Connect(function()
-    removerLavaActive = not removerLavaActive
-    toggleBtn(removerLavaBtn, removerLavaActive)
-    if removerLavaActive then
-        -- Remove uma vez só tudo que já existe
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            pcall(esconderLava, obj)
-        end
-        -- Escuta novos objetos que forem adicionados (sem loop)
-        lavaDescConn = workspace.DescendantAdded:Connect(function(obj)
-            pcall(esconderLava, obj)
-        end)
-        -- Invulnerabilidade: só mantém vida cheia, leve
-        lavaConn = RunService.Heartbeat:Connect(function()
-            local char = Players.LocalPlayer.Character
-            if not char then return end
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum and hum.Health < hum.MaxHealth then
-                hum.Health = hum.MaxHealth
-            end
-        end)
-    else
-        if lavaConn     then lavaConn:Disconnect()     lavaConn     = nil end
-        if lavaDescConn then lavaDescConn:Disconnect() lavaDescConn = nil end
-        restaurarLava()
-        local char = Players.LocalPlayer.Character
-        if char then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then hum.MaxHealth = 100 hum.Health = 100 end
-        end
+bossBtn.MouseButton1Click:Connect(function()
+    if bossDropdownAberto then
+        bossDropdownOuter.Visible = false
+        bossDropdownAberto = false
+        return
     end
+    bossDropdownAberto = true
+    local frame_pos = frame.AbsolutePosition
+    local contentX = frame_pos.X + TAB_W + 1
+    local contentY = frame_pos.Y + TITLE_H + 1
+    local contentW = FRAME_W - TAB_W - 1
+    local contentH = FRAME_H - TITLE_H - 1
+    local ddW = bossDropdownOuter.AbsoluteSize.X
+    local ddH = bossDropdownOuter.AbsoluteSize.Y
+    local centerX = contentX + (contentW - ddW) / 2
+    local centerY = contentY + (contentH - ddH) / 2
+    bossDropdownOuter.Position = UDim2.new(0, centerX, 0, centerY)
+    bossDropdownOuter.Visible = true
 end)
 
--- ANDAR NA ÁGUA
-local andarAguaActive      = false
-local andarAguaConn        = nil
-local andarAguaRespawnConn = nil
-local plataformaAgua       = nil
+-- Fecha dropdown de boss ao tocar fora ou no botão (handled via fecharTodosDropdowns)
 
-local function criarPlataforma()
-    local p = Instance.new("Part")
-    p.Name         = "PlataformaAgua"
-    p.Size         = Vector3.new(6, 0.5, 6)
-    p.Anchored     = true
-    p.CanCollide   = true
-    p.Transparency = 0
-    p.Color        = Color3.fromRGB(200, 0, 0)
-    p.Material     = Enum.Material.SmoothPlastic
-    p.CastShadow   = false
-    p.Parent       = workspace
-    return p
-end
+-- Toggle: Auto Farm Boss
+local autoFarmBossBtn = criarToggleRedz(farmingPanel, 322, "Auto Farm Boss")
 
-local function destruirPlataforma()
-    if plataformaAgua and plataformaAgua.Parent then
-        plataformaAgua:Destroy()
+-- Divisória decorativa 3 (acima do Raid Pirata)
+local armaDivisoria3 = Instance.new("TextLabel")
+armaDivisoria3.Size = UDim2.new(1, -12, 0, 24)
+armaDivisoria3.Position = UDim2.new(0, 6, 0, 374)
+armaDivisoria3.BackgroundTransparency = 1
+armaDivisoria3.TextColor3 = Color3.fromRGB(130, 130, 150)
+armaDivisoria3.Text = "─── ⋆⋅⋆⋅🌟⋅⋆⋅⋆ ───"
+armaDivisoria3.TextSize = 13
+armaDivisoria3.Font = Enum.Font.GothamBold
+armaDivisoria3.TextXAlignment = Enum.TextXAlignment.Center
+armaDivisoria3.Parent = farmingPanel
+
+-- Toggle: Raid Pirata
+local raidPirataBtn = criarToggleRedz(farmingPanel, 404, "Raid Pirata")
+
+-- Divisória decorativa 4 (abaixo do Raid Pirata)
+local armaDivisoria4 = Instance.new("TextLabel")
+armaDivisoria4.Size = UDim2.new(1, -12, 0, 24)
+armaDivisoria4.Position = UDim2.new(0, 6, 0, 454)
+armaDivisoria4.BackgroundTransparency = 1
+armaDivisoria4.TextColor3 = Color3.fromRGB(130, 130, 150)
+armaDivisoria4.Text = "─── ⋆⋅⋆⋅🌟⋅⋆⋅⋆ ───"
+armaDivisoria4.TextSize = 13
+armaDivisoria4.Font = Enum.Font.GothamBold
+armaDivisoria4.TextXAlignment = Enum.TextXAlignment.Center
+armaDivisoria4.Parent = farmingPanel
+
+-- Toggle: Ver Status dos Olhos
+local verStatusOlhosBtn = criarToggleRedz(farmingPanel, 484, "Ver Status dos Olhos")
+
+-- Toggle: Auto Farm Tirano
+local autoFarmTiranoBtn = criarToggleRedz(farmingPanel, 534, "Auto Farm Tirano")
+
+-- Toggle: Ativar Boss Tirano da Tiki
+local bossTiranoTikiBtn = criarToggleRedz(farmingPanel, 584, "Ativar Boss Tirano da Tiki")
+
+-- Divisória decorativa 5
+local armaDivisoria5 = Instance.new("TextLabel")
+armaDivisoria5.Size = UDim2.new(1, -12, 0, 24)
+armaDivisoria5.Position = UDim2.new(0, 6, 0, 634)
+armaDivisoria5.BackgroundTransparency = 1
+armaDivisoria5.TextColor3 = Color3.fromRGB(130, 130, 150)
+armaDivisoria5.Text = "─── ⋆⋅⋆⋅🌟⋅⋆⋅⋆ ───"
+armaDivisoria5.TextSize = 13
+armaDivisoria5.Font = Enum.Font.GothamBold
+armaDivisoria5.TextXAlignment = Enum.TextXAlignment.Center
+armaDivisoria5.Parent = farmingPanel
+
+-- 6 toggles Xwong
+local checkBoneBtn    = criarToggleRedz(farmingPanel, 664, "Quantidade de Ossos")
+local farmBoneBtn     = criarToggleRedz(farmingPanel, 714, "Farm Ossos")
+local bossFoiceBtn    = criarToggleRedz(farmingPanel, 764, "Boss da Foice")
+local tradeBoneBtn    = criarToggleRedz(farmingPanel, 814, "Trade Ossos")
+local autoPrayBtn     = criarToggleRedz(farmingPanel, 864, "Oracao Automatica")
+local autoTryLuckBtn  = criarToggleRedz(farmingPanel, 914, "Tentar Sorte Automatica")
+
+armaBtn.MouseButton1Click:Connect(function()
+    if armaDropdownAberto then
+        armaDropdownOuter.Visible = false
+        armaDropdownAberto = false
+        return
     end
-    plataformaAgua = nil
-end
-
-local andarAguaBtn, _ = criarItem(paineis["VISUAL"], 2, "ANDAR NA AGUA", nil)
-toggleBtn(andarAguaBtn, false)
-andarAguaBtn.MouseButton1Click:Connect(function()
-    andarAguaActive = not andarAguaActive
-    toggleBtn(andarAguaBtn, andarAguaActive)
-    if andarAguaActive then
-        plataformaAgua = criarPlataforma()
-
-        local char0 = Players.LocalPlayer.Character
-        local hrp0  = char0 and char0:FindFirstChild("HumanoidRootPart")
-
-        -- Offset do HumanoidRootPart até os pés (ajuste se pés atravessarem)
-        local OFFSET_Y = 3.25
-
-        -- platY começa embaixo dos pés atuais
-        local platY = hrp0 and (hrp0.Position.Y - OFFSET_Y) or 0
-
-        plataformaAgua.CFrame = CFrame.new(
-            hrp0 and hrp0.Position.X or 0,
-            platY,
-            hrp0 and hrp0.Position.Z or 0
-        )
-
-        andarAguaConn = RunService.Heartbeat:Connect(function()
-            local char = Players.LocalPlayer.Character
-            if not char then return end
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            if not hrp then return end
-
-            local feetY = hrp.Position.Y - OFFSET_Y
-
-            -- REGRA: plataforma SÓ desce, nunca sobe.
-            -- Se o boneco cair (feetY menor que platY), a plataforma segue pra baixo.
-            -- Se o boneco subir (pular, subir ilha), a plataforma fica parada → sem voo!
-            if feetY < platY then
-                platY = feetY
-            end
-
-            -- Só X e Z seguem sempre; Y só desce
-            plataformaAgua.CFrame = CFrame.new(hrp.Position.X, platY, hrp.Position.Z)
-        end)
-
-        andarAguaRespawnConn = Players.LocalPlayer.CharacterAdded:Connect(function(char)
-            task.wait(0.3)
-            if not andarAguaActive then return end
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                pcall(function()
-                    hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-                end)
-            end
-        end)
-    else
-        if andarAguaConn        then andarAguaConn:Disconnect()        andarAguaConn        = nil end
-        if andarAguaRespawnConn then andarAguaRespawnConn:Disconnect() andarAguaRespawnConn = nil end
-        destruirPlataforma()
-        local char = Players.LocalPlayer.Character
-        if char then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                pcall(function()
-                    hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
-                end)
-            end
-        end
-    end
+    armaDropdownAberto = true
+    local frame_pos = frame.AbsolutePosition
+    local contentX = frame_pos.X + TAB_W + 1
+    local contentY = frame_pos.Y + TITLE_H + 1
+    local contentW = FRAME_W - TAB_W - 1
+    local contentH = FRAME_H - TITLE_H - 1
+    local ddW = armaDropdownOuter.AbsoluteSize.X
+    local ddH = armaDropdownOuter.AbsoluteSize.Y
+    local centerX = contentX + (contentW - ddW) / 2
+    local centerY = contentY + (contentH - ddH) / 2
+    armaDropdownOuter.Position = UDim2.new(0, centerX, 0, centerY)
+    armaDropdownOuter.Visible = true
 end)
 
--- REMOVER ESTRELAS
-local removerEstrelasActive = false
-local removerEstrelasBtn, _ = criarItem(paineis["VISUAL"], 3, "REMOVER ESTRELAS", nil)
-toggleBtn(removerEstrelasBtn, false)
-removerEstrelasBtn.MouseButton1Click:Connect(function()
-    removerEstrelasActive = not removerEstrelasActive
-    toggleBtn(removerEstrelasBtn, removerEstrelasActive)
-    if removerEstrelasActive then
-        for _, obj in ipairs(Lighting:GetChildren()) do
-            if obj:IsA("Sky") then obj.StarCount = 0 end
-        end
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if string.find(string.lower(obj.Name), "star") then
-                if obj:IsA("BasePart") then
-                    obj.Transparency = 1
-                    obj.CanCollide  = false
-                end
-            end
-        end
-    else
-        for _, obj in ipairs(Lighting:GetChildren()) do
-            if obj:IsA("Sky") then obj.StarCount = 3000 end
-        end
-    end
+-- Fecha dropdown de arma ao tocar fora ou no botão (handled via fecharTodosDropdowns)
+
+-- ============================================================
+--  ABA 🎣 Auto Fishing — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA ⚔️ Quest ━ Items — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 🌋 Volcano Dojo — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 🌊 Sea Event — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 👑 Raça V4 — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 🍒 Raid ━ Frutas — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 🍏 Frutas ━ Ver Estoque — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 📌 Teleportar — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 👤 Pvp ━ Player — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA 🛒 Shop — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+-- ============================================================
+--  ABA ⚙️ Configurações — (em branco)
+-- ============================================================
+-- (conteúdo a adicionar)
+
+local resetBtn = criarItemSimples(paineis["👑 ADM"], 1, "RESET SCRIPT", Color3.fromRGB(255, 185, 0))
+resetBtn.MouseButton1Click:Connect(function()
+    voarActive = false
+    autoClickActive = false
+    bringMobActive = false
+    pegarBausActive = false
+    liteActive = false
+    local msg = Instance.new("TextLabel")
+    msg.Size = UDim2.new(0, 180, 0, 36)
+    msg.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    msg.BackgroundTransparency = 0
+    msg.BorderSizePixel = 0
+    msg.TextColor3 = Color3.fromRGB(0, 255, 80)
+    msg.Text = "Reset Successful!"
+    msg.TextScaled = true
+    msg.Font = Enum.Font.GothamBold
+    msg.ZIndex = 20
+    local admPanel = paineis["👑 ADM"]
+    local absPos = admPanel.AbsolutePosition
+    local absSize = admPanel.AbsoluteSize
+    msg.Position = UDim2.new(0, absPos.X + (absSize.X/2) - 90, 0, absPos.Y + 160)
+    Instance.new("UICorner", msg).CornerRadius = UDim.new(0, 8)
+    msg.Parent = screenGui
+    task.wait(2)
+    msg:Destroy()
 end)
 
--- SEMPRE DIA
-local sempreDiaActive = false
-local sempreDiaConn   = nil
-local sempreDiaBtn, _ = criarItem(paineis["VISUAL"], 4, "SEMPRE DIA", nil)
-toggleBtn(sempreDiaBtn, false)
-sempreDiaBtn.MouseButton1Click:Connect(function()
-    sempreDiaActive = not sempreDiaActive
-    toggleBtn(sempreDiaBtn, sempreDiaActive)
-    if sempreDiaActive then
-        Lighting.TimeOfDay     = "12:00:00"
-        Lighting.Brightness    = 2
-        Lighting.GlobalShadows = false
-        sempreDiaConn = RunService.Heartbeat:Connect(function()
-            Lighting.TimeOfDay = "12:00:00"
-            Lighting.ClockTime = 12
-        end)
-    else
-        if sempreDiaConn then sempreDiaConn:Disconnect() sempreDiaConn = nil end
-        Lighting.Brightness    = 1
-        Lighting.GlobalShadows = true
-    end
-end)
-
-
-local closeBtn = criarItemSimples(paineis["👑 ADM"], 1, "FECHAR", Color3.fromRGB(255, 80, 80))
+local closeBtn = criarItemSimples(paineis["👑 ADM"], 2, "FECHAR", Color3.fromRGB(255, 80, 80))
 
 -- ============================================================
 --  BOTÃO MINIMIZADO
@@ -1479,7 +1650,7 @@ miniBtn2.Parent = miniFrame
 miniBtn2.MouseButton1Click:Connect(function()
     minimized = not minimized
     if not minimized then
-        frame.Position = UDim2.new(0.5, -FRAME_W/2, 0.5, -FRAME_H/2)
+        frame.Position = UDim2.new(0.5, -FRAME_W/2, 0, -10)
     end
     frame.Visible = not minimized
 end)
@@ -1531,17 +1702,20 @@ avisoMensagem.ZIndex = 31
 avisoMensagem.Parent = avisoFrame
 
 local avisoBtn = Instance.new("TextButton")
-avisoBtn.Size = UDim2.new(0, 100, 0, 30)
-avisoBtn.Position = UDim2.new(0.5, -50, 0, 115)
-avisoBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+avisoBtn.Size = UDim2.new(0, 60, 0, 30)
+avisoBtn.Position = UDim2.new(0.5, -30, 0, 115)
+avisoBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
 avisoBtn.BorderSizePixel = 0
-avisoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-avisoBtn.Text = "OK"
+avisoBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+avisoBtn.Text = "❌"
 avisoBtn.TextScaled = true
 avisoBtn.Font = Enum.Font.GothamBold
 avisoBtn.ZIndex = 31
 avisoBtn.Parent = avisoFrame
 Instance.new("UICorner", avisoBtn).CornerRadius = UDim.new(0, 6)
+local avisoStroke2 = Instance.new("UIStroke", avisoBtn)
+avisoStroke2.Color = Color3.fromRGB(100, 50, 50)
+avisoStroke2.Thickness = 1.5
 
 avisoBtn.MouseButton1Click:Connect(function()
     avisoFrame.Visible = false
@@ -1614,7 +1788,7 @@ cfTitle.Parent = confirmFrame
 local cfSim = Instance.new("TextButton")
 cfSim.Size = UDim2.new(0, 65, 0, 28)
 cfSim.Position = UDim2.new(0, 8, 0, 52)
-cfSim.BackgroundColor3 = Color3.fromRGB(180, 30, 30)
+cfSim.BackgroundColor3 = Color3.fromRGB(30, 160, 50)
 cfSim.BorderSizePixel = 0
 cfSim.Text = "Sim"
 cfSim.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1625,17 +1799,20 @@ cfSim.Parent = confirmFrame
 Instance.new("UICorner", cfSim).CornerRadius = UDim.new(0, 6)
 
 local cfNao = Instance.new("TextButton")
-cfNao.Size = UDim2.new(0, 65, 0, 28)
-cfNao.Position = UDim2.new(0, 84, 0, 52)
-cfNao.BackgroundColor3 = Color3.fromRGB(30, 100, 30)
+cfNao.Size = UDim2.new(0, 50, 0, 28)
+cfNao.Position = UDim2.new(0, 85, 0, 52)
+cfNao.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
 cfNao.BorderSizePixel = 0
-cfNao.Text = "Não"
-cfNao.TextColor3 = Color3.fromRGB(255, 255, 255)
+cfNao.Text = "❌"
+cfNao.TextColor3 = Color3.fromRGB(255, 100, 100)
 cfNao.TextScaled = true
 cfNao.Font = Enum.Font.GothamBold
 cfNao.ZIndex = 10
 cfNao.Parent = confirmFrame
 Instance.new("UICorner", cfNao).CornerRadius = UDim.new(0, 6)
+local cfNaoStroke = Instance.new("UIStroke", cfNao)
+cfNaoStroke.Color = Color3.fromRGB(100, 50, 50)
+cfNaoStroke.Thickness = 1.5
 
 closeBtn.MouseButton1Click:Connect(function()
     local screen = workspace.CurrentCamera.ViewportSize
@@ -1660,7 +1837,7 @@ end)
 local function toggleMinimize()
     minimized = not minimized
     if not minimized then
-        frame.Position = UDim2.new(0.5, -FRAME_W/2, 0.5, -FRAME_H/2)
+        frame.Position = UDim2.new(0.5, -FRAME_W/2, 0, -10)
     end
     frame.Visible = not minimized
 end
@@ -2412,447 +2589,20 @@ task.spawn(function()
 end)
 
 -- ============================================================
---  ABA ⚙️ CONFIG — Settings Farming (igual ao redz Hub)
+--  ABA ⚙️ CONFIG — (em branco)
 -- ============================================================
 
-local cfgPanel = paineis["⚙️ CONFIG"]
+local cfgPanel = paineis["⚙️ Configurações"]
 local cfgY = 6
 
--- Helper: cria toggle row no painel de config
-local function criarCfgToggle(labelText, subText, yPos)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -12, 0, 44)
-    row.Position = UDim2.new(0, 6, 0, yPos)
-    row.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-    row.BorderSizePixel = 0
-    row.Parent = cfgPanel
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
-    Instance.new("UIStroke", row).Color = Color3.fromRGB(38, 38, 52)
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.72, 0, subText ~= "" and 0.52 or 1, 0)
-    lbl.Position = UDim2.new(0, 10, 0, subText ~= "" and 4 or 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(210, 210, 210)
-    lbl.Text = labelText
-    lbl.TextSize = 14
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = row
-
-    if subText ~= "" then
-        local sub = Instance.new("TextLabel")
-        sub.Size = UDim2.new(0.72, 0, 0.4, 0)
-        sub.Position = UDim2.new(0, 10, 0.55, 0)
-        sub.BackgroundTransparency = 1
-        sub.TextColor3 = Color3.fromRGB(120, 120, 120)
-        sub.Text = subText
-        sub.TextSize = 11
-        sub.Font = Enum.Font.Gotham
-        sub.TextXAlignment = Enum.TextXAlignment.Left
-        sub.Parent = row
-    end
-
-    local toggleBg = Instance.new("Frame")
-    toggleBg.Size = UDim2.new(0, 46, 0, 26)
-    toggleBg.Position = UDim2.new(1, -56, 0.5, -13)
-    toggleBg.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-    toggleBg.BorderSizePixel = 0
-    toggleBg.Parent = row
-    Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(0, 13)
-
-    local ball = Instance.new("Frame")
-    ball.Size = UDim2.new(0, 22, 0, 22)
-    ball.Position = UDim2.new(0, 2, 0.5, -11)
-    ball.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-    ball.BorderSizePixel = 0
-    ball.Parent = toggleBg
-    Instance.new("UICorner", ball).CornerRadius = UDim.new(0, 11)
-
-    local estado = false
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
-    btn.Parent = row
-
-    btn.MouseButton1Click:Connect(function()
-        estado = not estado
-        if estado then
-            toggleBg.BackgroundColor3 = Color3.fromRGB(100, 180, 100)
-            ball.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            TweenService:Create(ball, TweenInfo.new(0.15), {Position = UDim2.new(0, 22, 0.5, -11)}):Play()
-        else
-            toggleBg.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-            ball.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-            TweenService:Create(ball, TweenInfo.new(0.15), {Position = UDim2.new(0, 2, 0.5, -11)}):Play()
-        end
-    end)
-
-    return row, btn, function() return estado end
-end
-
--- Helper: cria botão de ação (seta >) no painel de config
-local function criarCfgBotao(labelText, subText, yPos)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -12, 0, 44)
-    row.Position = UDim2.new(0, 6, 0, yPos)
-    row.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-    row.BorderSizePixel = 0
-    row.Parent = cfgPanel
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
-    Instance.new("UIStroke", row).Color = Color3.fromRGB(38, 38, 52)
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.82, 0, subText ~= "" and 0.52 or 1, 0)
-    lbl.Position = UDim2.new(0, 10, 0, subText ~= "" and 4 or 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(210, 210, 210)
-    lbl.Text = labelText
-    lbl.TextSize = 14
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = row
-
-    if subText ~= "" then
-        local sub = Instance.new("TextLabel")
-        sub.Size = UDim2.new(0.82, 0, 0.4, 0)
-        sub.Position = UDim2.new(0, 10, 0.55, 0)
-        sub.BackgroundTransparency = 1
-        sub.TextColor3 = Color3.fromRGB(120, 120, 120)
-        sub.Text = subText
-        sub.TextSize = 11
-        sub.Font = Enum.Font.Gotham
-        sub.TextXAlignment = Enum.TextXAlignment.Left
-        sub.Parent = row
-    end
-
-    local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 20, 1, 0)
-    arrow.Position = UDim2.new(1, -28, 0, 0)
-    arrow.BackgroundTransparency = 1
-    arrow.TextColor3 = Color3.fromRGB(150, 150, 150)
-    arrow.Text = "›"
-    arrow.TextSize = 22
-    arrow.Font = Enum.Font.GothamBold
-    arrow.Parent = row
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
-    btn.Parent = row
-
-    return row, btn
-end
-
--- Helper: cria título de seção
-local function criarCfgSecao(texto, yPos)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -12, 0, 26)
-    lbl.Position = UDim2.new(0, 6, 0, yPos)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
-    lbl.Text = texto
-    lbl.TextSize = 14
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = cfgPanel
-    return lbl
-end
-
--- ---- Settings Farming ----
-local cfgTitulo = Instance.new("TextLabel")
-cfgTitulo.Size = UDim2.new(1, -12, 0, 28)
-cfgTitulo.Position = UDim2.new(0, 6, 0, cfgY)
-cfgTitulo.BackgroundTransparency = 1
-cfgTitulo.TextColor3 = Color3.fromRGB(255, 215, 0)
-cfgTitulo.Text = "⚙️ Settings Farming"
-cfgTitulo.TextSize = 15
-cfgTitulo.Font = Enum.Font.GothamBold
-cfgTitulo.TextXAlignment = Enum.TextXAlignment.Left
-cfgTitulo.Parent = cfgPanel
-cfgY = cfgY + 32
-
--- 1) Unban Fast Attack - M1 Fruit (sem toggle, só label cinza)
-local ufa = Instance.new("Frame")
-ufa.Size = UDim2.new(1, -12, 0, 44)
-ufa.Position = UDim2.new(0, 6, 0, cfgY)
-ufa.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-ufa.BorderSizePixel = 0
-ufa.Parent = cfgPanel
-Instance.new("UICorner", ufa).CornerRadius = UDim.new(0, 8)
-Instance.new("UIStroke", ufa).Color = Color3.fromRGB(38, 38, 52)
-local ufaLbl = Instance.new("TextLabel")
-ufaLbl.Size = UDim2.new(1, -20, 1, 0)
-ufaLbl.Position = UDim2.new(0, 10, 0, 0)
-ufaLbl.BackgroundTransparency = 1
-ufaLbl.TextColor3 = Color3.fromRGB(180, 180, 180)
-ufaLbl.Text = "Unban Fast Attack - M1 Fruit"
-ufaLbl.TextSize = 14
-ufaLbl.Font = Enum.Font.GothamBold
-ufaLbl.TextXAlignment = Enum.TextXAlignment.Left
-ufaLbl.Parent = ufa
-cfgY = cfgY + 50
-
--- 2) Bring Mod — Tự Động Gom Quái (toggle ON por padrão igual à foto)
-criarCfgToggle("Bring Mod", "Tự Động Gom Quái", cfgY)
-cfgY = cfgY + 50
-
--- 3) Set Home Point — Lưu Điểm Hồi Sinh
-criarCfgToggle("Set Home Point", "Lưu Điểm Hồi Sinh", cfgY)
-cfgY = cfgY + 50
-
--- 4) Infinite Soru
-criarCfgToggle("Infinite Soru", "", cfgY)
-cfgY = cfgY + 50
-
--- 5) Auto Active Race V3 — Tự Động Bật Tốc V3
-criarCfgToggle("Auto Active Race V3", "Tự Động Bật Tốc V3", cfgY)
-cfgY = cfgY + 50
-
--- 6) Auto Active Race V4 — Tự Động Bật Tốc V4
-criarCfgToggle("Auto Active Race V4", "Tự Động Bật Tốc V4", cfgY)
-cfgY = cfgY + 50
-
--- 7) Infinite Soru (segunda entrada)
-criarCfgToggle("Infinite Soru", "", cfgY)
-cfgY = cfgY + 50
-
--- 8) Dodge No CD
-criarCfgToggle("Dodge No CD", "", cfgY)
-cfgY = cfgY + 50
-
--- 9) Infinite Geppo
-criarCfgToggle("Infinite Geppo", "", cfgY)
-cfgY = cfgY + 50
-
--- 10) Walk on Water
-criarCfgToggle("Walk on Water", "", cfgY)
-cfgY = cfgY + 60
-
--- ---- Auto Increase Skill Points ----
-criarCfgSecao("Auto Increase Skill Points", cfgY)
-cfgY = cfgY + 30
-
--- Melee — Tự Động Nâng Điểm Melee
-criarCfgToggle("Melee", "Tự Động Nâng Điểm Melee", cfgY)
-cfgY = cfgY + 50
-
--- Defense — Tự Động Nâng Điểm Nặng Lượng
-criarCfgToggle("Defense", "Tự Động Nâng Điểm Nặng Lượng", cfgY)
-cfgY = cfgY + 50
-
--- Sword — Tự Động Nâng Điểm Kiếm
-criarCfgToggle("Sword", "Tự Động Nâng Điểm Kiếm", cfgY)
-cfgY = cfgY + 50
-
--- Gun — Tự Động Nâng Điểm Súng
-criarCfgToggle("Gun", "Tự Động Nâng Điểm Súng", cfgY)
-cfgY = cfgY + 50
-
--- Fruis — Tự Động Nâng Điểm Trái
-criarCfgToggle("Fruis", "Tự Động Nâng Điểm Trái", cfgY)
-cfgY = cfgY + 60
-
--- ---- Sea 1,2,3 ----
-criarCfgSecao("Sea 1,2,3", cfgY)
-cfgY = cfgY + 30
-
--- Join Sea 1
-criarCfgBotao("Join Sea 1", "", cfgY)
-cfgY = cfgY + 50
-
--- Join Sea 2
-criarCfgBotao("Join Sea 2", "", cfgY)
-cfgY = cfgY + 50
-
--- Join Sea 3
-criarCfgBotao("Join Sea 3", "", cfgY)
-cfgY = cfgY + 60
-
--- ---- Other ----
-criarCfgSecao("Other", cfgY)
-cfgY = cfgY + 30
-
--- Join Pirates Team
-criarCfgBotao("Join Pirates Team", "", cfgY)
-cfgY = cfgY + 50
-
--- Join Marines Team
-criarCfgBotao("Join Marines Team", "", cfgY)
-cfgY = cfgY + 50
-
--- Open Title Name
-criarCfgBotao("Open Title Name", "", cfgY)
-cfgY = cfgY + 50
-
--- FPS Boost — Tăng Fps
-criarCfgBotao("FPS Boost", "Tăng Fps", cfgY)
-cfgY = cfgY + 60
-
--- ---- Auto Codes ----
-criarCfgSecao("Auto Codes", cfgY)
-cfgY = cfgY + 30
-
--- Codes — Tự Động Nhập Hết Code
-criarCfgBotao("Codes", "Tự Động Nhập Hết Code", cfgY)
-cfgY = cfgY + 60
-
--- ---- Sever Hop ----
-criarCfgSecao("Sever Hop", cfgY)
-cfgY = cfgY + 30
-
--- Rejoin Server
-criarCfgBotao("Rejoin Server", "", cfgY)
-cfgY = cfgY + 50
-
--- Server Hop
-criarCfgBotao("Server Hop", "", cfgY)
-cfgY = cfgY + 50
-
+-- Helper: cria toggle row no painel de config (mantido para compatibilidade)
+do end -- CONFIG vazio
 
 -- ============================================================
---  ABA 🛒 SHOP — Buy items (igual ao redz Hub)
+--  ABA 🛒 SHOP — (em branco)
 -- ============================================================
 
-local shopPanel = paineis["🛒 SHOP"]
+local shopPanel = paineis["🛒 Shop"]
 local shopY = 6
 
--- Helper: cria botão de ação (seta >) no painel de shop
-local function criarShopBotao(labelText, yPos)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -12, 0, 44)
-    row.Position = UDim2.new(0, 6, 0, yPos)
-    row.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
-    row.BorderSizePixel = 0
-    row.Parent = shopPanel
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
-    Instance.new("UIStroke", row).Color = Color3.fromRGB(38, 38, 52)
-
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.85, 0, 1, 0)
-    lbl.Position = UDim2.new(0, 10, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(210, 210, 210)
-    lbl.Text = labelText
-    lbl.TextSize = 13
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = row
-
-    local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 20, 1, 0)
-    arrow.Position = UDim2.new(1, -28, 0, 0)
-    arrow.BackgroundTransparency = 1
-    arrow.TextColor3 = Color3.fromRGB(150, 150, 150)
-    arrow.Text = "›"
-    arrow.TextSize = 22
-    arrow.Font = Enum.Font.GothamBold
-    arrow.Parent = row
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
-    btn.Parent = row
-
-    return row, btn
-end
-
--- Helper: cria título de seção no shop
-local function criarShopSecao(texto, yPos)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -12, 0, 26)
-    lbl.Position = UDim2.new(0, 6, 0, yPos)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(255, 215, 0)
-    lbl.Text = texto
-    lbl.TextSize = 14
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = shopPanel
-    return lbl
-end
-
--- ---- Buy Melee V1 ----
-criarShopSecao("Buy Melee V1", shopY)
-shopY = shopY + 30
-
-criarShopBotao("Buy Black Leg $150,000", shopY)        shopY = shopY + 50
-criarShopBotao("Buy Electro $550,000", shopY)          shopY = shopY + 50
-criarShopBotao("Buy Water Kung Fu $750,000", shopY)    shopY = shopY + 50
-criarShopBotao("Buy Dragon Claw 1,500F", shopY)        shopY = shopY + 60
-
--- ---- Buy Melee V2 ----
-criarShopSecao("Buy Melee V2", shopY)
-shopY = shopY + 30
-
-criarShopBotao("Buy Superhuman $3,000,000", shopY)             shopY = shopY + 50
-criarShopBotao("Buy Death Step $5,000,000 5,000F", shopY)      shopY = shopY + 50
-criarShopBotao("Buy Sharkman Karate $2,500,000 5,000F", shopY) shopY = shopY + 50
-criarShopBotao("Buy Electric Claw $3,000,000 5,000F", shopY)   shopY = shopY + 50
-criarShopBotao("Buy Dragon Talon $3,000,000 5,000F", shopY)    shopY = shopY + 50
-criarShopBotao("Buy God Human $5,000,000 5,000F", shopY)       shopY = shopY + 50
-criarShopBotao("Buy Sanguine Art $5,000,000 5,000F", shopY)    shopY = shopY + 60
-
--- ---- Buy Sea Event Crafting ----
-criarShopSecao("Buy Sea Event Crafting", shopY)
-shopY = shopY + 30
-
-criarShopBotao("Craft Dragonheart", shopY)       shopY = shopY + 50
-criarShopBotao("Craft Dragonstorm", shopY)       shopY = shopY + 50
-criarShopBotao("Craft DinoHood", shopY)          shopY = shopY + 50
-criarShopBotao("Craft SharkTooth", shopY)        shopY = shopY + 50
-criarShopBotao("Craft TerrorJaw", shopY)         shopY = shopY + 50
-criarShopBotao("Craft SharkAnchor", shopY)       shopY = shopY + 50
-criarShopBotao("Craft LeviathanCrown", shopY)    shopY = shopY + 50
-criarShopBotao("Craft LeviathanShield", shopY)   shopY = shopY + 50
-criarShopBotao("Craft LeviathanBoat", shopY)     shopY = shopY + 50
-criarShopBotao("Craft LegendaryScroll", shopY)   shopY = shopY + 50
-criarShopBotao("Craft MythicalScroll", shopY)    shopY = shopY + 60
-
--- ---- Buy Haki, Soru... ----
-criarShopSecao("Buy Haki,Soru...", shopY)
-shopY = shopY + 30
-
-criarShopBotao("Buy Geppo $10,000", shopY)               shopY = shopY + 50
-criarShopBotao("Buy Buso Haki $25,000", shopY)           shopY = shopY + 50
-criarShopBotao("Buy Soru $25,000", shopY)                shopY = shopY + 50
-criarShopBotao("Buy Observation Haki $750,000", shopY)   shopY = shopY + 60
-
--- ---- Buy Sword, Gun ----
-criarShopSecao("Buy Sword,Gun", shopY)
-shopY = shopY + 30
-
-criarShopBotao("Buy Cutlass $1,000", shopY)              shopY = shopY + 50
-criarShopBotao("Buy Katana $1,000", shopY)               shopY = shopY + 50
-criarShopBotao("Buy Iron Mace $25,000", shopY)           shopY = shopY + 50
-criarShopBotao("Buy Dual Katana $12,000", shopY)         shopY = shopY + 50
-criarShopBotao("Buy Triple Katana $60,000", shopY)       shopY = shopY + 50
-criarShopBotao("Buy Pipe $100,000", shopY)               shopY = shopY + 50
-criarShopBotao("Buy Dual-Headed Blade $400,000", shopY)  shopY = shopY + 50
-criarShopBotao("Buy Bisento $1,200,000", shopY)          shopY = shopY + 50
-criarShopBotao("Buy Soul Cane $750,000", shopY)          shopY = shopY + 50
-criarShopBotao("Buy Pole V2 5,000F", shopY)              shopY = shopY + 50
-criarShopBotao("Buy Slingshot $5,000", shopY)            shopY = shopY + 50
-criarShopBotao("Buy Musket $8,000", shopY)               shopY = shopY + 50
-criarShopBotao("Buy Flintlock $10,500", shopY)           shopY = shopY + 50
-criarShopBotao("Refined Slingshot $30,000", shopY)       shopY = shopY + 50
-criarShopBotao("Buy Refined Flintlock $65,000", shopY)   shopY = shopY + 50
-criarShopBotao("Buy Cannon $100,000", shopY)             shopY = shopY + 50
-criarShopBotao("Buy Kabucha 1,500F", shopY)              shopY = shopY + 50
-criarShopBotao("Buy Bizarre Rifle 250 Ectoplasm", shopY) shopY = shopY + 50
-criarShopBotao("Buy Black Cape $50,000", shopY)          shopY = shopY + 50
-criarShopBotao("Swordsman Hat $150,000", shopY)          shopY = shopY + 50
-criarShopBotao("Buy Tomoe Ring $500,000", shopY)         shopY = shopY + 60
-
--- ---- Reset Stats, Random Race ----
-criarShopSecao("Reset Stats , Random Race", shopY)
-shopY = shopY + 30
-
-criarShopBotao("Đổi Tộc Ghoul", shopY)      shopY = shopY + 50
-criarShopBotao("Đổi Tộc Cyborg", shopY)     shopY = shopY + 50
-criarShopBotao("Reset Stats 2,500F", shopY) shopY = shopY + 50
-criarShopBotao("Random Race 3,000F", shopY) shopY = shopY + 50
-
+-- SHOP vazio
