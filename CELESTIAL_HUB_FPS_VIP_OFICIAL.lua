@@ -505,7 +505,7 @@ addWhiteStroke(velOkBtn)
 -- Mensagem abaixo da velocidade
 local velMsgLabel = Instance.new("TextLabel", container)
 velMsgLabel.Size = UDim2.new(1, -20, 0, 30)
-velMsgLabel.Position = UDim2.new(0, 10, 0, 200)
+velMsgLabel.Position = UDim2.new(0, 10, 0, 175)
 velMsgLabel.BackgroundTransparency = 1
 velMsgLabel.Text = ""
 velMsgLabel.TextColor3 = Color3.fromRGB(0, 220, 0)
@@ -513,10 +513,30 @@ velMsgLabel.Font = Enum.Font.GothamBold
 velMsgLabel.TextSize = 12
 velMsgLabel.TextXAlignment = Enum.TextXAlignment.Center
 
+criarDivisorH(container, 210)
+
+-- ===================== SUPER PULO =====================
+
+local rowPulo = criarLinha(container, 218, "Super Pulo")
+
+local puloBox = Instance.new("Frame", rowPulo)
+puloBox.Size = UDim2.new(0, 28, 0, 28)
+puloBox.Position = UDim2.new(1, -38, 0.5, -14)
+puloBox.BackgroundColor3 = Color3.fromRGB(60, 60, 65)
+Instance.new("UICorner", puloBox).CornerRadius = UDim.new(0, 6)
+addWhiteStroke(puloBox)
+
+local puloBtn = Instance.new("TextButton", rowPulo)
+puloBtn.Size = UDim2.new(0, 28, 0, 28)
+puloBtn.Position = UDim2.new(1, -38, 0.5, -14)
+puloBtn.BackgroundTransparency = 1
+puloBtn.Text = ""
+
 -- ===================== ESTADOS =====================
 
 local fpsAtivo = false
 local diaAtivo = false
+local puloAtivo = false
 local boostLoop = nil
 local diaLoop = nil
 
@@ -774,6 +794,42 @@ applySpeed(speedValue)
 
 local UserInputService = game:GetService("UserInputService")
 
+-- ===================== SUPER PULO LÓGICA =====================
+
+local origJumpPower = nil
+
+local function updatePuloBox()
+    puloBox.BackgroundColor3 = puloAtivo and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(60, 60, 65)
+end
+
+puloBtn.MouseButton1Click:Connect(function()
+    puloAtivo = not puloAtivo
+    updatePuloBox()
+    vibrar()
+
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+    if puloAtivo then
+        if hum then
+            origJumpPower = hum.JumpPower
+            hum.JumpPower = 180
+        end
+        -- Mantém o JumpPower ao trocar de personagem
+        player.CharacterAdded:Connect(function(newChar)
+            if not puloAtivo then return end
+            task.wait(0.5)
+            local newHum = newChar:FindFirstChildOfClass("Humanoid")
+            if newHum then newHum.JumpPower = 180 end
+        end)
+    else
+        if hum then
+            hum.JumpPower = origJumpPower or 50
+        end
+        origJumpPower = nil
+    end
+end)
+
 -- ===================== MINIMIZAR =====================
 
 local visivel = false
@@ -838,3 +894,4 @@ end)
 
 updateFpsBox()
 updateDiaBox()
+updatePuloBox()
