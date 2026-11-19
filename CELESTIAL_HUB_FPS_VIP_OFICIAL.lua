@@ -486,7 +486,7 @@ local ABAS_COM_CONTEUDO = {
     idiomas = true, info = true, zoom = true, graficos = true, status = true,
     farmset = true, multifarm = true, seaevent = true, location = true,
     fruit = true, settings = true, pvp = true, main = true, shop = true,
-    raid = true, hide = true, new = true, admin = true
+    raid = true, hide = true, comandos = true
 }
 local bolinhasVerdes = {}
 local bordasRGBAbas = {}
@@ -548,8 +548,7 @@ do
         {"shop","🛒\nSHOP","🛒 SHOP"},
         {"pvp","👥\nPVP","👥 PVP"},
         {"settings","🛠️\nSETTINGS","🛠️ SETTINGS"},
-        {"new","✨\nNEW","✨ NEW"},
-        {"admin","🛡️\nADMIN","🛡️ ADMIN"},
+        {"comandos","⌘\nCOMANDOS","⌘ COMANDOS"},
     }
     local yBase = 8
     for i, d in ipairs(novas) do
@@ -6069,391 +6068,8 @@ end
 
 
 
--- ===================== ABA NEW: RECURSOS ADICIONAIS =====================
-do
-    local contNew = frame:FindFirstChild("ContainerAba_new")
-    if contNew then
-        local newCards = {}
-        local historicoNew = {}
-        local waypointsAC = {}
-        local cframeFlyConnection = nil
-        local cframeFlyAtivo = false
-        local cframeFlySpeed = 50
-        local vehicleFlyConnection = nil
-        local vehicleFlyBV, vehicleFlyBG = nil, nil
-        local vehicleFlyAtivo = false
-        local hudAtivo = false
-        local hudConnection = nil
-        local keybindFly = Enum.KeyCode.F
-        local keybindConnection = nil
-        local notificationText
+-- Aba NEW removida conforme solicitado.
 
-        local function registrarAcao(msg)
-            table.insert(historicoNew, 1, os.date("%H:%M:%S") .. "  •  " .. tostring(msg))
-            while #historicoNew > 12 do table.remove(historicoNew) end
-            if notificationText and notificationText.Parent then
-                notificationText.Text = table.concat(historicoNew, "\n")
-            end
-        end
-
-        local function criarTexto(parent, text, y, height, size, color)
-            local label = Instance.new("TextLabel", parent)
-            label.Size = UDim2.new(1, -20, 0, height)
-            label.Position = UDim2.new(0, 10, 0, y)
-            label.BackgroundTransparency = 1
-            label.Text = text
-            label.TextColor3 = color or COR_TEXTO_SUB
-            label.Font = FONTE_TEXTO
-            label.TextSize = size or 11
-            label.TextWrapped = true
-            label.TextXAlignment = Enum.TextXAlignment.Left
-            label.TextYAlignment = Enum.TextYAlignment.Center
-            return label
-        end
-
-        local function criarBotao(parent, text, x, y, width, callback)
-            local btn = Instance.new("TextButton", parent)
-            btn.Size = UDim2.new(0, width, 0, 32)
-            btn.Position = UDim2.new(0, x, 0, y)
-            btn.BackgroundColor3 = COR_BOTAO_ATIVO
-            btn.TextColor3 = COR_TEXTO
-            btn.Text = text
-            btn.Font = FONTE_TEXTO
-            btn.TextSize = 10
-            btn.TextWrapped = true
-            btn.AutoButtonColor = true
-            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-            addWhiteStroke(btn)
-            btn.MouseButton1Click:Connect(function()
-                vibrar()
-                local ok, err = pcall(callback)
-                if not ok then registrarAcao("Erro: " .. tostring(err)) end
-            end)
-            return btn
-        end
-
-        local function criarInput(parent, placeholder, x, y, width, defaultText)
-            local box = Instance.new("TextBox", parent)
-            box.Size = UDim2.new(0, width, 0, 32)
-            box.Position = UDim2.new(0, x, 0, y)
-            box.BackgroundColor3 = COR_PAINEL
-            box.TextColor3 = COR_TEXTO
-            box.PlaceholderColor3 = COR_TEXTO_SUB
-            box.PlaceholderText = placeholder
-            box.Text = defaultText or ""
-            box.Font = FONTE_TEXTO
-            box.TextSize = 11
-            box.ClearTextOnFocus = false
-            Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
-            addWhiteStroke(box)
-            return box
-        end
-
-        local function registrarCard(card, termos)
-            card:SetAttribute("SearchTerms", string.lower(termos or ""))
-            table.insert(newCards, card)
-        end
-
-        -- Busca inteligente local: filtra cards por título e termos relacionados.
-        local cardBusca = criarMoldura(contNew, 40, 88, "Busca inteligente")
-        registrarCard(cardBusca, "pesquisa procurar busca filtro comandos recursos")
-        local buscaNew = criarInput(cardBusca, "Buscar recursos nesta aba...", 10, 34, 262, "")
-        local buscaInfo = criarTexto(cardBusca, "Digite parte do nome ou da função para filtrar os recursos.", 67, 16, 9)
-        buscaNew:GetPropertyChangedSignal("Text"):Connect(function()
-            local q = string.lower(buscaNew.Text):gsub("^%s+", ""):gsub("%s+$", "")
-            local y = cardBusca.Position.Y.Offset + cardBusca.Size.Y.Offset + 10
-            for _, card in ipairs(newCards) do
-                if card ~= cardBusca then
-                    local title = card:FindFirstChildWhichIsA("TextLabel")
-                    local titleText = title and string.lower(title.Text) or ""
-                    local terms = card:GetAttribute("SearchTerms") or ""
-                    local match = q == "" or titleText:find(q, 1, true) ~= nil or terms:find(q, 1, true) ~= nil
-                    card.Visible = match
-                    if match then
-                        card.Position = UDim2.new(0, 10, 0, y)
-                        y = y + card.Size.Y.Offset + 10
-                    end
-                end
-            end
-            contNew.CanvasSize = UDim2.new(0, 0, 0, y + 10)
-        end)
-
-        -- Painel de movimento: CFrame Fly e Fly de veículo em botões separados.
-        local cardMov = criarMoldura(contNew, 0, 164, "Painel de movimento")
-        registrarCard(cardMov, "movimento cframe fly voo velocidade veículo vehicle fly")
-        criarTexto(cardMov, "Velocidade do CFrame Fly (1–300)", 31, 18, 10)
-        local cfSpeedInput = criarInput(cardMov, "50", 10, 53, 82, "50")
-        local cfFlyBtn, vehicleBtn
-        cfFlyBtn = criarBotao(cardMov, "CFrame Fly: OFF", 102, 53, 170, function()
-            if cframeFlyAtivo then
-                cframeFlyAtivo = false
-                if cframeFlyConnection then cframeFlyConnection:Disconnect(); cframeFlyConnection = nil end
-                local char = player.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local head = char and char:FindFirstChild("Head")
-                if head then head.Anchored = false end
-                if hum then hum.PlatformStand = false end
-                cfFlyBtn.Text = "CFrame Fly: OFF"
-                registrarAcao("CFrame Fly desligado")
-                return
-            end
-            local value = tonumber(cfSpeedInput.Text)
-            if value then cframeFlySpeed = math.clamp(value, 1, 300) end
-            local char = player.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local head = char and char:FindFirstChild("Head")
-            if not hum or not head then registrarAcao("Personagem ainda não está pronto"); return end
-            if vehicleFlyAtivo then
-                vehicleFlyAtivo = false
-                if vehicleFlyConnection then vehicleFlyConnection:Disconnect(); vehicleFlyConnection = nil end
-                if vehicleFlyBV then vehicleFlyBV:Destroy(); vehicleFlyBV = nil end
-                if vehicleFlyBG then vehicleFlyBG:Destroy(); vehicleFlyBG = nil end
-                if vehicleBtn then vehicleBtn.Text = "Vehicle Fly: OFF" end
-            end
-            cframeFlyAtivo = true
-            hum.PlatformStand = true
-            head.Anchored = true
-            cfFlyBtn.Text = "CFrame Fly: ON"
-            cframeFlyConnection = RunService.Heartbeat:Connect(function(dt)
-                local c = player.Character
-                local h = c and c:FindFirstChildOfClass("Humanoid")
-                local hd = c and c:FindFirstChild("Head")
-                local cam = workspace.CurrentCamera
-                if not h or not hd or not cam or not hd.Parent then return end
-                local moveDirection = h.MoveDirection * (cframeFlySpeed * dt)
-                local headCF = hd.CFrame
-                local cameraCF = cam.CFrame
-                local cameraOffset = headCF:ToObjectSpace(cameraCF).Position
-                cameraCF = cameraCF * CFrame.new(-cameraOffset.X, -cameraOffset.Y, -cameraOffset.Z + 1)
-                local cameraPosition = cameraCF.Position
-                local headPosition = headCF.Position
-                local objectVelocity = CFrame.new(cameraPosition, Vector3.new(headPosition.X, cameraPosition.Y, headPosition.Z)):VectorToObjectSpace(moveDirection)
-                hd.CFrame = CFrame.new(headPosition) * (cameraCF - cameraPosition) * CFrame.new(objectVelocity)
-            end)
-            registrarAcao("CFrame Fly ligado — velocidade " .. tostring(cframeFlySpeed))
-        end)
-        criarTexto(cardMov, "Fly de veículo usa o assento atual; sente-se antes de ativar.", 94, 26, 9)
-        vehicleBtn = criarBotao(cardMov, "Vehicle Fly: OFF", 10, 124, 262, function()
-            if vehicleFlyAtivo then
-                vehicleFlyAtivo = false
-                if vehicleFlyConnection then vehicleFlyConnection:Disconnect(); vehicleFlyConnection = nil end
-                if vehicleFlyBV then vehicleFlyBV:Destroy(); vehicleFlyBV = nil end
-                if vehicleFlyBG then vehicleFlyBG:Destroy(); vehicleFlyBG = nil end
-                vehicleBtn.Text = "Vehicle Fly: OFF"
-                registrarAcao("Vehicle Fly desligado")
-                return
-            end
-            local char = player.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local seat = hum and hum.SeatPart
-            local root = seat and (seat.AssemblyRootPart or seat)
-            if not root then registrarAcao("Entre em um veículo com assento primeiro"); return end
-            if cframeFlyAtivo then
-                cframeFlyAtivo = false
-                if cframeFlyConnection then cframeFlyConnection:Disconnect(); cframeFlyConnection = nil end
-                local head = char and char:FindFirstChild("Head")
-                if head then head.Anchored = false end
-                if hum then hum.PlatformStand = false end
-                cfFlyBtn.Text = "CFrame Fly: OFF"
-            end
-            vehicleFlyAtivo = true
-            local vehicleControlModule = nil
-            pcall(function()
-                local playerScripts = player:WaitForChild("PlayerScripts")
-                local playerModule = playerScripts:WaitForChild("PlayerModule")
-                vehicleControlModule = require(playerModule:WaitForChild("ControlModule"))
-            end)
-            vehicleFlyBV = Instance.new("BodyVelocity")
-            vehicleFlyBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            vehicleFlyBV.Velocity = Vector3.zero
-            vehicleFlyBV.Parent = root
-            vehicleFlyBG = Instance.new("BodyGyro")
-            vehicleFlyBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-            vehicleFlyBG.P = 9e4
-            vehicleFlyBG.Parent = root
-            vehicleBtn.Text = "Vehicle Fly: ON"
-            vehicleFlyConnection = RunService.RenderStepped:Connect(function()
-                local c = player.Character
-                local h = c and c:FindFirstChildOfClass("Humanoid")
-                local currentSeat = h and h.SeatPart
-                local currentRoot = currentSeat and (currentSeat.AssemblyRootPart or currentSeat)
-                local cam = workspace.CurrentCamera
-                if not currentRoot or not cam or not vehicleFlyBV or not vehicleFlyBG then return end
-                local move = Vector3.zero
-                if vehicleControlModule then pcall(function() move = vehicleControlModule:GetMoveVector() end) end
-                if move.Magnitude <= 0.01 then move = h.MoveDirection end
-                local speed = math.clamp(tonumber(_G.FlySpeed) or 50, 1, 300)
-                vehicleFlyBV.Velocity = move.Magnitude > 0.01 and (cam.CFrame.RightVector * move.X - cam.CFrame.LookVector * move.Z) * speed or Vector3.zero
-                vehicleFlyBG.CFrame = cam.CFrame
-            end)
-            registrarAcao("Vehicle Fly ligado")
-        end)
-
-        -- Waypoints locais da sessão.
-        local cardWp = criarMoldura(contNew, 0, 132, "Sistema de waypoints")
-        registrarCard(cardWp, "waypoint posição salvar teleportar coordenadas local")
-        local wpName = criarInput(cardWp, "Nome do waypoint", 10, 34, 262, "")
-        criarBotao(cardWp, "SALVAR POSIÇÃO", 10, 75, 126, function()
-            local char = player.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            local name = wpName.Text:gsub("^%s+", ""):gsub("%s+$", "")
-            if not root then registrarAcao("Personagem não encontrado"); return end
-            if name == "" then name = "Waypoint " .. tostring(#waypointsAC + 1) end
-            waypointsAC[string.lower(name)] = {name = name, cframe = root.CFrame}
-            registrarAcao("Waypoint salvo: " .. name)
-        end)
-        criarBotao(cardWp, "IR AO WAYPOINT", 146, 75, 126, function()
-            local name = string.lower(wpName.Text:gsub("^%s+", ""):gsub("%s+$", ""))
-            local wp = waypointsAC[name]
-            local char = player.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            if not wp then registrarAcao("Waypoint não encontrado"); return end
-            if not root then registrarAcao("Personagem não encontrado"); return end
-            root.CFrame = wp.cframe + Vector3.new(0, 3, 0)
-            registrarAcao("Teleportado para: " .. wp.name)
-        end)
-        criarBotao(cardWp, "LIMPAR WAYPOINTS", 10, 91, 262, function()
-            table.clear(waypointsAC)
-            registrarAcao("Todos os waypoints desta sessão foram apagados")
-        end)
-
-        -- Atalho configurável para o botão Fly original.
-        local cardKeys = criarMoldura(contNew, 0, 104, "Atalho personalizado")
-        registrarCard(cardKeys, "keybind tecla atalho fly teclado personalizar")
-        criarTexto(cardKeys, "Tecla para alternar o Fly original", 31, 18, 10)
-        local keyInput = criarInput(cardKeys, "Ex.: F", 10, 54, 82, "F")
-        criarBotao(cardKeys, "APLICAR TECLA", 102, 54, 170, function()
-            local keyName = string.upper(keyInput.Text:gsub("%s+", ""))
-            local key = Enum.KeyCode[keyName]
-            if not key or key == Enum.KeyCode.Unknown then registrarAcao("Tecla inválida: " .. keyName); return end
-            keybindFly = key
-            registrarAcao("Atalho do Fly definido: " .. keyName)
-        end)
-        if keybindConnection then keybindConnection:Disconnect() end
-        keybindConnection = UserInputService.InputBegan:Connect(function(input, processed)
-            if processed or UserInputService:GetFocusedTextBox() then return end
-            if input.KeyCode == keybindFly and type(_G.ACHubToggleFly) == "function" then
-                _G.ACHubToggleFly()
-                registrarAcao("Atalho acionado: " .. keybindFly.Name)
-            end
-        end)
-
-        -- HUD local com informações do próprio jogador.
-        local cardHud = criarMoldura(contNew, 0, 78, "Player Info HUD")
-        registrarCard(cardHud, "hud jogador informações vida velocidade posição coordenadas")
-        local hudBtn
-        hudBtn = criarBotao(cardHud, "HUD: OFF", 10, 34, 262, function()
-            hudAtivo = not hudAtivo
-            hudBtn.Text = hudAtivo and "HUD: ON" or "HUD: OFF"
-            if hudAtivo then
-                if not _G.ACHubInfoHUD then
-                    local label = Instance.new("TextLabel", gui)
-                    label.Name = "ACHubInfoHUD"
-                    label.Size = UDim2.new(0, 250, 0, 58)
-                    label.Position = UDim2.new(1, -260, 0, 12)
-                    label.BackgroundColor3 = COR_FUNDO
-                    label.BackgroundTransparency = 0.2
-                    label.TextColor3 = COR_TEXTO
-                    label.Font = FONTE_TEXTO
-                    label.TextSize = 11
-                    label.TextXAlignment = Enum.TextXAlignment.Left
-                    label.TextYAlignment = Enum.TextYAlignment.Center
-                    label.TextWrapped = true
-                    Instance.new("UICorner", label).CornerRadius = UDim.new(0, 8)
-                    addWhiteStroke(label)
-                    _G.ACHubInfoHUD = label
-                end
-                if hudConnection then hudConnection:Disconnect() end
-                hudConnection = RunService.RenderStepped:Connect(function()
-                    local label = _G.ACHubInfoHUD
-                    local char = player.Character
-                    local hum = char and char:FindFirstChildOfClass("Humanoid")
-                    local root = char and char:FindFirstChild("HumanoidRootPart")
-                    if label and label.Parent then
-                        if hum and root then
-                            local pos = root.Position
-                            label.Text = string.format("  %s\n  HP: %d/%d  |  Vel: %d\n  XYZ: %.0f, %.0f, %.0f", player.Name, hum.Health, hum.MaxHealth, root.AssemblyLinearVelocity.Magnitude, pos.X, pos.Y, pos.Z)
-                        else label.Text = "  " .. player.Name .. "\n  Aguardando personagem..." end
-                    end
-                end)
-            else
-                if hudConnection then hudConnection:Disconnect(); hudConnection = nil end
-                if _G.ACHubInfoHUD then _G.ACHubInfoHUD:Destroy(); _G.ACHubInfoHUD = nil end
-            end
-            registrarAcao(hudAtivo and "Player Info HUD ligado" or "Player Info HUD desligado")
-        end)
-
-        -- Temas aplicados à interface atual e aos elementos criados depois.
-        local cardThemes = criarMoldura(contNew, 0, 84, "Temas")
-        registrarCard(cardThemes, "tema themes cores aparência roxo azul verde")
-        local function aplicarTema(accent, panel, card)
-            local oldAccent, oldPanel, oldCard = COR_BOTAO_ATIVO, COR_PAINEL, COR_CARD
-            COR_BOTAO_ATIVO, COR_PAINEL, COR_CARD = accent, panel, card
-            for _, obj in ipairs(gui:GetDescendants()) do
-                if obj:IsA("GuiObject") then
-                    if obj.BackgroundColor3 == oldAccent then obj.BackgroundColor3 = accent
-                    elseif obj.BackgroundColor3 == oldPanel then obj.BackgroundColor3 = panel
-                    elseif obj.BackgroundColor3 == oldCard then obj.BackgroundColor3 = card end
-                end
-            end
-            registrarAcao("Tema atualizado")
-        end
-        criarBotao(cardThemes, "ROXO", 10, 38, 80, function() aplicarTema(Color3.fromRGB(130, 90, 200), Color3.fromRGB(76, 50, 102), Color3.fromRGB(98, 65, 128)) end)
-        criarBotao(cardThemes, "AZUL", 101, 38, 80, function() aplicarTema(Color3.fromRGB(30, 120, 220), Color3.fromRGB(25, 45, 75), Color3.fromRGB(35, 65, 105)) end)
-        criarBotao(cardThemes, "VERDE", 192, 38, 80, function() aplicarTema(Color3.fromRGB(35, 160, 105), Color3.fromRGB(25, 65, 55), Color3.fromRGB(35, 90, 75)) end)
-
-        -- Centro de notificações e histórico das ações desta aba.
-        local cardHistory = criarMoldura(contNew, 0, 160, "Notificações e histórico")
-        registrarCard(cardHistory, "notificações histórico log ações recentes")
-        notificationText = criarTexto(cardHistory, "Nenhuma ação registrada ainda.", 32, 116, 9)
-        notificationText.TextYAlignment = Enum.TextYAlignment.Top
-        notificationText.TextWrapped = false
-
-        -- Gerenciador de módulos locais (sem executar scripts remotos arbitrários).
-        local cardModules = criarMoldura(contNew, 0, 118, "Gerenciador de módulos")
-        registrarCard(cardModules, "plugin plugins módulos recursos locais gerenciar")
-        criarTexto(cardModules, "Módulos locais: CFrame Fly, Vehicle Fly, Waypoints, HUD, atalhos e temas. Não executa plugins remotos de terceiros.", 31, 42, 9)
-        criarBotao(cardModules, "DESLIGAR MÓDULOS DE MOVIMENTO/HUD", 10, 78, 262, function()
-            if cframeFlyConnection then cframeFlyConnection:Disconnect(); cframeFlyConnection = nil end
-            if cframeFlyAtivo then
-                local char = player.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local head = char and char:FindFirstChild("Head")
-                if head then head.Anchored = false end
-                if hum then hum.PlatformStand = false end
-            end
-            cframeFlyAtivo = false
-            cfFlyBtn.Text = "CFrame Fly: OFF"
-            if vehicleFlyConnection then vehicleFlyConnection:Disconnect(); vehicleFlyConnection = nil end
-            if vehicleFlyBV then vehicleFlyBV:Destroy(); vehicleFlyBV = nil end
-            if vehicleFlyBG then vehicleFlyBG:Destroy(); vehicleFlyBG = nil end
-            vehicleFlyAtivo = false
-            vehicleBtn.Text = "Vehicle Fly: OFF"
-            hudAtivo = false
-            if hudConnection then hudConnection:Disconnect(); hudConnection = nil end
-            if _G.ACHubInfoHUD then _G.ACHubInfoHUD:Destroy(); _G.ACHubInfoHUD = nil end
-            hudBtn.Text = "HUD: OFF"
-            registrarAcao("Módulos de movimento e HUD desligados")
-        end)
-
-        -- Encerramento seguro dos recursos temporários ao fechar/destruir a interface.
-        player.CharacterAdded:Connect(function()
-            if cframeFlyAtivo then
-                task.wait(0.5)
-                local char = player.Character
-                local hum = char and char:FindFirstChildOfClass("Humanoid")
-                local head = char and char:FindFirstChild("Head")
-                if hum and head then
-                    hum.PlatformStand = true
-                    head.Anchored = true
-                end
-            end
-        end)
-
-        contNew.CanvasSize = UDim2.new(0, 0, 0, 1100)
-    end
-end
--- ===================== FIM ABA NEW =====================
 
 -- MINIMIZAR (abre sempre na aba Sea Event)
 openBtn.MouseButton1Click:Connect(function()
@@ -35780,115 +35396,698 @@ _G.CelestialHubDexMain = Main
 
 
 -- =====================================================
--- CELESTIAL HUB - ADMIN (OPÇÕES 1 E 2)
--- Os códigos originais são mantidos em blocos separados.
+-- CELESTIAL HUB - ABA COMANDOS
+-- Interface própria: sem painel Admin 1/2 e sem Command Bar.
+-- Os comandos são apresentados individualmente como toggles ou botões.
 -- =====================================================
 do
-    local admin = frame:FindFirstChild("ContainerAba_admin")
-    if admin then
-        local function criarBotaoAdmin(parent, texto, y, callback)
-            local botao = Instance.new("TextButton")
-            botao.Size = UDim2.new(1, -20, 0, 38)
-            botao.Position = UDim2.new(0, 10, 0, y)
-            botao.BackgroundColor3 = COR_BOTAO_ATIVO
-            botao.BorderSizePixel = 0
-            botao.Text = texto
-            botao.TextColor3 = COR_TEXTO
-            botao.Font = FONTE_TEXTO
-            botao.TextSize = 11
-            botao.TextWrapped = true
-            botao.AutoButtonColor = true
-            botao.Parent = parent
-            Instance.new("UICorner", botao).CornerRadius = UDim.new(0, 7)
-            addWhiteStroke(botao)
-            botao.MouseButton1Click:Connect(function()
-                vibrar()
-                task.spawn(function()
-                    local ok, err = pcall(callback)
-                    if not ok then warn("[Celestial Hub ADMIN] " .. tostring(err)) end
-                end)
-            end)
-            return botao
-        end
+    local comandosTab = frame:FindFirstChild("ContainerAba_comandos")
+    if comandosTab then
+        local topo = Instance.new("TextLabel")
+        topo.Name = "DescricaoComandos"
+        topo.Size = UDim2.new(1, -20, 0, 30)
+        topo.Position = UDim2.new(0, 10, 0, 36)
+        topo.BackgroundTransparency = 1
+        topo.Text = "428 comandos do Infinite Yield • selecione uma ação abaixo"
+        topo.TextColor3 = COR_TEXTO_SUB
+        topo.Font = FONTE_TEXTO
+        topo.TextSize = 9
+        topo.TextXAlignment = Enum.TextXAlignment.Left
+        topo.TextWrapped = true
+        topo.Parent = comandosTab
 
-        local cardIY = criarMoldura(admin, 42, 150, "① ADMIN CELESTIAL HUB — N° 1")
-        local descIY = Instance.new("TextLabel", cardIY)
-        descIY.Size = UDim2.new(1, -20, 0, 28)
-        descIY.Position = UDim2.new(0, 10, 0, 30)
-        descIY.BackgroundTransparency = 1
-        descIY.Text = "Celestial Hub — painel de comandos"
-        descIY.TextColor3 = COR_TEXTO_SUB
-        descIY.Font = FONTE_TEXTO
-        descIY.TextSize = 10
-        descIY.TextXAlignment = Enum.TextXAlignment.Left
-        criarBotaoAdmin(cardIY, "CARREGAR CELESTIAL HUB ADMIN 1", 58, function()
-            if _G.CelestialHubAdmin1Root and _G.CelestialHubAdmin1Root.Parent then
-                return -- já está carregado; evita instâncias duplicadas
+        local busca = Instance.new("TextBox")
+        busca.Name = "BuscarComando"
+        busca.Size = UDim2.new(1, -20, 0, 30)
+        busca.Position = UDim2.new(0, 10, 0, 68)
+        busca.BackgroundColor3 = COR_CARD
+        busca.BorderSizePixel = 0
+        busca.PlaceholderText = "Pesquisar comando..."
+        busca.Text = ""
+        busca.TextColor3 = COR_TEXTO
+        busca.PlaceholderColor3 = COR_TEXTO_SUB
+        busca.Font = FONTE_TEXTO
+        busca.TextSize = 10
+        busca.ClearTextOnFocus = false
+        busca.Parent = comandosTab
+        Instance.new("UICorner", busca).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(busca)
+
+        local lista = Instance.new("ScrollingFrame")
+        lista.Name = "ListaComandos"
+        lista.Size = UDim2.new(1, -20, 1, -112)
+        lista.Position = UDim2.new(0, 10, 0, 104)
+        lista.BackgroundColor3 = COR_PAINEL
+        lista.BackgroundTransparency = 0.12
+        lista.BorderSizePixel = 0
+        lista.ScrollBarThickness = 4
+        lista.ScrollingDirection = Enum.ScrollingDirection.Y
+        lista.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        lista.CanvasSize = UDim2.new(0, 0, 0, 0)
+        lista.Parent = comandosTab
+        Instance.new("UICorner", lista).CornerRadius = UDim.new(0, 7)
+        local layout = Instance.new("UIListLayout", lista)
+        layout.Padding = UDim.new(0, 4)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        local padding = Instance.new("UIPadding", lista)
+        padding.PaddingTop = UDim.new(0, 5)
+        padding.PaddingBottom = UDim.new(0, 5)
+        padding.PaddingLeft = UDim.new(0, 5)
+        padding.PaddingRight = UDim.new(0, 5)
+
+        local enginePronto = false
+        local engineCarregando = false
+        local function garantirEngine()
+            if enginePronto and type(execCmd) == "function" then return true end
+            if engineCarregando then
+                repeat task.wait(0.1) until not engineCarregando
+                return enginePronto and type(execCmd) == "function"
             end
-            local executar = loadstring
-            if type(executar) ~= "function" then error("Este executor não disponibiliza loadstring.") end
-            local func, compileError = executar(CelestialHubInfiniteYieldSource)
-            if not func then error(compileError or "Falha ao compilar Infinite Yield.") end
-            func()
-        end)
-
-        criarBotaoAdmin(cardIY, "FECHAR ADMIN NÚMERO 1", 103, function()
-            local unload = _G.CelestialHubAdmin1Unload
-            if type(unload) == "function" then
-                unload()
-            else
+            engineCarregando = true
+            local ok, err = pcall(function()
+                if type(execCmd) ~= "function" then
+                    if type(loadstring) ~= "function" then error("Este executor não oferece suporte a loadstring.") end
+                    local fn, compileError = loadstring(CelestialHubInfiniteYieldSource)
+                    if not fn then error(compileError or "Falha ao preparar os comandos.") end
+                    fn()
+                    -- Esconde a interface original imediatamente para não exibir o painel nem a Command Bar.
+                    pcall(function()
+                        local raiz = _G.CelestialHubAdmin1Root
+                        if raiz and raiz:IsA("GuiObject") then raiz.Visible = false end
+                    end)
+                    task.wait(0.2)
+                end
+                if type(execCmd) ~= "function" then error("O mecanismo de comandos não foi inicializado.") end
+                -- Remove somente a interface visual do Infinite Yield; o executor dos comandos permanece ativo.
                 pcall(function()
-                    if _G.CelestialHubAdmin1Root then _G.CelestialHubAdmin1Root:Destroy() end
+                    if _G.CelestialHubAdmin1Root and _G.CelestialHubAdmin1Root.Parent then
+                        _G.CelestialHubAdmin1Root:Destroy()
+                    end
                 end)
-                pcall(function() getgenv().IY_LOADED = false end)
+                pcall(function()
+                    if _G.CelestialHubAdmin1OwnedScreen and _G.CelestialHubAdmin1OwnedScreen.Parent then
+                        _G.CelestialHubAdmin1OwnedScreen:Destroy()
+                    end
+                end)
                 _G.CelestialHubAdmin1Gui = nil
                 _G.CelestialHubAdmin1Root = nil
-            end
-        end)
-
-        local cardDex = criarMoldura(admin, 212, 150, "② ADMIN CELESTIAL HUB — N° 2")
-        local descDex = Instance.new("TextLabel", cardDex)
-        descDex.Size = UDim2.new(1, -20, 0, 28)
-        descDex.Position = UDim2.new(0, 10, 0, 30)
-        descDex.BackgroundTransparency = 1
-        descDex.Text = "Celestial Hub Explorer — explorador completo"
-        descDex.TextColor3 = COR_TEXTO_SUB
-        descDex.Font = FONTE_TEXTO
-        descDex.TextSize = 10
-        descDex.TextXAlignment = Enum.TextXAlignment.Left
-        criarBotaoAdmin(cardDex, "CARREGAR CELESTIAL HUB EXPLORER", 58, function()
-            if _G.CelestialHubDexMain and _G.CelestialHubDexMain.MainGui
-                and _G.CelestialHubDexMain.MainGui.Parent then
-                return -- já está carregado; evita duplicar o Explorer
-            end
-            local executar = loadstring
-            if type(executar) ~= "function" then error("Este executor não disponibiliza loadstring.") end
-            local func, compileError = executar(CelestialHubDexSource)
-            if not func then error(compileError or "Falha ao compilar Dex++ Explorer.") end
-            func()
-        end)
-        criarBotaoAdmin(cardDex, "FECHAR ADMIN NÚMERO 2", 103, function()
-            local dex = _G.CelestialHubDexMain
-            if dex then
-                pcall(function()
-                    if type(dex.Uninit) == "function" then dex.Uninit() end
-                end)
-                pcall(function()
-                    if dex.MainGui and dex.MainGui.Parent then dex.MainGui:Destroy() end
-                end)
-            end
-            -- Limpa também interfaces auxiliares do Dex++ que possam ter ficado abertas.
-            pcall(function()
-                local container = dex and dex.GetSecureContainer and dex.GetSecureContainer()
-                if container then
-                    for _, item in ipairs(container:GetChildren()) do
-                        if item:IsA("ScreenGui") and item.Name:sub(1, 5) == "_DPP_" then
-                            item:Destroy()
-                        end
-                    end
-                end
+                _G.CelestialHubAdmin1OwnedScreen = nil
+                _G.CelestialHubAdmin1Unload = nil
+                enginePronto = true
             end)
-            _G.CelestialHubDexMain = nil
-        end)
+            engineCarregando = false
+            if not ok then
+                warn("[Celestial Hub COMANDOS] " .. tostring(err))
+                return false
+            end
+            return true
+        end
+
+        local catalogCommands = {
+            {NAME = 'discord / support / help', DESC = 'Invite to the Infinite Yield Discord server.'},
+            {NAME = 'guiscale [number]', DESC = 'Changes the size of the GUI. [number] accepts decimals and whole numbers. Min is 0.4 and Max is 2'},
+            {NAME = 'console', DESC = 'Opens the Roblox console'},
+            {NAME = 'oldconsole', DESC = 'Loads an old-themed Roblox console'},
+            {NAME = 'explorer / dex', DESC = 'Opens Dex++ by Chillz'},
+            {NAME = 'moondex / mdex', DESC = 'Opens Dex by Moon'},
+            {NAME = 'remotespy / rspy', DESC = 'Opens Cobalt to intercept incoming and outgoing network traffic'},
+            {NAME = 'simplespy / sspy', DESC = 'Opens Simple Spy V3 to intercept remote calls from the client to the server'},
+            {NAME = 'audiologger / alogger', DESC = 'Opens Edges audio logger'},
+            {NAME = 'serverinfo / info', DESC = 'Gives you info about the server'},
+            {NAME = 'jobid', DESC = 'Copies the games JobId to your clipboard'},
+            {NAME = 'notifyjobid', DESC = 'Notifies you the games JobId'},
+            {NAME = 'rejoin / rj [reposition]', DESC = 'Makes you rejoin the game'},
+            {NAME = 'inviteprompt [player]', DESC = 'Prompts the user of your choice that they had invited you. Requires a rejoin to function.'},
+            {NAME = 'autorejoin / autorj', DESC = 'Automatically rejoins the server if you get kicked/disconnected'},
+            {NAME = 'serverhop / shop', DESC = 'Teleports you to a different server'},
+            {NAME = 'gameteleport / gametp [place ID]', DESC = 'Joins a game by ID'},
+            {NAME = 'antiidle / antiafk', DESC = 'Prevents the game from kicking you for being idle/AFK'},
+            {NAME = 'datalimit [num]', DESC = 'Sets outgoing KBPS limit'},
+            {NAME = 'replicationlag / backtrack [num]', DESC = 'Sets IncomingReplicationLag'},
+            {NAME = 'creatorid / creator', DESC = 'Notifies you the creators UserId'},
+            {NAME = 'copycreatorid / copycreator', DESC = 'Copies the creators UserId to your clipboard'},
+            {NAME = 'setcreatorid / setcreator', DESC = 'Sets your UserId to the creators UserId'},
+            {NAME = 'noprompts', DESC = 'Prevents the game from showing you purchase/premium prompts'},
+            {NAME = 'showprompts', DESC = 'Allows the game to show purchase/premium prompts again'},
+            {NAME = 'enable [inventory/playerlist/chat/reset/emotes/all]', DESC = 'Toggles visibility of CoreGui items'},
+            {NAME = 'disable [inventory/playerlist/chat/reset/emotes/all]', DESC = 'Toggles visibility of CoreGui items'},
+            {NAME = 'showguis', DESC = 'Shows any invisible GUIs'},
+            {NAME = 'unshowguis', DESC = 'Undoes showguis'},
+            {NAME = 'hideguis', DESC = 'Hides any GUIs in PlayerGui'},
+            {NAME = 'unhideguis', DESC = 'Undoes hideguis'},
+            {NAME = 'guidelete', DESC = 'Enables backspace to delete GUI'},
+            {NAME = 'unguidelete / noguidelete', DESC = 'Disables guidelete'},
+            {NAME = 'hideiy', DESC = 'Hides the main IY GUI'},
+            {NAME = 'showiy / unhideiy', DESC = 'Shows IY again'},
+            {NAME = 'keepiy', DESC = 'Auto execute IY when you teleport through servers'},
+            {NAME = 'unkeepiy', DESC = 'Disables keepiy'},
+            {NAME = 'togglekeepiy', DESC = 'Toggles keepiy'},
+            {NAME = 'removeads / adblock', DESC = 'Automatically removes ad billboards'},
+            {NAME = 'savegame / saveplace', DESC = 'Saves the game you are in to a file'},
+            {NAME = 'clearerror', DESC = 'Clears the annoying box and blur when a game kicks you'},
+            {NAME = 'antigameplaypaused', DESC = 'Clears the annoying box shown when a game is loading assets due to network lag'},
+            {NAME = 'unantigameplaypaused', DESC = 'Disables antigameplaypaused'},
+            {NAME = 'clientantikick / antikick (CLIENT)', DESC = 'Prevents LocalScripts from kicking you'},
+            {NAME = 'clientantiteleport / antiteleport (CLIENT)', DESC = 'Prevents LocalScripts from teleporting you'},
+            {NAME = 'allowrejoin / allowrj (CLIENT)', DESC = 'Toggles if antiteleport allows you to rejoin or not'},
+            {NAME = 'cancelteleport / canceltp', DESC = 'Cancels teleports in progress'},
+            {NAME = 'volume / vol [0-10]', DESC = 'Adjusts your game volume on a scale of 0 to 10'},
+            {NAME = 'antilag / boostfps / lowgraphics', DESC = 'Lowers game quality in an attempt to boost FPS'},
+            {NAME = 'setfpscap / fpscap / maxfps', DESC = 'Sets FPS cap'},
+            {NAME = 'record / rec', DESC = 'Starts Roblox recorder'},
+            {NAME = 'screenshot / scrnshot', DESC = 'Takes a screenshot'},
+            {NAME = 'togglefullscreen / togglefs', DESC = 'Toggles fullscreen'},
+            {NAME = 'notify [text]', DESC = 'Sends you a notification with the provided text'},
+            {NAME = 'lastcommand / lastcmd', DESC = 'Executes the previous command used'},
+            {NAME = 'notifyping / ping', DESC = 'Notify yourself your ping'},
+            {NAME = 'norender', DESC = 'Disables 3D Rendering to decrease the amount of CPU the client uses'},
+            {NAME = 'render', DESC = 'Enables 3D Rendering'},
+            {NAME = '2022materials / use2022materials', DESC = 'Enables 2022 material textures'},
+            {NAME = 'un2022materials / unuse2022materials', DESC = 'Disables 2022 material textures'},
+            {NAME = 'alignmentkeys', DESC = 'Enables the left and right alignment keys (comma and period)'},
+            {NAME = 'unalignmentkeys / noalignmentkeys', DESC = 'Disables the alignment keys'},
+            {NAME = 'ctrllock', DESC = 'Binds Shiftlock to LeftControl'},
+            {NAME = 'unctrllock', DESC = 'Re-binds Shiftlock to LeftShift'},
+            {NAME = 'exit / shutdown / leave', DESC = 'Exits the game'},
+            {NAME = 'removecmd / deletecmd', DESC = 'Removes a command until the script is reloaded'},
+            {NAME = 'breakloops / break (cmd loops)', DESC = 'Stops any cmd loops (;100^1^cmd)'},
+            {NAME = '', DESC = ''},
+            {NAME = 'noclip', DESC = 'Go through objects'},
+            {NAME = 'unnoclip / clip', DESC = 'Disables noclip'},
+            {NAME = 'togglenoclip', DESC = 'Toggles noclip'},
+            {NAME = 'fly [speed]', DESC = 'Makes you fly'},
+            {NAME = 'unfly', DESC = 'Disables fly'},
+            {NAME = 'togglefly', DESC = 'Toggles fly'},
+            {NAME = 'flyspeed [num]', DESC = 'Set fly speed (default is 20)'},
+            {NAME = 'vehiclefly / vfly [speed]', DESC = 'Makes you fly in a vehicle'},
+            {NAME = 'unvehiclefly / unvfly', DESC = 'Disables vehicle fly'},
+            {NAME = 'vehicleflyspeed / vflyspeed [num]', DESC = 'Set vehicle fly speed'},
+            {NAME = 'cframefly / cfly [speed]', DESC = 'Makes you fly, bypassing some anti cheats (works on mobile)'},
+            {NAME = 'uncframefly / uncfly', DESC = 'Disables cfly'},
+            {NAME = 'cframeflyspeed / cflyspeed [num]', DESC = 'Sets cfly speed'},
+            {NAME = 'qefly [true / false]', DESC = 'Enables or disables the Q and E hotkeys for fly'},
+            {NAME = 'vehiclenoclip / vnoclip', DESC = 'Turns off vehicle collision'},
+            {NAME = 'vehicleclip / vclip / unvnoclip', DESC = 'Enables vehicle collision'},
+            {NAME = 'float / platform', DESC = 'Spawns a platform beneath you causing you to float'},
+            {NAME = 'unfloat / noplatform', DESC = 'Removes the platform'},
+            {NAME = 'togglefloat', DESC = 'Toggles float'},
+            {NAME = 'swim', DESC = 'Allows you to swim in the air'},
+            {NAME = 'unswim / noswim', DESC = 'Stops you from swimming everywhere'},
+            {NAME = 'toggleswim', DESC = 'Toggles swimming'},
+            {NAME = '', DESC = ''},
+            {NAME = 'setwaypoint / swp [name]', DESC = 'Sets a waypoint at your position'},
+            {NAME = 'waypointpos / wpp [name] [X Y Z]', DESC = 'Sets a waypoint with specified coordinates'},
+            {NAME = 'waypoints', DESC = 'Shows a list of currently active waypoints'},
+            {NAME = 'showwaypoints / showwp', DESC = 'Shows all currently set waypoints'},
+            {NAME = 'hidewaypoints / hidewp', DESC = 'Hides shown waypoints'},
+            {NAME = 'waypoint / wp [name]', DESC = 'Teleports player to a waypoint'},
+            {NAME = 'tweenwaypoint / twp [name]', DESC = 'Tweens player to a waypoint'},
+            {NAME = 'walktowaypoint / wtwp [name]', DESC = 'Walks player to a waypoint'},
+            {NAME = 'deletewaypoint / dwp [name]', DESC = 'Deletes a waypoint'},
+            {NAME = 'clearwaypoints / cwp', DESC = 'Clears all waypoints'},
+            {NAME = 'cleargamewaypoints / cgamewp', DESC = 'Clears all waypoints for the game you are in'},
+            {NAME = '', DESC = ''},
+            {NAME = 'goto [player] [request stream]', DESC = 'Go to a player'},
+            {NAME = 'tweengoto / tgoto [player]', DESC = 'Tween to a player (bypasses some anti cheats)'},
+            {NAME = 'tweenspeed / tspeed [num]', DESC = 'Sets how fast all tween commands go (default is 1)'},
+            {NAME = 'vehiclegoto / vgoto [player]', DESC = 'Go to a player while in a vehicle'},
+            {NAME = 'loopgoto [player] [distance] [delay]', DESC = 'Loop teleport to a player'},
+            {NAME = 'unloopgoto', DESC = 'Stops teleporting you to a player'},
+            {NAME = 'pulsetp / ptp [player] [seconds]', DESC = 'Teleports you to a player for a specified amount of time'},
+            {NAME = 'clientbring / cbring [player] (CLIENT)', DESC = 'Bring a player'},
+            {NAME = 'loopbring [player] [distance] [delay] (CLIENT)', DESC = 'Loop brings a player to you (useful for killing)'},
+            {NAME = 'unloopbring [player]', DESC = 'Undoes loopbring'},
+            {NAME = 'freeze / fr [player] (CLIENT)', DESC = 'Freezes a player'},
+            {NAME = 'freezeanims', DESC = 'Freezes your animations / pauses your animations - Does not work on default animations'},
+            {NAME = 'unfreezeanims', DESC = 'Unfreezes your animations / plays your animations'},
+            {NAME = 'thaw / unfr [player] (CLIENT)', DESC = 'Unfreezes a player'},
+            {NAME = 'anchor', DESC = 'Anchors your characters RootPart'},
+            {NAME = 'unanchor', DESC = 'Unanchors your characters RootPart'},
+            {NAME = 'tpposition / tppos [X Y Z]', DESC = 'Teleports you to certain coordinates'},
+            {NAME = 'tweentpposition / ttppos [X Y Z]', DESC = 'Tween to coordinates (bypasses some anti cheats)'},
+            {NAME = 'offset [X Y Z]', DESC = 'Offsets you by certain coordinates'},
+            {NAME = 'tweenoffset / toffset [X Y Z]', DESC = 'Tween offset (bypasses some anti cheats)'},
+            {NAME = 'thru [num]', DESC = 'Teleports you [num] studs ahead of where your character is facing'},
+            {NAME = 'notifyposition / notifypos [player]', DESC = 'Notifies you the coordinates of a character'},
+            {NAME = 'copyposition / copypos [player]', DESC = 'Copies the coordinates of a character to your clipboard'},
+            {NAME = 'walktoposition / walktopos [X Y Z]', DESC = 'Makes you walk to a coordinate'},
+            {NAME = 'spawnpoint / spawn [delay]', DESC = 'Sets a position where you will spawn'},
+            {NAME = 'nospawnpoint / nospawn', DESC = 'Removes your custom spawn point'},
+            {NAME = 'flashback / diedtp', DESC = 'Teleports you to where you last died'},
+            {NAME = 'walltp', DESC = 'Teleports you above/over any wall you run into'},
+            {NAME = 'nowalltp / unwalltp', DESC = 'Disables walltp'},
+            {NAME = 'teleporttool / tptool', DESC = 'Gives you a teleport tool'},
+            {NAME = '', DESC = ''},
+            {NAME = 'logs', DESC = 'Opens the logs GUI'},
+            {NAME = 'chatlogs / clogs', DESC = 'Log what people say or whisper'},
+            {NAME = 'joinlogs / jlogs', DESC = 'Log when people join'},
+            {NAME = 'chatlogswebhook / logswebhook [url]', DESC = 'Set a Discord webhook for chatlogs to go to (provide no URL to disable this)'},
+            {NAME = 'chat / say [text]', DESC = 'Makes you chat a string (possible mute bypass)'},
+            {NAME = 'vsay [text]', DESC = 'Say anything uncensored (CLIENT)'},
+            {NAME = 'spam [text]', DESC = 'Makes you spam the chat'},
+            {NAME = 'unspam / nospam', DESC = 'Turns off spam'},
+            {NAME = 'whisper / pm [player] [text]', DESC = 'Makes you whisper a string to someone (possible mute bypass)'},
+            {NAME = 'pmspam [player] [text]', DESC = 'Makes you spam a players whispers'},
+            {NAME = 'unpmspam / nopmspam [player]', DESC = 'Turns off pm spam'},
+            {NAME = 'spamspeed [num]', DESC = 'How quickly you spam (default is 1)'},
+            {NAME = 'bubblechat (CLIENT)', DESC = 'Enables bubble chat for your client'},
+            {NAME = 'unbubblechat / nobubblechat', DESC = 'Disables the bubblechat command'},
+            {NAME = 'chatwindow', DESC = 'Enables the chat window for your client'},
+            {NAME = 'unchatwindow / nochatwindow', DESC = 'Disables the chat window for your client'},
+            {NAME = 'darkchat', DESC = 'Makes the chat window dark for your client'},
+            {NAME = 'listento [player]', DESC = 'Listens to the area around a player. Can also eavesdrop with voice chat'},
+            {NAME = 'unlistento', DESC = 'Disables listento'},
+            {NAME = 'muteallvoices / muteallvcs', DESC = 'Mutes voice chat for all players'},
+            {NAME = 'unmuteallvoices / unmuteallvcs', DESC = 'Unmutes voice chat for all players'},
+            {NAME = 'mutevc [player]', DESC = 'Mutes the voice chat of a player'},
+            {NAME = 'unmutevc [player]', DESC = 'Unmutes the voice chat of a player'},
+            {NAME = 'phonebook / call', DESC = 'Prompts the Roblox phonebook UI to let you call your friends. Needs voice chat enabled'},
+            {NAME = '', DESC = ''},
+            {NAME = 'esp', DESC = 'View all players and their status'},
+            {NAME = 'espteam', DESC = 'ESP but teammates are green and bad guys are red'},
+            {NAME = 'noesp / unesp / unespteam', DESC = 'Removes ESP'},
+            {NAME = 'esptransparency [number]', DESC = 'Changes the transparency of ESP related commands'},
+            {NAME = 'partesp [part name]', DESC = 'Highlights a part'},
+            {NAME = 'unpartesp / nopartesp [part name]', DESC = 'removes partesp'},
+            {NAME = 'chams', DESC = 'ESP but without text in the way'},
+            {NAME = 'nochams / unchams', DESC = 'Removes chams'},
+            {NAME = 'locate [player]', DESC = 'View a single player and their status'},
+            {NAME = 'unlocate / nolocate [player]', DESC = 'Removes locate'},
+            {NAME = 'xray', DESC = 'Makes all parts in workspace transparent'},
+            {NAME = 'unxray / noxray', DESC = 'Restores transparency to all parts in workspace'},
+            {NAME = 'loopxray', DESC = 'Makes all parts in workspace transparent but looped'},
+            {NAME = 'unloopxray', DESC = 'Unloops xray'},
+            {NAME = 'togglexray', DESC = 'Toggles xray'},
+            {NAME = '', DESC = ''},
+            {NAME = 'view / spectate [player]', DESC = 'View a player'},
+            {NAME = 'viewpart / viewp [part name]', DESC = 'View a part'},
+            {NAME = 'unview / unspectate', DESC = 'Stops viewing player/part'},
+            {NAME = 'freecam / fcam / fc', DESC = 'Allows you to freely move camera around the game'},
+            {NAME = 'freecampos / fcpos [X Y Z]', DESC = 'Moves / opens freecam in a certain position'},
+            {NAME = 'freecamwaypoint / fcwp [name]', DESC = 'Moves / opens freecam to a waypoint'},
+            {NAME = 'freecamgoto / fcgoto / fctp [player]', DESC = 'Moves / opens freecam to a player'},
+            {NAME = 'unfreecam / unfc', DESC = 'Disables freecam'},
+            {NAME = 'freecamspeed / fcspeed [num]', DESC = 'Adjusts freecam speed (default is 1)'},
+            {NAME = 'notifyfreecamposition / notifyfcpos', DESC = 'Noitifies you your freecam coordinates'},
+            {NAME = 'copyfreecamposition / copyfcpos', DESC = 'Copies your freecam coordinates to your clipboard'},
+            {NAME = 'gotocamera / gotocam', DESC = 'Teleports you to the location of your camera'},
+            {NAME = 'tweengotocam / tgotocam', DESC = 'Tweens you to the location of your camera'},
+            {NAME = 'firstp', DESC = 'Forces camera to go into first person'},
+            {NAME = 'thirdp', DESC = 'Allows camera to go into third person'},
+            {NAME = 'noclipcam / nccam', DESC = 'Allows camera to go through objects like walls'},
+            {NAME = 'maxzoom [num]', DESC = 'Sets maximum camera zoom'},
+            {NAME = 'minzoom [num]', DESC = 'Sets minimum camera zoom'},
+            {NAME = 'camdistance [num]', DESC = 'Changes camera distance from your player'},
+            {NAME = 'fov [num]', DESC = 'Adjusts field of view (default is 70)'},
+            {NAME = 'fixcam / restorecam', DESC = 'Fixes camera'},
+            {NAME = 'enableshiftlock / enablesl', DESC = 'Enables the shift lock option'},
+            {NAME = 'lookat [player]', DESC = 'Moves your camera view to a player'},
+            {NAME = '', DESC = ''},
+            {NAME = 'btools (CLIENT)', DESC = 'Gives you building tools (DOES NOT REPLICATE)'},
+            {NAME = 'f3x (CLIENT)', DESC = 'Gives you F3X building tools (DOES NOT REPLICATE)'},
+            {NAME = 'partname / partpath', DESC = 'Allows you to click a part to see its path & name'},
+            {NAME = 'delete [instance name] (CLIENT)', DESC = 'Removes any part with a certain name from the workspace (DOES NOT REPLICATE)'},
+            {NAME = 'deleteclass / dc [class name] (CLIENT)', DESC = 'Removes any part with a certain classname from the workspace (DOES NOT REPLICATE)'},
+            {NAME = 'lockworkspace / lockws', DESC = 'Locks the whole workspace'},
+            {NAME = 'unlockworkspace / unlockws', DESC = 'Unlocks the whole workspace'},
+            {NAME = 'invisibleparts / invisparts (CLIENT)', DESC = 'Shows invisible parts'},
+            {NAME = 'uninvisibleparts / uninvisparts (CLIENT)', DESC = 'Makes parts affected by invisparts return to normal'},
+            {NAME = 'deleteinvisparts / dip (CLIENT)', DESC = 'Deletes invisible parts'},
+            {NAME = 'gotopart [part name]', DESC = 'Moves your character to a part or multiple parts'},
+            {NAME = 'tweengotopart / tgotopart [part name]', DESC = 'Tweens your character to a part or multiple parts'},
+            {NAME = 'gotopartclass / gpc [class name]', DESC = 'Moves your character to a part or multiple parts based on classname'},
+            {NAME = 'tweengotopartclass / tgpc [class name]', DESC = 'Tweens your character to a part or multiple parts based on classname'},
+            {NAME = 'gotomodel [part name]', DESC = 'Moves your character to a model or multiple models'},
+            {NAME = 'tweengotomodel / tgotomodel [part name]', DESC = 'Tweens your character to a model or multiple models'},
+            {NAME = 'gotopartdelay / gotomodeldelay [num]', DESC = 'Adjusts how quickly you teleport to each part (default is 0.1)'},
+            {NAME = 'bringpart [part name] (CLIENT)', DESC = 'Moves a part or multiple parts to your character'},
+            {NAME = 'bringpartclass / bpc [class name] (CLIENT)', DESC = 'Moves a part or multiple parts to your character based on classname'},
+            {NAME = 'noclickdetectorlimits / nocdlimits', DESC = 'Sets all click detectors MaxActivationDistance to math.huge'},
+            {NAME = 'fireclickdetectors / firecd [name]', DESC = 'Uses all click detectors in a game or uses the optional name'},
+            {NAME = 'firetouchinterests / touchinterests [name]', DESC = 'Uses all touchinterests in a game or uses the optional name'},
+            {NAME = 'noproximitypromptlimits / nopplimits', DESC = 'Sets all proximity prompts MaxActivationDistance to math.huge'},
+            {NAME = 'fireproximityprompts / firepp [name]', DESC = 'Uses all proximity prompts in a game or uses the optional name'},
+            {NAME = 'instantproximityprompts / instantpp', DESC = 'Disable the cooldown for proximity prompts'},
+            {NAME = 'uninstantproximityprompts / uninstantpp', DESC = 'Undo the cooldown removal'},
+            {NAME = 'tpunanchored / tpua [player]', DESC = 'Teleports unanchored parts to a player'},
+            {NAME = 'freezeunanchored / freezeua', DESC = 'Freezes unanchored parts'},
+            {NAME = 'thawunanchored / thawua / unfreezeua', DESC = 'Unfreezes unanchored parts'},
+            {NAME = 'removeterrain / rterrain / noterrain', DESC = 'Removes all terrain'},
+            {NAME = 'clearnilinstances / nonilinstances / cni', DESC = 'Removes nil instances'},
+            {NAME = 'destroyheight / dh [num]', DESC = 'Sets FallenPartsDestroyHeight'},
+            {NAME = 'fakeout', DESC = 'Tp to the void and then back (useful to kill people attached to you)'},
+            {NAME = 'antivoid', DESC = 'Prevents you from falling into the void by launching you upwards'},
+            {NAME = 'unantivoid / noantivoid', DESC = 'Disables antivoid'},
+            {NAME = '', DESC = ''},
+            {NAME = 'fullbright / fb (CLIENT)', DESC = 'Makes the map brighter / more visible'},
+            {NAME = 'loopfullbright / loopfb (CLIENT)', DESC = 'Makes the map brighter / more visible but looped'},
+            {NAME = 'unloopfullbright / unloopfb', DESC = 'Unloops fullbright'},
+            {NAME = 'ambient [num] [num] [num] (CLIENT)', DESC = 'Changes ambient'},
+            {NAME = 'day (CLIENT)', DESC = 'Changes the time to day for the client'},
+            {NAME = 'night (CLIENT)', DESC = 'Changes the time to night for the client'},
+            {NAME = 'nofog (CLIENT)', DESC = 'Removes fog'},
+            {NAME = 'brightness [num] (CLIENT)', DESC = 'Changes the brightness lighting property'},
+            {NAME = 'globalshadows / gshadows (CLIENT)', DESC = 'Enables global shadows'},
+            {NAME = 'unglobalshadows / ungshadows (CLIENT)', DESC = 'Disables global shadows'},
+            {NAME = 'restorelighting / rlighting', DESC = 'Restores Lighting properties'},
+            {NAME = 'light [radius] [brightness] (CLIENT)', DESC = 'Gives your player dynamic light'},
+            {NAME = 'nolight / unlight', DESC = 'Removes dynamic light from your player'},
+            {NAME = '', DESC = ''},
+            {NAME = 'inspect / examine [player]', DESC = 'Opens InspectMenu for a certain player'},
+            {NAME = 'age [player]', DESC = 'Tells you the age of a player'},
+            {NAME = 'chatage [player]', DESC = 'Chats the age of a player'},
+            {NAME = 'joindate / jd [player]', DESC = 'Tells you the date the player joined Roblox'},
+            {NAME = 'chatjoindate / cjd [player]', DESC = 'Chats the date the player joined Roblox'},
+            {NAME = 'copyname / copyuser [player]', DESC = 'Copies a players full username to your clipboard'},
+            {NAME = 'userid / id [player]', DESC = 'Notifies a players UserId'},
+            {NAME = 'copyplaceid / placeid', DESC = 'Copies the current PlaceId to your clipboard'},
+            {NAME = 'copygameid / gameid', DESC = 'Copies the current GameId to your clipboard'},
+            {NAME = 'copyuserid / copyid [player]', DESC = 'Copies a players UserId to your clipboard'},
+            {NAME = 'appearanceid / aid [player]', DESC = 'Notifies a players AppearanceId'},
+            {NAME = 'copyappearanceid / caid [player]', DESC = 'Copies a players AppearanceId to your clipboard'},
+            {NAME = 'bang [player] [speed]', DESC = 'owo'},
+            {NAME = 'unbang', DESC = 'uwu'},
+            {NAME = 'jerk', DESC = 'Makes you jork it'},
+            {NAME = 'scare / spook [player]', DESC = 'Teleports in front of a player for half a second'},
+            {NAME = 'carpet [player]', DESC = 'Be someones carpet'},
+            {NAME = 'uncarpet', DESC = 'Undoes carpet'},
+            {NAME = 'friend [player]', DESC = 'Sends a friend request to certain players'},
+            {NAME = 'unfriend [player]', DESC = 'Unfriends certain players'},
+            {NAME = 'headsit [player]', DESC = 'Sit on a players head'},
+            {NAME = 'walkto / follow [player]', DESC = 'Follow a player'},
+            {NAME = 'pathfindwalkto / pathfindfollow [player]', DESC = 'Follow a player using pathfinding'},
+            {NAME = 'pathfindwalktowaypoint / pathfindwalktowp [waypoint]', DESC = 'Walk to a waypoint using pathfinding'},
+            {NAME = 'unwalkto / unfollow', DESC = 'Stops following a player'},
+            {NAME = 'orbit [player] [speed] [distance]', DESC = 'Makes your character orbit around a player with an optional speed and an optional distance'},
+            {NAME = 'unorbit', DESC = 'Disables orbit'},
+            {NAME = 'stareat / stare [player]', DESC = 'Stare / look at a player'},
+            {NAME = 'unstareat / unstare [player]', DESC = 'Disables stareat'},
+            {NAME = 'rolewatch [group id] [role name]', DESC = 'Notify if someone from a watched group joins the server'},
+            {NAME = 'rolewatchstop / unrolewatch', DESC = 'Disable Rolewatch'},
+            {NAME = 'rolewatchleave', DESC = 'Toggle if you should leave the game if someone from a watched group joins the server'},
+            {NAME = 'staffwatch', DESC = 'Notify if a staff member of the game joins the server'},
+            {NAME = 'unstaffwatch', DESC = 'Disable Staffwatch'},
+            {NAME = 'findfriendgroups', DESC = 'Notifies you if any players are friends with each other'},
+            {NAME = 'handlekill / hkill [player] [radius] (TOOL)', DESC = 'Kills a player using tool damage (YOU NEED A TOOL)'},
+            {NAME = 'fling', DESC = 'Flings anyone you touch'},
+            {NAME = 'unfling', DESC = 'Disables the fling command'},
+            {NAME = 'flyfling [speed]', DESC = 'Basically the invisfling command but not invisible'},
+            {NAME = 'unflyfling', DESC = 'Disables the flyfling command'},
+            {NAME = 'walkfling', DESC = 'Basically fling but no spinning'},
+            {NAME = 'unwalkfling / nowalkfling', DESC = 'Disables walkfling'},
+            {NAME = 'invisfling', DESC = 'Enables invisible fling (the invis part is patched, try using the god command before using this)'},
+            {NAME = 'antifling', DESC = 'Disables player collisions to prevent you from being flung'},
+            {NAME = 'unantifling', DESC = 'Disables antifling'},
+            {NAME = 'loopoof', DESC = 'Loops everyones character sounds (everyone can hear)'},
+            {NAME = 'unloopoof', DESC = 'Stops the oof chaos'},
+            {NAME = 'muteboombox [player]', DESC = 'Mutes someones boombox'},
+            {NAME = 'unmuteboombox [player]', DESC = 'Unmutes someones boombox'},
+            {NAME = 'hitboxes', DESC = 'Shows all rendered bounding boxes'},
+            {NAME = 'unhitboxes', DESC = 'Stops showing all rendered bounding boxes'},
+            {NAME = 'hitbox [player] [size] [transparency]', DESC = 'Expands the hitbox for players HumanoidRootPart (default is 1)'},
+            {NAME = 'headsize [player] [size]', DESC = 'Expands the head size for players Head (default is 1)'},
+            {NAME = '', DESC = ''},
+            {NAME = 'reset', DESC = 'Resets your character normally'},
+            {NAME = 'respawn', DESC = 'Respawns you'},
+            {NAME = 'refresh / re', DESC = 'Respawns and brings you back to the same position'},
+            {NAME = 'god', DESC = 'Makes your character difficult to kill in most games'},
+            {NAME = 'invisible / invis', DESC = 'Makes you invisible to other players'},
+            {NAME = 'visible / vis', DESC = 'Makes you visible to other players'},
+            {NAME = 'toolinvisible / toolinvis / tinvis', DESC = 'Makes you invisible to other players and able to use tools'},
+            {NAME = 'speed / ws / walkspeed [num]', DESC = 'Change your walkspeed (default is 16)'},
+            {NAME = 'spoofspeed / spoofws [num]', DESC = 'Spoofs your WalkSpeed on the Client'},
+            {NAME = 'loopspeed / loopws [num]', DESC = 'Loops your walkspeed'},
+            {NAME = 'unloopspeed / unloopws', DESC = 'Turns off loopspeed'},
+            {NAME = 'hipheight / hheight [num]', DESC = 'Adjusts hip height'},
+            {NAME = 'jumppower / jpower / jp [num]', DESC = 'Change a players jump height (default is 50)'},
+            {NAME = 'spoofjumppower / spoofjp [num]', DESC = 'Spoofs your JumpPower on the Client'},
+            {NAME = 'loopjumppower / loopjp [num]', DESC = 'Loops your jump height'},
+            {NAME = 'unloopjumppower / unloopjp', DESC = 'Turns off loopjumppower'},
+            {NAME = 'maxslopeangle / msa [num]', DESC = 'Adjusts MaxSlopeAngle'},
+            {NAME = 'gravity / grav [num] (CLIENT)', DESC = 'Change your gravity'},
+            {NAME = 'sit', DESC = 'Makes your character sit'},
+            {NAME = 'lay / laydown', DESC = 'Makes your character lay down'},
+            {NAME = 'sitwalk', DESC = 'Makes your character sit while still being able to walk'},
+            {NAME = 'nosit', DESC = 'Prevents your character from sitting'},
+            {NAME = 'unnosit', DESC = 'Disables nosit'},
+            {NAME = 'jump', DESC = 'Makes your character jump'},
+            {NAME = 'infinitejump / infjump', DESC = 'Allows you to climb into the air by repeatedly pressing jump'},
+            {NAME = 'uninfinitejump / uninfjump', DESC = 'Disables infinitejump'},
+            {NAME = 'flyjump', DESC = 'Infinite jump that continuously flies upward just by holding the jump button'},
+            {NAME = 'unflyjump', DESC = 'Disables flyjump'},
+            {NAME = 'autojump / ajump', DESC = 'Automatically jumps when you run into an object'},
+            {NAME = 'unautojump / unajump', DESC = 'Disables autojump'},
+            {NAME = 'edgejump / ejump', DESC = 'Automatically jumps when you get to the edge of an object'},
+            {NAME = 'unedgejump / unejump', DESC = 'Disables edgejump'},
+            {NAME = 'platformstand / stun', DESC = 'Enables PlatformStand'},
+            {NAME = 'unplatformstand / unstun', DESC = 'Disables PlatformStand'},
+            {NAME = 'norotate / noautorotate', DESC = 'Disables AutoRotate'},
+            {NAME = 'unnorotate / autorotate', DESC = 'Enables AutoRotate'},
+            {NAME = 'enablestate [StateType]', DESC = 'Enables a humanoid state type'},
+            {NAME = 'disablestate [StateType]', DESC = 'Disables a humanoid state type'},
+            {NAME = 'team [team name] (CLIENT)', DESC = 'Changes your team. Sometimes fools LocalScripts.'},
+            {NAME = 'nobillboardgui / nobgui / noname', DESC = 'Removes billboard and surface GUIs from your players (i.e. name GUIs at cafes)'},
+            {NAME = 'loopnobgui / loopnoname', DESC = 'Loop removes billboard and surface GUIs from your players (i.e. name GUIs at cafes)'},
+            {NAME = 'unloopnobgui / unloopnoname', DESC = 'Disables loopnobgui'},
+            {NAME = 'noarms', DESC = 'Removes your arms'},
+            {NAME = 'nolegs', DESC = 'Removes your legs'},
+            {NAME = 'nolimbs', DESC = 'Removes your limbs'},
+            {NAME = 'naked (CLIENT)', DESC = 'Removes your clothing'},
+            {NAME = 'noface / removeface', DESC = 'Removes your face'},
+            {NAME = 'blockhead', DESC = 'Turns your head into a block'},
+            {NAME = 'blockhats', DESC = 'Turns your hats into blocks'},
+            {NAME = 'blocktool', DESC = 'Turns the currently selected tool into a block'},
+            {NAME = 'creeper', DESC = 'Makes you look like a creeper'},
+            {NAME = 'drophats', DESC = 'Drops your hats'},
+            {NAME = 'nohats / deletehats / rhats', DESC = 'Deletes your hats'},
+            {NAME = 'hatspin / spinhats', DESC = 'Spins your characters accessories'},
+            {NAME = 'unhatspin / unspinhats', DESC = 'Undoes spinhats'},
+            {NAME = 'clearhats / cleanhats', DESC = 'Clears hats in the workspace'},
+            {NAME = 'chardelete / cd [instance name]', DESC = 'Removes any part with a certain name from your character'},
+            {NAME = 'chardeleteclass / cdc [class name]', DESC = 'Removes any part with a certain classname from your character'},
+            {NAME = 'deletevelocity / dv / removeforces', DESC = 'Removes any velocity / force instances in your character'},
+            {NAME = 'weaken [num]', DESC = 'Makes your character less dense via CustomPhysicalProperties'},
+            {NAME = 'unweaken', DESC = 'Sets your characters CustomPhysicalProperties to default'},
+            {NAME = 'strengthen [num]', DESC = 'Makes your character more dense via CustomPhysicalProperties'},
+            {NAME = 'unstrengthen', DESC = 'Sets your characters CustomPhysicalProperties to default'},
+            {NAME = 'breakvelocity', DESC = 'Sets your characters velocity to 0'},
+            {NAME = 'spin [speed]', DESC = 'Spins your character'},
+            {NAME = 'unspin', DESC = 'Disables spin'},
+            {NAME = 'split', DESC = 'Splits your character in half'},
+            {NAME = 'nilchar', DESC = 'Sets your characters parent to nil'},
+            {NAME = 'unnilchar / nonilchar', DESC = 'Sets your characters parent to workspace'},
+            {NAME = 'noroot / removeroot / rroot', DESC = 'Removes your characters HumanoidRootPart'},
+            {NAME = 'replaceroot', DESC = 'Replaces your characters HumanoidRootPart'},
+            {NAME = 'clearcharappearance / clearchar / clrchar', DESC = 'Removes all accessory, shirt, pants, charactermesh, and bodycolors'},
+            {NAME = 'tpwalk / teleportwalk [num]', DESC = 'Teleports you to your move direction'},
+            {NAME = 'untpwalk / unteleportwalk', DESC = 'Undoes tpwalk / teleportwalk'},
+            {NAME = 'trip', DESC = 'Makes your character fall over'},
+            {NAME = 'wallwalk / walkonwalls', DESC = 'Walk on walls'},
+            {NAME = 'promptr6', DESC = 'Prompts the game to switch your rig type to R6'},
+            {NAME = 'promptr15', DESC = 'Prompts the game to switch your rig type to R15'},
+            {NAME = '', DESC = ''},
+            {NAME = 'animation / anim [ID] [speed]', DESC = 'Makes your character perform an animation (must be an animation on the marketplace or by Roblox/StickMasterLuke to replicate)'},
+            {NAME = 'emote / em [ID] [speed]', DESC = 'Makes your character perform an emote (must be on the marketplace or by Roblox/StickMasterLuke to replicate)'},
+            {NAME = 'dance', DESC = 'Makes you  d a n c e'},
+            {NAME = 'undance', DESC = 'Stops dance animations'},
+            {NAME = 'defemote [emote]', DESC = 'Plays default emote'},
+            {NAME = 'spasm', DESC = 'Makes you  c r a z y'},
+            {NAME = 'unspasm', DESC = 'Stops spasm'},
+            {NAME = 'headthrow', DESC = 'Simply makes you throw your head'},
+            {NAME = 'noanim', DESC = 'Disables your animations'},
+            {NAME = 'reanim', DESC = 'Restores your animations'},
+            {NAME = 'animspeed [num]', DESC = 'Changes the speed of your current animation'},
+            {NAME = 'copyanimation / copyanim / copyemote [player]', DESC = 'Copies someone elses animation'},
+            {NAME = 'copyanimationid / copyanimid / copyemoteid [player]', DESC = 'Copies your AnimationId or someone elses to your clipboard'},
+            {NAME = 'loopanimation / loopanim', DESC = 'Loops your current animation'},
+            {NAME = 'stopanimations / stopanims', DESC = 'Stops running animations'},
+            {NAME = 'refreshanimations / refreshanims', DESC = 'Refreshes animations'},
+            {NAME = 'allowcustomanim / allowcustomanimations', DESC = 'Lets you use custom animation packs instead'},
+            {NAME = 'unallowcustomanim / unallowcustomanimations', DESC = 'Doesnt let you use custom animation packs instead'},
+            {NAME = '', DESC = ''},
+            {NAME = 'autoclick [click delay] [release delay]', DESC = 'Automatically clicks your mouse with a set delay'},
+            {NAME = 'unautoclick / noautoclick', DESC = 'Turns off autoclick'},
+            {NAME = 'autokeypress [key] [down delay] [up delay]', DESC = 'Automatically presses a key with a set delay'},
+            {NAME = 'unautokeypress', DESC = 'Stops autokeypress'},
+            {NAME = 'hovername', DESC = 'Shows a players username when your mouse is hovered over them'},
+            {NAME = 'unhovername / nohovername', DESC = 'Turns off hovername'},
+            {NAME = 'mousesensitivity / ms [0-10]', DESC = 'Sets your mouse sensitivity (affects first person and right click drag) (default is 1)'},
+            {NAME = 'clickdelete', DESC = 'Go to Settings > Keybinds > Add for click delete'},
+            {NAME = 'clickteleport', DESC = 'Go to Settings > Keybinds > Add for click teleport'},
+            {NAME = 'clickfor', DESC = 'Click a player to run (click type) (player)'},
+            {NAME = 'unclickfor', DESC = 'Disables clickfor'},
+            {NAME = 'clicktype [type]', DESC = 'Sets click type'},
+            {NAME = 'mouseteleport / mousetp', DESC = 'Teleports your character to your mouse. This is recommended as a keybind'},
+            {NAME = '', DESC = ''},
+            {NAME = 'tools', DESC = 'Copies tools from ReplicatedStorage and Lighting'},
+            {NAME = 'notools / removetools / deletetools', DESC = 'Removes tools from character and backpack'},
+            {NAME = 'deleteselectedtool / dst', DESC = 'Removes any currently selected tools'},
+            {NAME = 'grabtools', DESC = 'Automatically get tools that are dropped'},
+            {NAME = 'ungrabtools / nograbtools', DESC = 'Disables grabtools'},
+            {NAME = 'copytools [player] (CLIENT)', DESC = 'Copies a players tools'},
+            {NAME = 'dupetools / clonetools [num]', DESC = 'Duplicates your inventory tools a set amount of times'},
+            {NAME = 'droptools', DESC = 'Drops your tools'},
+            {NAME = 'droppabletools', DESC = 'Makes your tools droppable'},
+            {NAME = 'equiptools', DESC = 'Equips every tool in your inventory at once'},
+            {NAME = 'unequiptools', DESC = 'Unequips every tool you are currently holding at once'},
+            {NAME = 'removespecifictool [name]', DESC = 'Automatically remove a specific tool from your inventory'},
+            {NAME = 'unremovespecifictool [name]', DESC = 'Stops removing a specific tool from your inventory'},
+            {NAME = 'clearremovespecifictool', DESC = 'Stop removing all specific tools from your inventory'},
+            {NAME = 'reach [num]', DESC = 'Increases the hitbox of your held tool'},
+            {NAME = 'boxreach [num]', DESC = 'Increases the hitbox of your held tool in a box shape'},
+            {NAME = 'unreach / noreach', DESC = 'Turns off reach'},
+            {NAME = 'grippos [X Y Z]', DESC = 'Changes your current tools grip position'},
+            {NAME = 'usetools [amount] [delay]', DESC = 'Activates all tools in your backpack at the same time'},
+            {NAME = '', DESC = ''},
+            {NAME = 'addalias [cmd] [alias]', DESC = 'Adds an alias to a command'},
+            {NAME = 'removealias [alias]', DESC = 'Removes a custom alias'},
+            {NAME = 'clraliases', DESC = 'Removes all custom aliases'},
+            {NAME = '', DESC = ''},
+            {NAME = 'addplugin / plugin [name]', DESC = 'Add a plugin via command'},
+            {NAME = 'removeplugin / deleteplugin [name]', DESC = 'Remove a plugin via command'},
+            {NAME = 'reloadplugin [name]', DESC = 'Reloads a plugin'},
+            {NAME = 'addallplugins / loadallplugins', DESC = 'Adds all available plugins from the workspace folder'},
+        }
+
+        local comandosUI = {}
+        local nomesDisponiveis = {}
+        for _, info in ipairs(catalogCommands) do
+            local nome = tostring(info.NAME or "")
+            local base = nome:match("^%s*([^%s/]+)")
+            if base and base ~= "" then nomesDisponiveis[base:lower()] = true end
+        end
+
+        local function primeiroComando(nome)
+            return tostring(nome or ""):match("^%s*([^%s/]+)")
+        end
+
+        for indice, info in ipairs(catalogCommands) do
+            local nomeCompleto = tostring(info.NAME or "")
+            if nomeCompleto ~= "" then
+                local comando = primeiroComando(nomeCompleto)
+                if comando then
+                    local lower = comando:lower()
+                    local desligar = lower:sub(1, 2) == "un" and nomesDisponiveis[lower:sub(3)]
+                    local ligar = (not desligar) and (nomesDisponiveis["un" .. lower] or nomesDisponiveis["no" .. lower])
+                    local alternadorNativo = lower:sub(1, 6) == "toggle"
+                    local temArgs = nomeCompleto:find("%[", 1, false) ~= nil
+                    local altura = temArgs and 62 or 42
+
+                    local linha = Instance.new("Frame")
+                    linha.Name = "Comando_" .. tostring(indice)
+                    linha.Size = UDim2.new(1, -2, 0, altura)
+                    linha.BackgroundColor3 = COR_CARD
+                    linha.BorderSizePixel = 0
+                    linha.LayoutOrder = indice
+                    linha.Parent = lista
+                    Instance.new("UICorner", linha).CornerRadius = UDim.new(0, 6)
+
+                    local nomeLabel = Instance.new("TextLabel")
+                    nomeLabel.Size = UDim2.new(1, -88, 0, 18)
+                    nomeLabel.Position = UDim2.new(0, 7, 0, 3)
+                    nomeLabel.BackgroundTransparency = 1
+                    nomeLabel.Text = nomeCompleto
+                    nomeLabel.TextColor3 = COR_TEXTO
+                    nomeLabel.Font = FONTE_TEXTO
+                    nomeLabel.TextSize = 9
+                    nomeLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    nomeLabel.TextTruncate = Enum.TextTruncate.AtEnd
+                    nomeLabel.Parent = linha
+
+                    local desc = Instance.new("TextLabel")
+                    desc.Size = UDim2.new(1, -88, 0, 15)
+                    desc.Position = UDim2.new(0, 7, 0, 21)
+                    desc.BackgroundTransparency = 1
+                    desc.Text = tostring(info.DESC or "")
+                    desc.TextColor3 = COR_TEXTO_SUB
+                    desc.Font = FONTE_TEXTO
+                    desc.TextSize = 8
+                    desc.TextXAlignment = Enum.TextXAlignment.Left
+                    desc.TextTruncate = Enum.TextTruncate.AtEnd
+                    desc.Parent = linha
+
+                    local argsBox
+                    if temArgs then
+                        argsBox = Instance.new("TextBox")
+                        argsBox.Name = "Argumentos"
+                        argsBox.Size = UDim2.new(1, -88, 0, 20)
+                        argsBox.Position = UDim2.new(0, 7, 0, 39)
+                        argsBox.BackgroundColor3 = COR_PAINEL
+                        argsBox.BorderSizePixel = 0
+                        argsBox.PlaceholderText = "Preencha os parâmetros deste comando"
+                        argsBox.Text = ""
+                        argsBox.TextColor3 = COR_TEXTO
+                        argsBox.PlaceholderColor3 = COR_TEXTO_SUB
+                        argsBox.Font = FONTE_TEXTO
+                        argsBox.TextSize = 8
+                        argsBox.ClearTextOnFocus = false
+                        argsBox.Parent = linha
+                        Instance.new("UICorner", argsBox).CornerRadius = UDim.new(0, 4)
+                    end
+
+                    local acao = Instance.new("TextButton")
+                    acao.Name = "Acao"
+                    acao.Size = UDim2.new(0, 72, 0, 28)
+                    acao.Position = UDim2.new(1, -78, 0.5, -14)
+                    acao.BackgroundColor3 = COR_BOTAO_ATIVO
+                    acao.BorderSizePixel = 0
+                    acao.Text = (ligar and "TOGGLE") or (alternadorNativo and "ALTERNAR") or (desligar and "DESLIGAR") or "EXECUTAR"
+                    acao.TextColor3 = COR_TEXTO
+                    acao.Font = FONTE_TEXTO
+                    acao.TextSize = 8
+                    acao.TextWrapped = true
+                    acao.Parent = linha
+                    Instance.new("UICorner", acao).CornerRadius = UDim.new(0, 5)
+                    addWhiteStroke(acao)
+
+                    local ativo = false
+                    acao.MouseButton1Click:Connect(function()
+                        vibrar()
+                        if not garantirEngine() then return end
+                        local argumentos = argsBox and argsBox.Text or ""
+                        local comandoCompleto
+                        if ligar then
+                            ativo = not ativo
+                            comandoCompleto = ativo and comando or (nomesDisponiveis["un" .. lower] and ("un" .. comando) or ("no" .. comando))
+                            acao.Text = ativo and "ATIVO" or "INATIVO"
+                            acao.BackgroundColor3 = ativo and COR_BOLINHA_VERDE or COR_BOTAO_ATIVO
+                        else
+                            comandoCompleto = comando
+                            if alternadorNativo then
+                                acao.Text = "ALTERNADO"
+                            elseif desligar then
+                                acao.Text = "DESLIGADO"
+                            else
+                                acao.Text = "EXECUTADO"
+                            end
+                        end
+                        if argumentos ~= "" then comandoCompleto = comandoCompleto .. " " .. argumentos end
+                        task.spawn(function()
+                            local ok, err = pcall(function()
+                                execCmd(comandoCompleto, Players.LocalPlayer, true)
+                            end)
+                            if not ok then warn("[Celestial Hub COMANDOS] " .. tostring(err)) end
+                        end)
+                    end)
+
+                    table.insert(comandosUI, {
+                        frame = linha,
+                        nome = nomeCompleto,
+                        descricao = tostring(info.DESC or "")
+                    })
+                end
+            end
+        end
+
+        local function filtrar()
+            local termo = (busca.Text or ""):lower()
+            for _, item in ipairs(comandosUI) do
+                local texto = (item.nome .. " " .. item.descricao):lower()
+                item.frame.Visible = termo == "" or texto:find(termo, 1, true) ~= nil
+            end
+        end
+        busca:GetPropertyChangedSignal("Text"):Connect(filtrar)
+        comandosTab.CanvasSize = UDim2.new(0, 0, 0, 500)
     end
 end
+
