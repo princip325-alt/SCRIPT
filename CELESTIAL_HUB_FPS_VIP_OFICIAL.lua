@@ -35403,6 +35403,20 @@ _G.CelestialHubDexMain = Main
 do
     local comandosTab = frame:FindFirstChild("ContainerAba_comandos")
     if comandosTab then
+        -- Esta aba usa uma lista interna própria. Desativar a rolagem do
+        -- container externo evita duas ScrollingFrames disputando o gesto.
+        comandosTab.ScrollingEnabled = false
+        comandosTab.AutomaticCanvasSize = Enum.AutomaticSize.None
+        comandosTab.CanvasSize = UDim2.new(0, 0, 0, comandosTab.AbsoluteSize.Y)
+        comandosTab.CanvasPosition = Vector2.new(0, 0)
+        comandosTab.ElasticBehavior = Enum.ElasticBehavior.Never
+        comandosTab.ClipsDescendants = true
+        comandosTab:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+            comandosTab.CanvasSize = UDim2.new(0, 0, 0, comandosTab.AbsoluteSize.Y)
+        end)
+        -- O título "⌘ COMANDOS" é criado junto com as demais abas,
+        -- na mesma posição e no mesmo padrão visual de SETTINGS, MAIN etc.
+
         local topo = Instance.new("TextLabel")
         topo.Name = "DescricaoComandos"
         topo.Size = UDim2.new(1, -20, 0, 30)
@@ -35440,10 +35454,15 @@ do
         lista.BackgroundColor3 = COR_PAINEL
         lista.BackgroundTransparency = 0.12
         lista.BorderSizePixel = 0
-        lista.ScrollBarThickness = 4
+        lista.ScrollBarThickness = 5
         lista.ScrollingDirection = Enum.ScrollingDirection.Y
-        lista.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        lista.ScrollingEnabled = true
+        lista.Active = true
+        lista.ElasticBehavior = Enum.ElasticBehavior.Never
+        lista.AutomaticCanvasSize = Enum.AutomaticSize.None
         lista.CanvasSize = UDim2.new(0, 0, 0, 0)
+        lista.ClipsDescendants = true
+        lista.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
         lista.Parent = comandosTab
         Instance.new("UICorner", lista).CornerRadius = UDim.new(0, 7)
         local layout = Instance.new("UIListLayout", lista)
@@ -35454,6 +35473,17 @@ do
         padding.PaddingBottom = UDim.new(0, 5)
         padding.PaddingLeft = UDim.new(0, 5)
         padding.PaddingRight = UDim.new(0, 5)
+
+        local function atualizarCanvasComandos()
+            lista.CanvasSize = UDim2.new(
+                0, 0, 0,
+                math.max(0, layout.AbsoluteContentSize.Y
+                    + padding.PaddingTop.Offset
+                    + padding.PaddingBottom.Offset + 2)
+            )
+        end
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(atualizarCanvasComandos)
+        lista:GetPropertyChangedSignal("AbsoluteSize"):Connect(atualizarCanvasComandos)
 
         local enginePronto = false
         local engineCarregando = false
@@ -35961,6 +35991,12 @@ do
             return tostring(nome or ""):match("^%s*([^%s/]+)")
         end
 
+        local function capitalizarInicio(texto)
+            texto = tostring(texto or "")
+            if texto == "" then return texto end
+            return texto:sub(1, 1):upper() .. texto:sub(2)
+        end
+
         for indice, info in ipairs(catalogCommands) do
             local nomeCompleto = tostring(info.NAME or "")
             if nomeCompleto ~= "" then
@@ -35986,7 +36022,7 @@ do
                     nomeLabel.Size = UDim2.new(1, -88, 0, 18)
                     nomeLabel.Position = UDim2.new(0, 7, 0, 3)
                     nomeLabel.BackgroundTransparency = 1
-                    nomeLabel.Text = nomeCompleto
+                    nomeLabel.Text = capitalizarInicio(nomeCompleto)
                     nomeLabel.TextColor3 = COR_TEXTO
                     nomeLabel.Font = FONTE_TEXTO
                     nomeLabel.TextSize = 9
@@ -35998,7 +36034,7 @@ do
                     desc.Size = UDim2.new(1, -88, 0, 15)
                     desc.Position = UDim2.new(0, 7, 0, 21)
                     desc.BackgroundTransparency = 1
-                    desc.Text = tostring(info.DESC or "")
+                    desc.Text = capitalizarInicio(info.DESC or "")
                     desc.TextColor3 = COR_TEXTO_SUB
                     desc.Font = FONTE_TEXTO
                     desc.TextSize = 8
@@ -36085,9 +36121,10 @@ do
                 local texto = (item.nome .. " " .. item.descricao):lower()
                 item.frame.Visible = termo == "" or texto:find(termo, 1, true) ~= nil
             end
+            task.defer(atualizarCanvasComandos)
         end
         busca:GetPropertyChangedSignal("Text"):Connect(filtrar)
-        comandosTab.CanvasSize = UDim2.new(0, 0, 0, 500)
+        task.defer(atualizarCanvasComandos)
     end
 end
 
