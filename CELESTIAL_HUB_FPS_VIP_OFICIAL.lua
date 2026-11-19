@@ -3117,8 +3117,9 @@ do
 
         -- Seletor em pop-up, seguindo o padrão dos outros menus da interface.
         local donoDropdown = Instance.new("Frame", gui)
-        donoDropdown.Size = UDim2.new(0, 240, 0, 195)
-        donoDropdown.BackgroundColor3 = Color3.fromRGB(45, 30, 60)
+        donoDropdown.Size = UDim2.new(0, 440, 0, 400)
+        donoDropdown.BackgroundColor3 = COR_FUNDO
+    donoDropdown.BackgroundTransparency = 0.12
         donoDropdown.BorderSizePixel = 0
         donoDropdown.Visible = false
         donoDropdown.ZIndex = 9999
@@ -3126,15 +3127,15 @@ do
         addWhiteStroke(donoDropdown)
 
         local donoSearch = Instance.new("TextBox", donoDropdown)
-        donoSearch.Size = UDim2.new(1, -12, 0, 30)
-        donoSearch.Position = UDim2.new(0, 6, 0, 6)
-        donoSearch.BackgroundColor3 = COR_CARD
+        donoSearch.Size = UDim2.new(1, -20, 0, 56)
+        donoSearch.Position = UDim2.new(0, 10, 0, 10)
+        donoSearch.BackgroundTransparency = 1
         donoSearch.TextColor3 = COR_TEXTO
         donoSearch.PlaceholderText = " Pesquisar jogador"
         donoSearch.PlaceholderColor3 = COR_TEXTO_SUB
         donoSearch.Text = ""
         donoSearch.Font = FONTE_TEXTO
-        donoSearch.TextSize = 12
+        donoSearch.TextSize = 16
         donoSearch.ClearTextOnFocus = false
         donoSearch.ZIndex = 10000
         Instance.new("UICorner", donoSearch).CornerRadius = UDim.new(0, 6)
@@ -3144,13 +3145,13 @@ do
         table.insert(bordasRGBAbas, bordaDonoSearchRGB)
 
         local donoVoltarBtn = Instance.new("TextButton", donoDropdown)
-        donoVoltarBtn.Size = UDim2.new(1, -12, 0, 28)
-        donoVoltarBtn.Position = UDim2.new(0, 6, 0, 42)
-        donoVoltarBtn.BackgroundColor3 = COR_CARD
+        donoVoltarBtn.Size = UDim2.new(1, -20, 0, 56)
+        donoVoltarBtn.Position = UDim2.new(0, 10, 0, 72)
+        donoVoltarBtn.BackgroundTransparency = 1
         donoVoltarBtn.Text = "‹ Voltar"
         donoVoltarBtn.TextColor3 = COR_TEXTO
         donoVoltarBtn.Font = FONTE_TEXTO
-        donoVoltarBtn.TextSize = 12
+        donoVoltarBtn.TextSize = 16
         donoVoltarBtn.ZIndex = 10000
         Instance.new("UICorner", donoVoltarBtn).CornerRadius = UDim.new(0, 6)
         local bordaDonoVoltarBtnRGB = Instance.new("UIStroke", donoVoltarBtn)
@@ -3159,8 +3160,8 @@ do
         table.insert(bordasRGBAbas, bordaDonoVoltarBtnRGB)
 
         local donoLista = Instance.new("ScrollingFrame", donoDropdown)
-        donoLista.Size = UDim2.new(1, -10, 0, 118)
-        donoLista.Position = UDim2.new(0, 6, 0, 74)
+        donoLista.Size = UDim2.new(1, -20, 1, -150)
+        donoLista.Position = UDim2.new(0, 10, 0, 140)
         donoLista.BackgroundTransparency = 1
         donoLista.BorderSizePixel = 0
         donoLista.ScrollBarThickness = 2
@@ -3214,10 +3215,7 @@ do
 
         local function abrirDropdownDono()
             atualizarListaDono("")
-            donoDropdown.Position = UDim2.new(
-                0, donoBtn.AbsolutePosition.X,
-                0, donoBtn.AbsolutePosition.Y + donoBtn.AbsoluteSize.Y
-            )
+            donoDropdown.Position = UDim2.new(0.5, -220, 0.5, -200)
             donoDropdown.Visible = true
         end
 
@@ -4999,8 +4997,9 @@ do
         addWhiteStroke(tpPlayerBtn)
 
         local tpPlayerDropdown = Instance.new("Frame", gui)
-        tpPlayerDropdown.Size = UDim2.new(0, 240, 0, 200)
-        tpPlayerDropdown.BackgroundColor3 = Color3.fromRGB(45, 30, 60)
+        tpPlayerDropdown.Size = UDim2.new(0, 440, 0, 400)
+        tpPlayerDropdown.BackgroundColor3 = COR_FUNDO
+    tpPlayerDropdown.BackgroundTransparency = 0.12
         tpPlayerDropdown.BorderSizePixel = 0
         tpPlayerDropdown.Visible = false
         tpPlayerDropdown.ZIndex = 9999
@@ -5008,15 +5007,15 @@ do
         addWhiteStroke(tpPlayerDropdown)
 
         local tpPlayerSearch = Instance.new("TextBox", tpPlayerDropdown)
-        tpPlayerSearch.Size = UDim2.new(1, -12, 0, 30)
-        tpPlayerSearch.Position = UDim2.new(0, 6, 0, 6)
-        tpPlayerSearch.BackgroundColor3 = COR_CARD
+        tpPlayerSearch.Size = UDim2.new(1, -20, 0, 56)
+        tpPlayerSearch.Position = UDim2.new(0, 10, 0, 10)
+        tpPlayerSearch.BackgroundTransparency = 1
         tpPlayerSearch.TextColor3 = COR_TEXTO
         tpPlayerSearch.PlaceholderText = " Search"
         tpPlayerSearch.PlaceholderColor3 = COR_TEXTO_SUB
         tpPlayerSearch.Text = ""
         tpPlayerSearch.Font = FONTE_TEXTO
-        tpPlayerSearch.TextSize = 12
+        tpPlayerSearch.TextSize = 16
         tpPlayerSearch.ClearTextOnFocus = false
         tpPlayerSearch.ZIndex = 10000
         Instance.new("UICorner", tpPlayerSearch).CornerRadius = UDim.new(0, 6)
@@ -5028,13 +5027,13 @@ do
         -- Voltar fica logo abaixo da pesquisa, como solicitado.
         -- Ele fecha o menu e devolve a interface normal do PVP.
         local tpPlayerVoltarBtn = Instance.new("TextButton", tpPlayerDropdown)
-        tpPlayerVoltarBtn.Size = UDim2.new(1, -12, 0, 28)
-        tpPlayerVoltarBtn.Position = UDim2.new(0, 6, 0, 42)
-        tpPlayerVoltarBtn.BackgroundColor3 = COR_CARD
+        tpPlayerVoltarBtn.Size = UDim2.new(1, -20, 0, 56)
+        tpPlayerVoltarBtn.Position = UDim2.new(0, 10, 0, 72)
+        tpPlayerVoltarBtn.BackgroundTransparency = 1
         tpPlayerVoltarBtn.Text = "‹ Voltar"
         tpPlayerVoltarBtn.TextColor3 = COR_TEXTO
         tpPlayerVoltarBtn.Font = FONTE_TEXTO
-        tpPlayerVoltarBtn.TextSize = 12
+        tpPlayerVoltarBtn.TextSize = 16
         tpPlayerVoltarBtn.ZIndex = 10001
         Instance.new("UICorner", tpPlayerVoltarBtn).CornerRadius = UDim.new(0, 6)
         local bordaTpPlayerVoltarBtnRGB = Instance.new("UIStroke", tpPlayerVoltarBtn)
@@ -5043,8 +5042,8 @@ do
         table.insert(bordasRGBAbas, bordaTpPlayerVoltarBtnRGB)
 
         local tpPlayerLista = Instance.new("ScrollingFrame", tpPlayerDropdown)
-        tpPlayerLista.Size = UDim2.new(1, -10, 0, 120)
-        tpPlayerLista.Position = UDim2.new(0, 6, 0, 74)
+        tpPlayerLista.Size = UDim2.new(1, -20, 1, -150)
+        tpPlayerLista.Position = UDim2.new(0, 10, 0, 140)
         tpPlayerLista.BackgroundTransparency = 1
         tpPlayerLista.BorderSizePixel = 0
         tpPlayerLista.ScrollBarThickness = 2
@@ -5134,10 +5133,7 @@ do
 
         local function abrirDropdownTP()
             atualizarListaTP("")
-            tpPlayerDropdown.Position = UDim2.new(
-                0, tpPlayerBtn.AbsolutePosition.X,
-                0, tpPlayerBtn.AbsolutePosition.Y + tpPlayerBtn.AbsoluteSize.Y
-            )
+            tpPlayerDropdown.Position = UDim2.new(0.5, -220, 0.5, -200)
             tpPlayerDropdown.Visible = true
             tpAtualizarBtn.Visible = false
             tpTeleportarBtn.Visible = false
@@ -5243,8 +5239,9 @@ do
         addWhiteStroke(observarPlayerBtn)
 
         local observarDropdown = Instance.new("Frame", gui)
-        observarDropdown.Size = UDim2.new(0, 240, 0, 200)
-        observarDropdown.BackgroundColor3 = Color3.fromRGB(45, 30, 60)
+        observarDropdown.Size = UDim2.new(0, 440, 0, 400)
+        observarDropdown.BackgroundColor3 = COR_FUNDO
+    observarDropdown.BackgroundTransparency = 0.12
         observarDropdown.BorderSizePixel = 0
         observarDropdown.Visible = false
         observarDropdown.ZIndex = 9999
@@ -5252,15 +5249,15 @@ do
         addWhiteStroke(observarDropdown)
 
         local observarSearch = Instance.new("TextBox", observarDropdown)
-        observarSearch.Size = UDim2.new(1, -12, 0, 30)
-        observarSearch.Position = UDim2.new(0, 6, 0, 6)
-        observarSearch.BackgroundColor3 = COR_CARD
+        observarSearch.Size = UDim2.new(1, -20, 0, 56)
+        observarSearch.Position = UDim2.new(0, 10, 0, 10)
+        observarSearch.BackgroundTransparency = 1
         observarSearch.TextColor3 = COR_TEXTO
         observarSearch.PlaceholderText = " Search"
         observarSearch.PlaceholderColor3 = COR_TEXTO_SUB
         observarSearch.Text = ""
         observarSearch.Font = FONTE_TEXTO
-        observarSearch.TextSize = 12
+        observarSearch.TextSize = 16
         observarSearch.ClearTextOnFocus = false
         observarSearch.ZIndex = 10000
         Instance.new("UICorner", observarSearch).CornerRadius = UDim.new(0, 6)
@@ -5270,13 +5267,13 @@ do
         table.insert(bordasRGBAbas, bordaObservarSearchRGB)
 
         local observarVoltarBtn = Instance.new("TextButton", observarDropdown)
-        observarVoltarBtn.Size = UDim2.new(1, -12, 0, 28)
-        observarVoltarBtn.Position = UDim2.new(0, 6, 0, 42)
-        observarVoltarBtn.BackgroundColor3 = COR_CARD
+        observarVoltarBtn.Size = UDim2.new(1, -20, 0, 56)
+        observarVoltarBtn.Position = UDim2.new(0, 10, 0, 72)
+        observarVoltarBtn.BackgroundTransparency = 1
         observarVoltarBtn.Text = "‹ Voltar"
         observarVoltarBtn.TextColor3 = COR_TEXTO
         observarVoltarBtn.Font = FONTE_TEXTO
-        observarVoltarBtn.TextSize = 12
+        observarVoltarBtn.TextSize = 16
         observarVoltarBtn.ZIndex = 10001
         Instance.new("UICorner", observarVoltarBtn).CornerRadius = UDim.new(0, 6)
         local bordaObservarVoltarBtnRGB = Instance.new("UIStroke", observarVoltarBtn)
@@ -5285,8 +5282,8 @@ do
         table.insert(bordasRGBAbas, bordaObservarVoltarBtnRGB)
 
         local observarLista = Instance.new("ScrollingFrame", observarDropdown)
-        observarLista.Size = UDim2.new(1, -10, 0, 120)
-        observarLista.Position = UDim2.new(0, 6, 0, 74)
+        observarLista.Size = UDim2.new(1, -20, 1, -150)
+        observarLista.Position = UDim2.new(0, 10, 0, 140)
         observarLista.BackgroundTransparency = 1
         observarLista.BorderSizePixel = 0
         observarLista.ScrollBarThickness = 2
@@ -5411,10 +5408,7 @@ do
 
         local function abrirDropdownObservar()
             atualizarListaObservar("")
-            observarDropdown.Position = UDim2.new(
-                0, observarPlayerBtn.AbsolutePosition.X,
-                0, observarPlayerBtn.AbsolutePosition.Y + observarPlayerBtn.AbsoluteSize.Y
-            )
+            observarDropdown.Position = UDim2.new(0.5, -220, 0.5, -200)
             observarDropdown.Visible = true
             observarAtualizarBtn.Visible = false
             observarAcaoBtn.Visible = false
@@ -5806,8 +5800,9 @@ do
     baitStatus.TextXAlignment = Enum.TextXAlignment.Center
 
     local dropdownBait = Instance.new("Frame", gui)
-    dropdownBait.Size = UDim2.new(0, 240, 0, 200)
-    dropdownBait.BackgroundColor3 = Color3.fromRGB(45, 30, 60)
+    dropdownBait.Size = UDim2.new(0, 440, 0, 400)
+    dropdownBait.BackgroundColor3 = COR_FUNDO
+    dropdownBait.BackgroundTransparency = 0.12
     dropdownBait.BorderSizePixel = 0
     dropdownBait.Visible = false
     dropdownBait.ZIndex = 9999
@@ -5815,15 +5810,15 @@ do
     addWhiteStroke(dropdownBait)
 
     local searchBait = Instance.new("TextBox", dropdownBait)
-    searchBait.Size = UDim2.new(1, -12, 0, 30)
-    searchBait.Position = UDim2.new(0, 6, 0, 6)
-    searchBait.BackgroundColor3 = COR_CARD
+    searchBait.Size = UDim2.new(1, -20, 0, 56)
+    searchBait.Position = UDim2.new(0, 10, 0, 10)
+    searchBait.BackgroundTransparency = 1
     searchBait.TextColor3 = COR_TEXTO
     searchBait.PlaceholderText = " Search"
     searchBait.PlaceholderColor3 = COR_TEXTO_SUB
     searchBait.Text = ""
     searchBait.Font = FONTE_TEXTO
-    searchBait.TextSize = 12
+    searchBait.TextSize = 16
     searchBait.ClearTextOnFocus = false
     searchBait.ZIndex = 10000
     Instance.new("UICorner", searchBait).CornerRadius = UDim.new(0, 6)
@@ -5834,13 +5829,13 @@ do
 
     -- Voltar fica logo abaixo da pesquisa, com a mesma mecânica do seletor de PVP.
     local baitVoltarBtn = Instance.new("TextButton", dropdownBait)
-    baitVoltarBtn.Size = UDim2.new(1, -12, 0, 28)
-    baitVoltarBtn.Position = UDim2.new(0, 6, 0, 42)
-    baitVoltarBtn.BackgroundColor3 = COR_CARD
+    baitVoltarBtn.Size = UDim2.new(1, -20, 0, 56)
+    baitVoltarBtn.Position = UDim2.new(0, 10, 0, 72)
+    baitVoltarBtn.BackgroundTransparency = 1
     baitVoltarBtn.Text = "‹ Voltar"
     baitVoltarBtn.TextColor3 = COR_TEXTO
     baitVoltarBtn.Font = FONTE_TEXTO
-    baitVoltarBtn.TextSize = 12
+    baitVoltarBtn.TextSize = 16
     baitVoltarBtn.ZIndex = 10001
     Instance.new("UICorner", baitVoltarBtn).CornerRadius = UDim.new(0, 6)
     local bordaBaitVoltarBtnRGB = Instance.new("UIStroke", baitVoltarBtn)
@@ -5849,8 +5844,8 @@ do
         table.insert(bordasRGBAbas, bordaBaitVoltarBtnRGB)
 
     local listaBait = Instance.new("ScrollingFrame", dropdownBait)
-    listaBait.Size = UDim2.new(1, -10, 0, 120)
-    listaBait.Position = UDim2.new(0, 6, 0, 74)
+    listaBait.Size = UDim2.new(1, -20, 1, -150)
+    listaBait.Position = UDim2.new(0, 10, 0, 140)
     listaBait.BackgroundTransparency = 1
     listaBait.BorderSizePixel = 0
     listaBait.ScrollBarThickness = 2
@@ -5896,10 +5891,7 @@ do
     local function abrirDropdownBait()
         dropdownBait.Visible = true
         atualizarListaBait("")
-        dropdownBait.Position = UDim2.new(
-            0, baitSelectBtn.AbsolutePosition.X,
-            0, baitSelectBtn.AbsolutePosition.Y + baitSelectBtn.AbsoluteSize.Y
-        )
+        dropdownBait.Position = UDim2.new(0.5, -220, 0.5, -200)
     end
 
     baitSelectBtn.MouseButton1Click:Connect(function()
