@@ -6899,7 +6899,27 @@ Title.Font = Enum.Font.SourceSans
 Title.TextSize = 18
 Title.Text = "Celestial Hub Admin 1 v" .. currentVersion
 
+-- Referências explícitas para permitir descarregamento completo do Admin 1.
+-- ScaledHolder contém a janela, notificações e controles flutuantes do executor.
 _G.CelestialHubAdmin1Gui = PARENT
+_G.CelestialHubAdmin1Root = ScaledHolder
+_G.CelestialHubAdmin1OwnedScreen = (PARENT ~= COREGUI.RobloxGui) and PARENT or nil
+_G.CelestialHubAdmin1Unload = function()
+    pcall(function()
+        if _G.CelestialHubAdmin1Root then
+            _G.CelestialHubAdmin1Root:Destroy()
+        end
+    end)
+    pcall(function()
+        local owned = _G.CelestialHubAdmin1OwnedScreen
+        if owned and owned.Parent then owned:Destroy() end
+    end)
+    pcall(function() getgenv().IY_LOADED = false end)
+    _G.CelestialHubAdmin1Gui = nil
+    _G.CelestialHubAdmin1Root = nil
+    _G.CelestialHubAdmin1OwnedScreen = nil
+    _G.CelestialHubAdmin1Unload = nil
+end
 do
     local dragging, dragInput, dragStart, startPos
     Title.InputBegan:Connect(function(input)
@@ -19703,32 +19723,7 @@ addcmd("debug", {}, function(args, speaker)
     return _G.IY_DEBUG and "Enabled" or "Disabled"
 end)
 
-if IsOnMobile then
-	local QuickCapture = Instance.new("TextButton")
-	local UICorner = Instance.new("UICorner")
-	QuickCapture.Name = randomString()
-	QuickCapture.Parent = PARENT
-	QuickCapture.BackgroundColor3 = Color3.fromRGB(46, 46, 47)
-	QuickCapture.BackgroundTransparency = 0.14
-	QuickCapture.Position = UDim2.new(0.489, 0, 0, 0)
-	QuickCapture.Size = UDim2.new(0, 32, 0, 33)
-	QuickCapture.Font = Enum.Font.SourceSansBold
-	QuickCapture.Text = "IY"
-	QuickCapture.TextColor3 = Color3.fromRGB(255, 255, 255)
-	QuickCapture.TextSize = 20
-	QuickCapture.TextWrapped = true
-	QuickCapture.ZIndex = 10
-	QuickCapture.Draggable = true
-	UICorner.Name = randomString()
-	UICorner.CornerRadius = UDim.new(0.5, 0)
-	UICorner.Parent = QuickCapture
-	QuickCapture.MouseButton1Click:Connect(function()
-		Cmdbar:CaptureFocus()
-		maximizeHolder()
-	end)
-	table.insert(shade1, QuickCapture)
-	table.insert(text1, QuickCapture)
-end
+-- Botao flutuante "IY" removido conforme solicitado; restante do Infinite Yield preservado.
 
 pcall(function() Scale.Scale = math.max(Holder.AbsoluteSize.X / 1920, guiScale) end)
 Scale.Parent = ScaledHolder
@@ -35827,6 +35822,9 @@ do
         descIY.TextSize = 10
         descIY.TextXAlignment = Enum.TextXAlignment.Left
         criarBotaoAdmin(cardIY, "CARREGAR CELESTIAL HUB ADMIN 1", 58, function()
+            if _G.CelestialHubAdmin1Root and _G.CelestialHubAdmin1Root.Parent then
+                return -- já está carregado; evita instâncias duplicadas
+            end
             local executar = loadstring
             if type(executar) ~= "function" then error("Este executor não disponibiliza loadstring.") end
             local func, compileError = executar(CelestialHubInfiniteYieldSource)
@@ -35835,10 +35833,17 @@ do
         end)
 
         criarBotaoAdmin(cardIY, "FECHAR ADMIN NÚMERO 1", 103, function()
-            local painel = _G.CelestialHubAdmin1Gui
-            if painel and painel.Parent then painel:Destroy() end
-            _G.CelestialHubAdmin1Gui = nil
-            pcall(function() getgenv().IY_LOADED = false end)
+            local unload = _G.CelestialHubAdmin1Unload
+            if type(unload) == "function" then
+                unload()
+            else
+                pcall(function()
+                    if _G.CelestialHubAdmin1Root then _G.CelestialHubAdmin1Root:Destroy() end
+                end)
+                pcall(function() getgenv().IY_LOADED = false end)
+                _G.CelestialHubAdmin1Gui = nil
+                _G.CelestialHubAdmin1Root = nil
+            end
         end)
 
         local cardDex = criarMoldura(admin, 212, 150, "② ADMIN CELESTIAL HUB — N° 2")
@@ -35852,6 +35857,10 @@ do
         descDex.TextSize = 10
         descDex.TextXAlignment = Enum.TextXAlignment.Left
         criarBotaoAdmin(cardDex, "CARREGAR CELESTIAL HUB EXPLORER", 58, function()
+            if _G.CelestialHubDexMain and _G.CelestialHubDexMain.MainGui
+                and _G.CelestialHubDexMain.MainGui.Parent then
+                return -- já está carregado; evita duplicar o Explorer
+            end
             local executar = loadstring
             if type(executar) ~= "function" then error("Este executor não disponibiliza loadstring.") end
             local func, compileError = executar(CelestialHubDexSource)
@@ -35860,7 +35869,25 @@ do
         end)
         criarBotaoAdmin(cardDex, "FECHAR ADMIN NÚMERO 2", 103, function()
             local dex = _G.CelestialHubDexMain
-            if dex and type(dex.Uninit) == "function" then dex.Uninit() end
+            if dex then
+                pcall(function()
+                    if type(dex.Uninit) == "function" then dex.Uninit() end
+                end)
+                pcall(function()
+                    if dex.MainGui and dex.MainGui.Parent then dex.MainGui:Destroy() end
+                end)
+            end
+            -- Limpa também interfaces auxiliares do Dex++ que possam ter ficado abertas.
+            pcall(function()
+                local container = dex and dex.GetSecureContainer and dex.GetSecureContainer()
+                if container then
+                    for _, item in ipairs(container:GetChildren()) do
+                        if item:IsA("ScreenGui") and item.Name:sub(1, 5) == "_DPP_" then
+                            item:Destroy()
+                        end
+                    end
+                end
+            end)
             _G.CelestialHubDexMain = nil
         end)
     end
