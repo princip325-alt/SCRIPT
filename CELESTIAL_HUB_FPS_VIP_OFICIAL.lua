@@ -6899,6 +6899,29 @@ Title.Font = Enum.Font.SourceSans
 Title.TextSize = 18
 Title.Text = "Celestial Hub Admin 1 v" .. currentVersion
 
+_G.CelestialHubAdmin1Gui = PARENT
+do
+    local dragging, dragInput, dragStart, startPos
+    Title.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging, dragStart, startPos = true, input.Position, Holder.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    Title.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            Holder.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+
 do
 	local emoji = ({
 		["01 01"] = "🎆",
@@ -35755,6 +35778,7 @@ end)()
 
 -- Start
 Main.Init()
+_G.CelestialHubDexMain = Main
 
 --for i,v in pairs(Main.MissingEnv) do print(i,v) end
 ]====]
@@ -35792,12 +35816,12 @@ do
             return botao
         end
 
-        local cardIY = criarMoldura(admin, 42, 100, "① ADMIN CELESTIAL HUB — N° 1")
+        local cardIY = criarMoldura(admin, 42, 150, "① ADMIN CELESTIAL HUB — N° 1")
         local descIY = Instance.new("TextLabel", cardIY)
         descIY.Size = UDim2.new(1, -20, 0, 28)
         descIY.Position = UDim2.new(0, 10, 0, 30)
         descIY.BackgroundTransparency = 1
-        descIY.Text = "Infinite Yield — painel de comandos"
+        descIY.Text = "Celestial Hub — painel de comandos"
         descIY.TextColor3 = COR_TEXTO_SUB
         descIY.Font = FONTE_TEXTO
         descIY.TextSize = 10
@@ -35810,12 +35834,19 @@ do
             func()
         end)
 
-        local cardDex = criarMoldura(admin, 162, 100, "② ADMIN CELESTIAL HUB — N° 2")
+        criarBotaoAdmin(cardIY, "FECHAR ADMIN NÚMERO 1", 103, function()
+            local painel = _G.CelestialHubAdmin1Gui
+            if painel and painel.Parent then painel:Destroy() end
+            _G.CelestialHubAdmin1Gui = nil
+            pcall(function() getgenv().IY_LOADED = false end)
+        end)
+
+        local cardDex = criarMoldura(admin, 212, 150, "② ADMIN CELESTIAL HUB — N° 2")
         local descDex = Instance.new("TextLabel", cardDex)
         descDex.Size = UDim2.new(1, -20, 0, 28)
         descDex.Position = UDim2.new(0, 10, 0, 30)
         descDex.BackgroundTransparency = 1
-        descDex.Text = "Dex++ Explorer — explorador completo"
+        descDex.Text = "Celestial Hub Explorer — explorador completo"
         descDex.TextColor3 = COR_TEXTO_SUB
         descDex.Font = FONTE_TEXTO
         descDex.TextSize = 10
@@ -35826,6 +35857,11 @@ do
             local func, compileError = executar(CelestialHubDexSource)
             if not func then error(compileError or "Falha ao compilar Dex++ Explorer.") end
             func()
+        end)
+        criarBotaoAdmin(cardDex, "FECHAR ADMIN NÚMERO 2", 103, function()
+            local dex = _G.CelestialHubDexMain
+            if dex and type(dex.Uninit) == "function" then dex.Uninit() end
+            _G.CelestialHubDexMain = nil
         end)
     end
 end
