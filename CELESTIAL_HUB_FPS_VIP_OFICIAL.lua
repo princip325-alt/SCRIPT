@@ -1361,7 +1361,7 @@ do
  btnTikTok.TextSize = 15
         Instance.new("UICorner", btnTikTok).CornerRadius = UDim.new(0, 8)
         addWhiteStroke(btnTikTok)
-        btnTikTok.MouseButton1Click:Connect(function() abrirLink("https://www.tiktok.com/@acsgamer27y") end)
+        btnTikTok.MouseButton1Click:Connect(function() abrirLink("https://www.tiktok.com/@ac.store.ofc?_r=1&_t=ZS-9BWzGZaxyyK") end)
 
         local hint = Instance.new("TextLabel", molduraLinks)
         hint.Size = UDim2.new(1, -30, 0, 20)
@@ -7806,7 +7806,7 @@ PluginsHint.Position = UDim2.new(0, 25, 0, 40)
 PluginsHint.Size = UDim2.new(0, 200, 0, 50)
 PluginsHint.Font = Enum.Font.SourceSansItalic
 PluginsHint.TextSize = 16
-PluginsHint.Text = "Download plugins from the IY Discord (discord.gg/78ZuWSq)"
+PluginsHint.Text = "Celestial Hub Discord: discord.gg/pt3TqzuSDz"
 PluginsHint.TextColor3 = Color3.new(1, 1, 1)
 PluginsHint.TextStrokeColor3 = Color3.new(1, 1, 1)
 PluginsHint.TextWrapped = true
@@ -9081,9 +9081,9 @@ reference = (function()
 		{111,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="Text",Parent={105},Position=UDim2.new(0,8,0,148),Size=UDim2.new(1,-8,0,16),Text="Setting up 'goto $1' on the OnChatted event will teleport you to any player that chats.",TextColor3=Color3.new(1,1,1),TextSize=14,TextWrapped=true,TextXAlignment=0,TextYAlignment=0,ZIndex=10,}},
 		{112,"Frame",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Name="Section",Parent={7},Size=UDim2.new(1,0,0,105),ZIndex=10,}},
 		{113,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=4,Name="Header",Parent={112},Position=UDim2.new(0,8,0,5),Size=UDim2.new(1,-8,0,20),Text="Get Further Help",TextColor3=Color3.new(1,1,1),TextSize=20,TextXAlignment=0,ZIndex=10,}},
-		{114,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="Text",Parent={112},Position=UDim2.new(0,8,0,30),Size=UDim2.new(1,-8,0,32),Text="You can join the Discord server to get support with IY,  and read up on more documentation such as the Plugin API.",TextColor3=Color3.new(1,1,1),TextSize=14,TextWrapped=true,TextXAlignment=0,ZIndex=10,}},
+		{114,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="Text",Parent={112},Position=UDim2.new(0,8,0,30),Size=UDim2.new(1,-8,0,32),Text="Join the Celestial Hub Discord server to get support and updates.",TextColor3=Color3.new(1,1,1),TextSize=14,TextWrapped=true,TextXAlignment=0,ZIndex=10,}},
 		{115,"Frame",{BackgroundColor3=Color3.new(0.1803921610117,0.1803921610117,0.1843137294054),BorderSizePixel=0,Name="Line",Parent={112},Position=UDim2.new(0,10,1,-1),Size=UDim2.new(1,-20,0,1),Visible=false,ZIndex=10,}},
-		{116,"TextButton",{BackgroundColor3=Color3.new(0.48627451062202,0.61960786581039,0.85098040103912),BorderColor3=Color3.new(0.1803921610117,0.1803921610117,0.1843137294054),Font=4,Name="InviteButton",Parent={112},Position=UDim2.new(0,5,0,75),Size=UDim2.new(1,-10,0,25),Text="Copy Discord Invite Link (https://discord.gg/78ZuWSq)",TextColor3=Color3.new(0.1803921610117,0.1803921610117,0.1843137294054),TextSize=16,ZIndex=10,}},
+		{116,"TextButton",{BackgroundColor3=Color3.new(0.48627451062202,0.61960786581039,0.85098040103912),BorderColor3=Color3.new(0.1803921610117,0.1803921610117,0.1843137294054),Font=4,Name="InviteButton",Parent={112},Position=UDim2.new(0,5,0,75),Size=UDim2.new(1,-10,0,25),Text="Copy Celestial Hub Discord Invite (https://discord.gg/pt3TqzuSDz)",TextColor3=Color3.new(0.1803921610117,0.1803921610117,0.1843137294054),TextSize=16,ZIndex=10,}},
 	})
 	for i,v in pairs(main.Content.List:GetDescendants()) do
 		if v:IsA("TextLabel") then
@@ -9101,7 +9101,7 @@ reference = (function()
 	local lastPress = nil
 	inviteButton.MouseButton1Click:Connect(function()
 		if everyClipboard then
-			toClipboard("https://discord.gg/78ZuWSq")
+			toClipboard("https://discord.gg/pt3TqzuSDz")
 			inviteButton.Text = "Copied"
 		else
 			inviteButton.Text = "No Clipboard Function, type out the link"
@@ -9110,7 +9110,7 @@ reference = (function()
 		lastPress = pressTime
 		wait(2)
 		if lastPress ~= pressTime then return end
-		inviteButton.Text = "Copy Discord Invite Link (https://discord.gg/78ZuWSq)"
+		inviteButton.Text = "Copy Celestial Hub Discord Invite (https://discord.gg/pt3TqzuSDz)"
 	end)
 	dragGUI(main)
 	main.Parent = ScaledHolder
@@ -10668,11 +10668,11 @@ function autoComplete(str,curText)
 end
 
 CMDs = {}
-CMDs[#CMDs + 1] = {NAME = 'discord / support / help', DESC = 'Invite to the Infinite Yield Discord server.'}
+CMDs[#CMDs + 1] = {NAME = 'discord / support / help', DESC = 'Invite to the Celestial Hub Discord server.'}
 CMDs[#CMDs + 1] = {NAME = 'guiscale [number]', DESC = 'Changes the size of the GUI. [number] accepts decimals and whole numbers. Min is 0.4 and Max is 2'}
 CMDs[#CMDs + 1] = {NAME = 'console', DESC = 'Opens the Roblox console'}
 CMDs[#CMDs + 1] = {NAME = 'oldconsole', DESC = 'Loads an old-themed Roblox console'}
-CMDs[#CMDs + 1] = {NAME = 'explorer / dex', DESC = 'Opens Dex++ by Chillz'}
+CMDs[#CMDs + 1] = {NAME = 'explorer / dex', DESC = 'Open Celestial Hub Explorer'}
 CMDs[#CMDs + 1] = {NAME = 'moondex / mdex', DESC = 'Opens Dex by Moon'}
 CMDs[#CMDs + 1] = {NAME = 'remotespy / rspy', DESC = 'Opens Cobalt to intercept incoming and outgoing network traffic'}
 CMDs[#CMDs + 1] = {NAME = 'simplespy / sspy', DESC = 'Opens Simple Spy V3 to intercept remote calls from the client to the server'}
@@ -12774,32 +12774,17 @@ end)
 
 addcmd('discord', {'support', 'help'}, function(args, speaker)
 	if everyClipboard then
-		toClipboard('https://discord.com/invite/78ZuWSq')
-		notify('Discord Invite', 'Copied to clipboard!\ndiscord.gg/78ZuWSq')
+		toClipboard('https://discord.gg/pt3TqzuSDz')
+		notify('Celestial Hub Discord', 'Invite copied!\\nhttps://discord.gg/pt3TqzuSDz')
 	else
-		notify('Discord Invite', 'discord.gg/78ZuWSq')
-	end
-	if httprequest then
-		httprequest({
-			Url = 'http://127.0.0.1:6463/rpc?v=1',
-			Method = 'POST',
-			Headers = {
-				['Content-Type'] = 'application/json',
-				Origin = 'https://discord.com'
-			},
-			Body = HttpService:JSONEncode({
-				cmd = 'INVITE_BROWSER',
-				nonce = HttpService:GenerateGUID(false),
-				args = {code = '78ZuWSq'}
-			})
-		})
+		notify('Celestial Hub Discord', 'Invite: https://discord.gg/pt3TqzuSDz')
 	end
 end)
 
 addcmd('keepiy', {}, function(args, speaker)
 	if queueteleport then
 		KeepInfYield = true
-		notify('KeepIY','Infinite Yield will now run after you teleport')
+		notify('Celestial Hub','Celestial Hub will now run after you teleport')
 		updatesaves()
 	else
 		notify('Incompatible Exploit','Your exploit does not support this command (missing queue_on_teleport)')
@@ -12809,7 +12794,7 @@ end)
 addcmd('unkeepiy', {}, function(args, speaker)
 	if queueteleport then
 		KeepInfYield = false
-		notify('KeepIY','Infinite Yield will no longer run after you teleport')
+		notify('Celestial Hub','Celestial Hub will no longer run after you teleport')
 		updatesaves()
 	else
 		notify('Incompatible Exploit','Your exploit does not support this command (missing queue_on_teleport)')
@@ -34803,7 +34788,7 @@ Main = (function()
 			{2,"Frame",{Active=true,BackgroundColor3=Color3.new(0.20392157137394,0.20392157137394,0.20392157137394),BorderSizePixel=0,Name="Main",Parent={1},Position=UDim2.new(0.5,-175,0.5,-100),Size=UDim2.new(0,350,0,200),}},
 			{3,"Frame",{BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,ClipsDescendants=true,Name="Holder",Parent={2},Size=UDim2.new(1,0,1,0),}},
 			{4,"UIGradient",{Parent={3},Rotation=30,Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,1,0),NumberSequenceKeypoint.new(1,1,0),}),}},
-			{5,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=4,Name="Title",Parent={3},Position=UDim2.new(0,-190,0,15),Size=UDim2.new(0,100,0,50),Text="Dex++",TextColor3=Color3.new(1,1,1),TextSize=50,TextTransparency=1,}},
+			{5,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=4,Name="Title",Parent={3},Position=UDim2.new(0,-190,0,15),Size=UDim2.new(0,100,0,50),Text="Celestial Hub Explorer",TextColor3=Color3.new(1,1,1),TextSize=50,TextTransparency=1,}},
 			{6,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="Desc",Parent={3},Position=UDim2.new(0,-230,0,60),Size=UDim2.new(0,180,0,25),Text="Ultimate Debugging Suite",TextColor3=Color3.new(1,1,1),TextSize=18,TextTransparency=1,}},
 			{7,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="StatusText",Parent={3},Position=UDim2.new(0,20,0,110),Size=UDim2.new(0,180,0,25),Text="Fetching API",TextColor3=Color3.new(1,1,1),TextSize=14,TextTransparency=1,}},
 			{8,"Frame",{BackgroundColor3=Color3.new(0.20392157137394,0.20392157137394,0.20392157137394),BorderSizePixel=0,Name="ProgressBar",Parent={3},Position=UDim2.new(0,110,0,145),Size=UDim2.new(0,0,0,4),}},
@@ -35040,7 +35025,7 @@ Main = (function()
 	Main.SetMainGuiOpen = function(val)
 		Main.MainGuiOpen = val
 
-		Main.MainGui.OpenButton.Text = val and "Close" or "Dex++"
+		Main.MainGui.OpenButton.Text = val and "Close" or "Celestial Hub Explorer"
 		if val then Main.MainGui.OpenButton.MainFrame.Visible = true end
 		Main.MainGui.OpenButton.MainFrame:TweenSize(val and UDim2.new(0,224,0,200) or UDim2.new(0,0,0,0),Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
 		--Main.MainGui.OpenButton.BackgroundTransparency = val and 0 or (Lib.CheckMouseInGui(Main.MainGui.OpenButton) and 0 or 0.2)
@@ -35068,7 +35053,7 @@ Main = (function()
 	Main.CreateMainGui = function()
 		local gui = create({
 			{1,"ScreenGui",{IgnoreGuiInset=true,Name="MainMenu",}},
-			{2,"TextButton",{AnchorPoint=Vector2.new(0.5,0),AutoButtonColor=false,BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,Font=4,Name="OpenButton",Parent={1},Position=UDim2.new(0.5,0,0,2),Size=UDim2.new(0,55,0,32),Text="Dex++",TextColor3=Color3.new(1,1,1),TextSize=16,TextTransparency=0.20000000298023,}},
+			{2,"TextButton",{AnchorPoint=Vector2.new(0.5,0),AutoButtonColor=false,BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),BorderSizePixel=0,Font=4,Name="OpenButton",Parent={1},Position=UDim2.new(0.5,0,0,2),Size=UDim2.new(0,55,0,32),Text="Celestial Hub Explorer",TextColor3=Color3.new(1,1,1),TextSize=16,TextTransparency=0.20000000298023,}},
 			{3,"UICorner",{CornerRadius=UDim.new(0,4),Parent={2},}},
 			{4,"Frame",{AnchorPoint=Vector2.new(0.5,0),BackgroundColor3=Color3.new(0.17647059261799,0.17647059261799,0.17647059261799),ClipsDescendants=true,Name="MainFrame",Parent={2},Position=UDim2.new(0.5,0,1,-4),Size=UDim2.new(0,224,0,200),}},
 			{5,"UICorner",{CornerRadius=UDim.new(0,4),Parent={4},}},
@@ -35422,7 +35407,7 @@ do
         topo.Size = UDim2.new(1, -20, 0, 30)
         topo.Position = UDim2.new(0, 10, 0, 36)
         topo.BackgroundTransparency = 1
-        topo.Text = "428 comandos do Infinite Yield • selecione uma ação abaixo"
+        topo.Text = "428 comandos do Celestial Hub • selecione uma ação abaixo"
         topo.TextColor3 = COR_TEXTO_SUB
         topo.Font = FONTE_TEXTO
         topo.TextSize = 9
@@ -35534,11 +35519,11 @@ do
         end
 
         local catalogCommands = {
-            {NAME = 'discord / support / help', DESC = 'Invite to the Infinite Yield Discord server.'},
+            {NAME = 'discord / support / help', DESC = 'Invite to the Celestial Hub Discord server.'},
             {NAME = 'guiscale [number]', DESC = 'Changes the size of the GUI. [number] accepts decimals and whole numbers. Min is 0.4 and Max is 2'},
             {NAME = 'console', DESC = 'Opens the Roblox console'},
             {NAME = 'oldconsole', DESC = 'Loads an old-themed Roblox console'},
-            {NAME = 'explorer / dex', DESC = 'Opens Dex++ by Chillz'},
+            {NAME = 'explorer / dex', DESC = 'Open Celestial Hub Explorer'},
             {NAME = 'moondex / mdex', DESC = 'Opens Dex by Moon'},
             {NAME = 'remotespy / rspy', DESC = 'Opens Cobalt to intercept incoming and outgoing network traffic'},
             {NAME = 'simplespy / sspy', DESC = 'Opens Simple Spy V3 to intercept remote calls from the client to the server'},
@@ -36007,7 +35992,9 @@ do
                     local ligar = (not desligar) and (nomesDisponiveis["un" .. lower] or nomesDisponiveis["no" .. lower])
                     local alternadorNativo = lower:sub(1, 6) == "toggle"
                     local temArgs = nomeCompleto:find("%[", 1, false) ~= nil
-                    local altura = temArgs and 62 or 42
+                    -- Cartões mais altos: nome, campo de argumentos e ação
+                    -- ficam em linhas separadas para não se sobreporem em telas pequenas.
+                    local altura = temArgs and 104 or 76
 
                     local linha = Instance.new("Frame")
                     linha.Name = "Comando_" .. tostring(indice)
@@ -36019,8 +36006,8 @@ do
                     Instance.new("UICorner", linha).CornerRadius = UDim.new(0, 6)
 
                     local nomeLabel = Instance.new("TextLabel")
-                    nomeLabel.Size = UDim2.new(1, -88, 0, 18)
-                    nomeLabel.Position = UDim2.new(0, 7, 0, 3)
+                    nomeLabel.Size = UDim2.new(1, -14, 0, 18)
+                    nomeLabel.Position = UDim2.new(0, 7, 0, 4)
                     nomeLabel.BackgroundTransparency = 1
                     nomeLabel.Text = capitalizarInicio(nomeCompleto)
                     nomeLabel.TextColor3 = COR_TEXTO
@@ -36031,8 +36018,8 @@ do
                     nomeLabel.Parent = linha
 
                     local desc = Instance.new("TextLabel")
-                    desc.Size = UDim2.new(1, -88, 0, 15)
-                    desc.Position = UDim2.new(0, 7, 0, 21)
+                    desc.Size = UDim2.new(1, -14, 0, 15)
+                    desc.Position = UDim2.new(0, 7, 0, 23)
                     desc.BackgroundTransparency = 1
                     desc.Text = capitalizarInicio(info.DESC or "")
                     desc.TextColor3 = COR_TEXTO_SUB
@@ -36046,8 +36033,8 @@ do
                     if temArgs then
                         argsBox = Instance.new("TextBox")
                         argsBox.Name = "Argumentos"
-                        argsBox.Size = UDim2.new(1, -88, 0, 20)
-                        argsBox.Position = UDim2.new(0, 7, 0, 39)
+                        argsBox.Size = UDim2.new(1, -14, 0, 22)
+                        argsBox.Position = UDim2.new(0, 7, 0, 42)
                         argsBox.BackgroundColor3 = COR_PAINEL
                         argsBox.BorderSizePixel = 0
                         argsBox.PlaceholderText = "Preencha os parâmetros deste comando"
@@ -36063,15 +36050,18 @@ do
 
                     local acao = Instance.new("TextButton")
                     acao.Name = "Acao"
-                    acao.Size = UDim2.new(0, 72, 0, 28)
-                    acao.Position = UDim2.new(1, -78, 0.5, -14)
+                    acao.AnchorPoint = Vector2.new(0.5, 1)
+                    acao.Size = UDim2.new(0, 156, 0, 27)
+                    acao.Position = UDim2.new(0.5, 0, 1, -6)
                     acao.BackgroundColor3 = COR_BOTAO_ATIVO
                     acao.BorderSizePixel = 0
                     acao.Text = (ligar and "TOGGLE") or (alternadorNativo and "ALTERNAR") or (desligar and "DESLIGAR") or "EXECUTAR"
                     acao.TextColor3 = COR_TEXTO
                     acao.Font = FONTE_TEXTO
-                    acao.TextSize = 8
+                    acao.TextSize = 10
                     acao.TextWrapped = true
+                    acao.TextXAlignment = Enum.TextXAlignment.Center
+                    acao.TextYAlignment = Enum.TextYAlignment.Center
                     acao.Parent = linha
                     Instance.new("UICorner", acao).CornerRadius = UDim.new(0, 5)
                     addWhiteStroke(acao)
