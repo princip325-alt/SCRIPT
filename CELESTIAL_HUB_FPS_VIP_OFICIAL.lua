@@ -821,14 +821,59 @@ do
         layoutIdiomas.Padding = UDim.new(0, 4)
         layoutIdiomas.SortOrder = Enum.SortOrder.LayoutOrder
 
+        -- Tradução robusta: executores diferentes expõem APIs HTTP diferentes.
+        -- Tenta primeiro as funções de request do executor e depois as APIs Roblox.
+        local cacheTraducoes = {}
+        local function obterCorpoHttp(url)
+            local resposta
+            local funcaoRequest
+            if type(syn) == "table" and type(syn.request) == "function" then
+                funcaoRequest = syn.request
+            elseif type(http) == "table" and type(http.request) == "function" then
+                funcaoRequest = http.request
+            elseif type(fluxus) == "table" and type(fluxus.request) == "function" then
+                funcaoRequest = fluxus.request
+            elseif type(http_request) == "function" then
+                funcaoRequest = http_request
+            elseif type(request) == "function" then
+                funcaoRequest = request
+            end
+
+            if funcaoRequest then
+                local ok, retorno = pcall(funcaoRequest, {Url = url, Method = "GET"})
+                if ok and retorno then
+                    if type(retorno) == "string" then
+                        resposta = retorno
+                    elseif type(retorno) == "table" then
+                        if retorno.Success == false or (retorno.StatusCode and retorno.StatusCode >= 400) then
+                            resposta = nil
+                        else
+                            resposta = retorno.Body or retorno.body
+                        end
+                    end
+                end
+            end
+
+            if not resposta then
+                local ok, retorno = pcall(function() return game:HttpGet(url) end)
+                if ok and type(retorno) == "string" then resposta = retorno end
+            end
+            if not resposta then
+                local ok, retorno = pcall(function() return HttpServiceIdioma:GetAsync(url) end)
+                if ok and type(retorno) == "string" then resposta = retorno end
+            end
+            return resposta
+        end
+
         local function traduzirTexto(texto, destino)
             if type(texto) ~= "string" or texto == "" or #texto > 450 then return texto end
             if texto:match("^%s*$") or texto:match("^[%d%p%s]+$") then return texto end
+            local chaveCache = destino .. "\0" .. texto
+            if cacheTraducoes[chaveCache] then return cacheTraducoes[chaveCache] end
             local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=" .. destino .. "&dt=t&q=" .. HttpServiceIdioma:UrlEncode(texto)
-            local ok, resposta = pcall(function()
-                local bruto = game:HttpGet(url)
-                return HttpServiceIdioma:JSONDecode(bruto)
-            end)
+            local bruto = obterCorpoHttp(url)
+            if not bruto then return texto end
+            local ok, resposta = pcall(function() return HttpServiceIdioma:JSONDecode(bruto) end)
             if not ok or type(resposta) ~= "table" or type(resposta[1]) ~= "table" then return texto end
             local partes = {}
             for _, trecho in ipairs(resposta[1]) do
@@ -837,7 +882,11 @@ do
                 end
             end
             local resultado = table.concat(partes)
-            return resultado ~= "" and resultado or texto
+            if resultado ~= "" then
+                cacheTraducoes[chaveCache] = resultado
+                return resultado
+            end
+            return texto
         end
 
         local function aplicarTextoTraduzido(obj, propriedade, original, destino)
@@ -6715,6 +6764,34 @@ CMDsF.TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png"
 CMDsF.VerticalScrollBarInset = 'Always'
 CMDsF.ZIndex = 10
 table.insert(scroll,CMDsF)
+
+-- Controles rápidos para ir ao início/fim da lista de comandos.
+local function criarBotaoNavegacaoScroll(nome, texto, y, destino)
+	local botao = Instance.new("TextButton")
+	botao.Name = nome
+	botao.Parent = Holder
+	botao.AnchorPoint = Vector2.new(1, 0)
+	botao.Position = UDim2.new(1, -10, 0, y)
+	botao.Size = UDim2.new(0, 18, 0, 18)
+	botao.BackgroundColor3 = Color3.fromRGB(46, 46, 47)
+	botao.BackgroundTransparency = 0.15
+	botao.BorderSizePixel = 0
+	botao.AutoButtonColor = true
+	botao.Font = Enum.Font.SourceSansBold
+	botao.Text = texto
+	botao.TextColor3 = Color3.new(1, 1, 1)
+	botao.TextSize = 12
+	botao.ZIndex = 30
+	botao.Activated:Connect(function()
+		local maxY = math.max(0, CMDsF.AbsoluteCanvasSize.Y - CMDsF.AbsoluteWindowSize.Y)
+		local targetY = (destino == "topo") and 0 or maxY
+		CMDsF.CanvasPosition = Vector2.new(0, targetY)
+	end)
+	return botao
+end
+
+criarBotaoNavegacaoScroll("IrParaInicioComandos", "▲", 47, "topo")
+criarBotaoNavegacaoScroll("IrParaFimComandos", "▼", 199, "fim")
 
 cmdListLayout.Parent = CMDsF
 
