@@ -987,6 +987,79 @@ do
 end
 -- ===================== FIM IDIOMAS =====================
 
+-- Um único padrão visual para TODOS os seletores com seta.
+-- Reutiliza os controles e callbacks existentes; altera somente a apresentação.
+local function aplicarPadraoDropdownIdiomas(popup, pesquisa, voltar, lista, placeholder)
+    popup.Size = UDim2.new(0, 250, 0, 230)
+    popup.Position = UDim2.new(0.5, -125, 0.5, -115)
+    popup.BackgroundColor3 = COR_FUNDO
+    popup.BorderSizePixel = 0
+    popup.ZIndex = 10000
+    popup.ClipsDescendants = true
+    local cantoPopup = popup:FindFirstChildOfClass("UICorner")
+    if cantoPopup then cantoPopup.CornerRadius = UDim.new(0, 10) end
+
+    local function obterMoldura(controle, nome, altura, y, fundo)
+        local moldura = controle.Parent
+        if moldura == popup then
+            moldura = Instance.new("Frame")
+            moldura.Name = nome
+            moldura.Parent = popup
+            controle.Parent = moldura
+        end
+        moldura.Name = nome
+        moldura.Size = UDim2.new(1, -12, 0, altura)
+        moldura.Position = UDim2.new(0, 6, 0, y)
+        moldura.BackgroundColor3 = fundo or COR_CARD
+        moldura.BackgroundTransparency = (fundo == nil) and 1 or 0
+        moldura.BorderSizePixel = 0
+        moldura.ZIndex = 10001
+        moldura.ClipsDescendants = true
+        local canto = moldura:FindFirstChildOfClass("UICorner")
+        if not canto then canto = Instance.new("UICorner", moldura) end
+        canto.CornerRadius = UDim.new(0, 6)
+        local stroke = moldura:FindFirstChildOfClass("UIStroke")
+        if not stroke then
+            stroke = Instance.new("UIStroke", moldura)
+            stroke.Thickness = 1.5
+            stroke.Transparency = 0
+            table.insert(bordasRGBAbas, stroke)
+        end
+        for _, filho in ipairs(controle:GetChildren()) do
+            if filho:IsA("UIStroke") or filho:IsA("UICorner") then filho:Destroy() end
+        end
+        controle.BorderSizePixel = 0
+        controle.Size = UDim2.new(1, 0, 1, 0)
+        controle.Position = UDim2.new(0, 0, 0, 0)
+        controle.ZIndex = 10002
+        return moldura
+    end
+
+    obterMoldura(pesquisa, "MolduraPesquisaDropdown", 30, 6, COR_CARD)
+    pesquisa.BackgroundTransparency = 1
+    pesquisa.TextColor3 = COR_TEXTO
+    pesquisa.PlaceholderColor3 = COR_TEXTO_SUB
+    pesquisa.PlaceholderText = placeholder or "Pesquisar..."
+    pesquisa.TextXAlignment = Enum.TextXAlignment.Center
+    pesquisa.TextSize = 12
+    pesquisa.ClearTextOnFocus = false
+
+    obterMoldura(voltar, "MolduraVoltarDropdown", 28, 42, nil)
+    voltar.BackgroundTransparency = 1
+    voltar.Text = "‹ Voltar"
+    voltar.TextColor3 = COR_TEXTO
+    voltar.Font = FONTE_TEXTO
+    voltar.TextSize = 12
+
+    lista.Size = UDim2.new(1, -12, 1, -78)
+    lista.Position = UDim2.new(0, 6, 0, 74)
+    lista.BackgroundTransparency = 1
+    lista.BorderSizePixel = 0
+    lista.ScrollBarThickness = 3
+    lista.ZIndex = 10001
+    lista.ClipsDescendants = true
+end
+
 
 task.spawn(function()
     task.wait(0.15)
@@ -3168,6 +3241,7 @@ do
         donoLista.CanvasSize = UDim2.new(0, 0, 0, 0)
         donoLista.AutomaticCanvasSize = Enum.AutomaticSize.Y
         Instance.new("UIListLayout", donoLista).Padding = UDim.new(0, 4)
+        aplicarPadraoDropdownIdiomas(donoDropdown, donoSearch, donoVoltarBtn, donoLista, "Pesquisar jogadores...")
 
         local function fecharDropdownDono()
             donoDropdown.Visible = false
@@ -3214,10 +3288,6 @@ do
 
         local function abrirDropdownDono()
             atualizarListaDono("")
-            donoDropdown.Position = UDim2.new(
-                0, donoBtn.AbsolutePosition.X,
-                0, donoBtn.AbsolutePosition.Y + donoBtn.AbsoluteSize.Y
-            )
             donoDropdown.Visible = true
         end
 
@@ -4096,6 +4166,7 @@ do
     local layout = Instance.new("UIListLayout", listaFrame)
     layout.Padding = UDim.new(0, 4)
     layout.SortOrder = Enum.SortOrder.LayoutOrder
+    aplicarPadraoDropdownIdiomas(dropdownFrame, searchBox, voltarArmaBtn, listaFrame, "Pesquisar armas...")
 
     local function atualizarLista(filtro)
         for _, c in ipairs(listaFrame:GetChildren()) do
@@ -4728,6 +4799,7 @@ do
 
     local raidLayout = Instance.new("UIListLayout", raidListaFrame)
     raidLayout.Padding = UDim.new(0, 4)
+    aplicarPadraoDropdownIdiomas(raidDropdown, raidSearch, voltarRaidBtn, raidListaFrame, "Pesquisar raids...")
 
     local function atualizarListaRaids(filtro)
         for _, filho in ipairs(raidListaFrame:GetChildren()) do
@@ -4768,7 +4840,6 @@ do
         raidDropdown.Visible = not raidDropdown.Visible
         if raidDropdown.Visible then
             atualizarListaRaids("")
-            raidDropdown.Position = UDim2.new(0, raidBtn.AbsolutePosition.X, 0, raidBtn.AbsolutePosition.Y + 35)
         end
     end)
 
@@ -5073,6 +5144,7 @@ do
         tpPlayerLista.CanvasSize = UDim2.new(0, 0, 0, 0)
         tpPlayerLista.AutomaticCanvasSize = Enum.AutomaticSize.Y
         Instance.new("UIListLayout", tpPlayerLista).Padding = UDim.new(0, 4)
+        aplicarPadraoDropdownIdiomas(tpPlayerDropdown, tpPlayerSearch, tpPlayerVoltarBtn, tpPlayerLista, "Pesquisar jogadores...")
 
         local tpAtualizarBtn = Instance.new("TextButton", molduraTPPlayer)
         tpAtualizarBtn.Size = UDim2.new(1, -20, 0, 30)
@@ -5155,10 +5227,6 @@ do
 
         local function abrirDropdownTP()
             atualizarListaTP("")
-            tpPlayerDropdown.Position = UDim2.new(
-                0, tpPlayerBtn.AbsolutePosition.X,
-                0, tpPlayerBtn.AbsolutePosition.Y + tpPlayerBtn.AbsoluteSize.Y
-            )
             tpPlayerDropdown.Visible = true
             tpAtualizarBtn.Visible = false
             tpTeleportarBtn.Visible = false
@@ -5315,6 +5383,7 @@ do
         observarLista.CanvasSize = UDim2.new(0, 0, 0, 0)
         observarLista.AutomaticCanvasSize = Enum.AutomaticSize.Y
         Instance.new("UIListLayout", observarLista).Padding = UDim.new(0, 4)
+        aplicarPadraoDropdownIdiomas(observarDropdown, observarSearch, observarVoltarBtn, observarLista, "Pesquisar jogadores...")
 
         local observarAtualizarBtn = Instance.new("TextButton", molduraObservar)
         observarAtualizarBtn.Size = UDim2.new(1, -20, 0, 30)
@@ -5432,10 +5501,6 @@ do
 
         local function abrirDropdownObservar()
             atualizarListaObservar("")
-            observarDropdown.Position = UDim2.new(
-                0, observarPlayerBtn.AbsolutePosition.X,
-                0, observarPlayerBtn.AbsolutePosition.Y + observarPlayerBtn.AbsoluteSize.Y
-            )
             observarDropdown.Visible = true
             observarAtualizarBtn.Visible = false
             observarAcaoBtn.Visible = false
@@ -5879,6 +5944,7 @@ do
     listaBait.CanvasSize = UDim2.new(0, 0, 0, 0)
     listaBait.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Instance.new("UIListLayout", listaBait).Padding = UDim.new(0, 4)
+    aplicarPadraoDropdownIdiomas(dropdownBait, searchBait, baitVoltarBtn, listaBait, "Pesquisar iscas...")
 
     local function atualizarListaBait(filtro)
         for _, c in ipairs(listaBait:GetChildren()) do
@@ -5917,10 +5983,6 @@ do
     local function abrirDropdownBait()
         dropdownBait.Visible = true
         atualizarListaBait("")
-        dropdownBait.Position = UDim2.new(
-            0, baitSelectBtn.AbsolutePosition.X,
-            0, baitSelectBtn.AbsolutePosition.Y + baitSelectBtn.AbsoluteSize.Y
-        )
     end
 
     baitSelectBtn.MouseButton1Click:Connect(function()
