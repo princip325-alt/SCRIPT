@@ -15232,6 +15232,14 @@ addcmd("antiafk", {"antiidle"}, function(args, speaker)
     if not (args[1] and tostring(args[1]) == "nonotify") then notify("Anti Idle", "Anti idle is enabled") end
 end)
 
+addcmd("unantiafk", {"unantiidle"}, function(args, speaker)
+    if antiAfkCon then
+        antiAfkCon:Disconnect()
+        antiAfkCon = nil
+    end
+    notify("Anti Idle", "Anti idle is disabled")
+end)
+
 addcmd("datalimit", {}, function(args, speaker)
 	local kbps = tonumber(args[1])
 	if kbps then
@@ -15529,31 +15537,49 @@ addcmd('pulsetp',{'ptp'},function(args, speaker)
 end)
 
 local vnoclipParts = {}
-addcmd('vehiclenoclip',{'vnoclip'},function(args, speaker)
-	vnoclipParts = {}
-	local seat = speaker.Character:FindFirstChildOfClass('Humanoid').SeatPart
-	local vehicleModel = seat.Parent
-	repeat
-		if vehicleModel.ClassName ~= "Model" then
-			vehicleModel = vehicleModel.Parent
-		end
-	until vehicleModel.ClassName == "Model"
-	wait(0.1)
-	execCmd('noclip')
-	for i,v in pairs(vehicleModel:GetDescendants()) do
-		if v:IsA("BasePart") and v.CanCollide then
-			table.insert(vnoclipParts,v)
-			v.CanCollide = false
+local vnoclipConnection = nil
+local vnoclipOriginalCollision = {}
+local function restaurarNoclipVeiculo()
+	if vnoclipConnection then vnoclipConnection:Disconnect(); vnoclipConnection = nil end
+	for part, original in pairs(vnoclipOriginalCollision) do
+		if typeof(part) == "Instance" and part:IsA("BasePart") and part.Parent then
+			pcall(function() part.CanCollide = original end)
 		end
 	end
+	vnoclipOriginalCollision = {}
+	vnoclipParts = {}
+end
+addcmd('vehiclenoclip',{'vnoclip'},function(args, speaker)
+	if vnoclipConnection then return end
+	vnoclipOriginalCollision = {}
+	vnoclipParts = {}
+	local function atualizarVeiculoNoclip()
+		local character = speaker.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local seat = humanoid and humanoid.SeatPart
+		if not seat then return end
+		local vehicleModel = seat:FindFirstAncestorWhichIsA("Model")
+		if not vehicleModel then return end
+		while vehicleModel.Parent and vehicleModel.Parent:IsA("Model") do
+			vehicleModel = vehicleModel.Parent
+		end
+		for _, part in ipairs(vehicleModel:GetDescendants()) do
+			if part:IsA("BasePart") then
+				if vnoclipOriginalCollision[part] == nil then
+					vnoclipOriginalCollision[part] = part.CanCollide
+					table.insert(vnoclipParts, part)
+				end
+				part.CanCollide = false
+			end
+		end
+	end
+	vnoclipConnection = RunService.Stepped:Connect(atualizarVeiculoNoclip)
+	-- Aplica também imediatamente se o jogador já estiver sentado.
+	atualizarVeiculoNoclip()
 end)
 
 addcmd("vehicleclip", {"vclip", "unvnoclip", "unvehiclenoclip"}, function(args, speaker)
-	execCmd("clip")
-	for i, v in pairs(vnoclipParts) do
-		v.CanCollide = true
-	end
-	vnoclipParts = {}
+	restaurarNoclipVeiculo()
 end)
 
 addcmd("togglevnoclip", {}, function(args, speaker)
@@ -35767,151 +35793,230 @@ do
             return card
         end
 
-        -- SETTINGS: FPS e volume configuráveis pelo usuário.
+        -- Calcula o próximo espaço livre com base nos elementos reais da aba.
+        -- Isso evita os grandes vãos causados por posições Y fixas.
+        local function proximoY(parent)
+            local bottom = 36
+            for _, child in ipairs(parent:GetChildren()) do
+                if child:IsA("GuiObject") and child.Visible then
+                    local y = child.Position.Y.Offset + child.Size.Y.Offset
+                    if y > bottom then bottom = y end
+                end
+            end
+            return bottom + 10
+        end
+
+        local function criarCampoAplicacao(parent, nome, tituloTexto, placeholder, valorInicial, textoBotao, validar, aplicar)
+            local y = proximoY(parent)
+            local card = Instance.new("Frame")
+            card.Name = nome
+            card.Size = UDim2.new(1, -20, 0, 92)
+            card.Position = UDim2.new(0, 10, 0, y)
+            card.BackgroundColor3 = COR_CARD
+            card.BorderSizePixel = 0
+            card.Parent = parent
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 7)
+
+            local title = Instance.new("TextLabel", card)
+            title.BackgroundTransparency = 1
+            title.Position = UDim2.new(0, 10, 0, 5)
+            title.Size = UDim2.new(1, -20, 0, 20)
+            title.Text = tituloTexto
+            title.TextColor3 = COR_TEXTO
+            title.Font = FONTE_TEXTO
+            title.TextSize = 12
+            title.TextXAlignment = Enum.TextXAlignment.Left
+
+            local input = Instance.new("TextBox", card)
+            input.Size = UDim2.new(0.48, -12, 0, 34)
+            input.Position = UDim2.new(0, 10, 0, 42)
+            input.BackgroundColor3 = COR_PAINEL
+            input.TextColor3 = COR_TEXTO
+            input.PlaceholderText = placeholder
+            input.Text = valorInicial
+            input.Font = FONTE_TEXTO
+            input.TextSize = 12
+            input.ClearTextOnFocus = false
+            input.BorderSizePixel = 0
+            input.Parent = card
+            Instance.new("UICorner", input).CornerRadius = UDim.new(0, 6)
+
+            local apply = Instance.new("TextButton", card)
+            apply.Size = UDim2.new(0.48, -12, 0, 34)
+            apply.Position = UDim2.new(0.52, 2, 0, 42)
+            apply.BackgroundColor3 = COR_BOTAO_ATIVO
+            apply.Text = textoBotao
+            apply.TextColor3 = COR_TEXTO
+            apply.Font = FONTE_TEXTO
+            apply.TextSize = 11
+            apply.BorderSizePixel = 0
+            apply.Parent = card
+            Instance.new("UICorner", apply).CornerRadius = UDim.new(0, 6)
+
+            input:GetPropertyChangedSignal("Text"):Connect(function()
+                apply.Text = textoBotao
+                apply.BackgroundColor3 = COR_BOTAO_ATIVO
+            end)
+            apply.MouseButton1Click:Connect(function()
+                vibrar()
+                local value = validar(input.Text)
+                if value == nil then
+                    apply.Text = "VALOR INVÁLIDO"
+                    apply.BackgroundColor3 = COR_ALERTA
+                    return
+                end
+                local ok = aplicar(value)
+                if ok then
+                    apply.Text = "APLICADO ✓"
+                    apply.BackgroundColor3 = COR_BOLINHA_VERDE
+                else
+                    apply.Text = "FALHA AO APLICAR"
+                    apply.BackgroundColor3 = COR_ALERTA
+                end
+            end)
+            return card
+        end
+
+        local function criarAcaoRapida(parent, nome, titulo, comando)
+            local y = proximoY(parent)
+            local card, btn = criarAcaoUI(parent, nome, titulo, y, function(b)
+                local ok = rodarComando(comando)
+                if ok then
+                    b.Text = "CONCLUÍDO ✓"
+                    b.BackgroundColor3 = COR_BOLINHA_VERDE
+                else
+                    b.Text = "FALHA • TENTAR NOVAMENTE"
+                    b.BackgroundColor3 = COR_ALERTA
+                end
+            end, 70)
+            btn.Position = UDim2.new(0, 10, 0, 32)
+            btn.Size = UDim2.new(1, -20, 0, 28)
+            return card
+        end
+
+        -- SETTINGS: FPS, volume e utilitários que pertencem às configurações.
         local settingsTab = frame:FindFirstChild("ContainerAba_settings")
         if settingsTab then
-            local fpsCard = Instance.new("Frame")
-            fpsCard.Name = "ControleFPSCap"
-            fpsCard.Size = UDim2.new(1, -20, 0, 92)
-            fpsCard.Position = UDim2.new(0, 10, 0, 570)
-            fpsCard.BackgroundColor3 = COR_CARD
-            fpsCard.BorderSizePixel = 0
-            fpsCard.Parent = settingsTab
-            Instance.new("UICorner", fpsCard).CornerRadius = UDim.new(0, 7)
-            local fpsTitle = Instance.new("TextLabel", fpsCard)
-            fpsTitle.BackgroundTransparency = 1
-            fpsTitle.Position = UDim2.new(0, 10, 0, 5)
-            fpsTitle.Size = UDim2.new(1, -20, 0, 20)
-            fpsTitle.Text = "Limite de FPS (1–1000)"
-            fpsTitle.TextColor3 = COR_TEXTO
-            fpsTitle.Font = FONTE_TEXTO
-            fpsTitle.TextSize = 12
-            fpsTitle.TextXAlignment = Enum.TextXAlignment.Left
-            local fpsInput = Instance.new("TextBox", fpsCard)
-            fpsInput.Size = UDim2.new(0.48, -12, 0, 34)
-            fpsInput.Position = UDim2.new(0, 10, 0, 42)
-            fpsInput.BackgroundColor3 = COR_PAINEL
-            fpsInput.TextColor3 = COR_TEXTO
-            fpsInput.PlaceholderText = "Ex.: 120"
-            fpsInput.Text = "120"
-            fpsInput.Font = FONTE_TEXTO
-            fpsInput.TextSize = 12
-            fpsInput.ClearTextOnFocus = false
-            Instance.new("UICorner", fpsInput).CornerRadius = UDim.new(0, 6)
-            local fpsApply = Instance.new("TextButton", fpsCard)
-            fpsApply.Size = UDim2.new(0.48, -12, 0, 34)
-            fpsApply.Position = UDim2.new(0.52, 2, 0, 42)
-            fpsApply.BackgroundColor3 = COR_BOTAO_ATIVO
-            fpsApply.Text = "APLICAR FPS"
-            fpsApply.TextColor3 = COR_TEXTO
-            fpsApply.Font = FONTE_TEXTO
-            fpsApply.TextSize = 11
-            Instance.new("UICorner", fpsApply).CornerRadius = UDim.new(0, 6)
-            fpsApply.MouseButton1Click:Connect(function()
-                local n = tonumber(fpsInput.Text)
-                if n and n >= 1 and n <= 1000 then rodarComando("setfpscap " .. math.floor(n))
-                else fpsInput.Text = "Valor 1–1000" end
-            end)
+            criarCampoAplicacao(settingsTab, "ControleFPSCap", "Limite de FPS (1–1000)", "Ex.: 120", "120", "APLICAR FPS",
+                function(texto)
+                    local n = tonumber(texto)
+                    if n and n >= 1 and n <= 1000 then return math.floor(n) end
+                    return nil
+                end,
+                function(n)
+                    -- setfpscap é uma API do executor; sem ela não há como garantir o limite real.
+                    if type(setfpscap) ~= "function" then return false end
+                    return pcall(setfpscap, n)
+                end)
 
-            local volCard = Instance.new("Frame")
-            volCard.Name = "ControleVolume"
-            volCard.Size = UDim2.new(1, -20, 0, 92)
-            volCard.Position = UDim2.new(0, 10, 0, 670)
-            volCard.BackgroundColor3 = COR_CARD
-            volCard.BorderSizePixel = 0
-            volCard.Parent = settingsTab
-            Instance.new("UICorner", volCard).CornerRadius = UDim.new(0, 7)
-            local volTitle = Instance.new("TextLabel", volCard)
-            volTitle.BackgroundTransparency = 1
-            volTitle.Position = UDim2.new(0, 10, 0, 5)
-            volTitle.Size = UDim2.new(1, -20, 0, 20)
-            volTitle.Text = "Volume do jogo (0–10)"
-            volTitle.TextColor3 = COR_TEXTO
-            volTitle.Font = FONTE_TEXTO
-            volTitle.TextSize = 12
-            volTitle.TextXAlignment = Enum.TextXAlignment.Left
-            local volInput = Instance.new("TextBox", volCard)
-            volInput.Size = UDim2.new(0.48, -12, 0, 34)
-            volInput.Position = UDim2.new(0, 10, 0, 42)
-            volInput.BackgroundColor3 = COR_PAINEL
-            volInput.TextColor3 = COR_TEXTO
-            volInput.PlaceholderText = "0 a 10"
-            volInput.Text = "5"
-            volInput.Font = FONTE_TEXTO
-            volInput.TextSize = 12
-            Instance.new("UICorner", volInput).CornerRadius = UDim.new(0, 6)
-            local volApply = Instance.new("TextButton", volCard)
-            volApply.Size = UDim2.new(0.48, -12, 0, 34)
-            volApply.Position = UDim2.new(0.52, 2, 0, 42)
-            volApply.BackgroundColor3 = COR_BOTAO_ATIVO
-            volApply.Text = "APLICAR VOLUME"
-            volApply.TextColor3 = COR_TEXTO
-            volApply.Font = FONTE_TEXTO
-            volApply.TextSize = 11
-            Instance.new("UICorner", volApply).CornerRadius = UDim.new(0, 6)
-            volApply.MouseButton1Click:Connect(function()
-                local n = tonumber(volInput.Text)
-                if n and n >= 0 and n <= 10 then rodarComando("volume " .. tostring(n))
-                else volInput.Text = "Valor 0–10" end
-            end)
-            settingsTab.CanvasSize = UDim2.new(0, 0, 0, 780)
+            criarCampoAplicacao(settingsTab, "ControleVolume", "Volume do jogo (0–10)", "0 a 10", "5", "APLICAR VOLUME",
+                function(texto)
+                    local n = tonumber(texto)
+                    if n and n >= 0 and n <= 10 then return n end
+                    return nil
+                end,
+                function(n)
+                    local ok = pcall(function()
+                        UserSettings():GetService("UserGameSettings").MasterVolume = n / 10
+                    end)
+                    return ok
+                end)
+
+            criarAcaoRapida(settingsTab, "AcaoConsole", "Abrir console", "console")
+            criarAcaoRapida(settingsTab, "AcaoInfoServidor", "Informações do servidor", "serverinfo")
+            criarAcaoRapida(settingsTab, "AcaoJobId", "Copiar JobId", "jobid")
+            criarToggleComando(settingsTab, "ToggleAntiIdle", "Anti-idle", proximoY(settingsTab), "antiafk", "unantiafk")
+            settingsTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(settingsTab) + 5)
         end
 
-        -- MULTIFARM: noclip do personagem, noclip do barco e pulo infinito.
+        -- MULTIFARM: os controles entram logo após o último item existente.
         local multiTab = frame:FindFirstChild("ContainerAba_multifarm")
         if multiTab then
-            criarToggleComando(multiTab, "ToggleNoclipPersonagem", "Noclip do personagem", 1110, "noclip", "unnoclip")
-            criarToggleComando(multiTab, "ToggleNoclipBarco", "Noclip do barco/veículo", 1200, "vehiclenoclip", "vehicleclip")
-            criarToggleComando(multiTab, "TogglePuloInfinito", "Pulo infinito", 1290, "infjump", "uninfjump")
-            multiTab.CanvasSize = UDim2.new(0, 0, 0, 1390)
+            criarToggleComando(multiTab, "ToggleNoclipPersonagem", "Noclip do personagem", proximoY(multiTab), "noclip", "unnoclip")
+            criarToggleComando(multiTab, "ToggleNoclipBarco", "Noclip do barco", proximoY(multiTab), "vehiclenoclip", "vehicleclip")
+            criarToggleComando(multiTab, "TogglePuloInfinito", "Pulo infinito", proximoY(multiTab), "infjump", "uninfjump")
+            multiTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(multiTab) + 5)
         end
 
-        -- PVP: proteção anti-arremesso contra colisões e impactos de NPC/Boss.
+        -- PVP: Anti-Fling com capitalização e sem deixar um vão na aba.
         local pvpTab = frame:FindFirstChild("ContainerAba_pvp")
         if pvpTab then
-            criarToggleComando(pvpTab, "ToggleAntiFlingBoss", "Anti-Fling (jogadores e Bosses)", 500, "antifling", "unantifling", 90)
-            pvpTab.CanvasSize = UDim2.new(0, 0, 0, 610)
+            criarToggleComando(pvpTab, "ToggleAntiFlingBoss", "Anti-Fling (Jogadores e Bosses)", proximoY(pvpTab), "antifling", "unantifling", 90)
+            pvpTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(pvpTab) + 5)
         end
 
-        -- Ações rápidas de uso único continuam disponíveis também na aba COMANDOS.
-        -- A lista completa existente não é removida nem reescrita.
-        local commandsQuick = {
-            {"Abrir console", "console"}, {"Notificar ping", "notifyping"},
-            {"Copiar posição", "copyposition"}, {"Informações do servidor", "serverinfo"},
-            {"Copiar JobId", "jobid"}, {"Reentrar no servidor", "rejoin"},
-            {"Trocar de servidor", "serverhop"}, {"Anti-idle", "antiafk"},
-            {"Notificação personalizada", "notify Celestial Hub"}
-        }
-        local quickTop = Instance.new("Frame")
-        quickTop.Name = "AcoesRapidasComandos"
-        quickTop.Size = UDim2.new(1, -20, 0, #commandsQuick * 38 + 12)
-        quickTop.Position = UDim2.new(0, 10, 0, 138)
-        quickTop.BackgroundColor3 = COR_CARD
-        quickTop.BorderSizePixel = 0
-        quickTop.Parent = comandosTab
-        Instance.new("UICorner", quickTop).CornerRadius = UDim.new(0, 7)
-        local quickLayout = Instance.new("UIListLayout", quickTop)
-        quickLayout.Padding = UDim.new(0, 3)
-        quickLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        local quickPad = Instance.new("UIPadding", quickTop)
-        quickPad.PaddingTop = UDim.new(0, 6)
-        quickPad.PaddingLeft = UDim.new(0, 6)
-        quickPad.PaddingRight = UDim.new(0, 6)
-        for i, item in ipairs(commandsQuick) do
-            local b = Instance.new("TextButton")
-            b.LayoutOrder = i
-            b.Size = UDim2.new(1, 0, 0, 34)
-            b.BackgroundColor3 = COR_BOTAO_ATIVO
-            b.Text = item[1]
-            b.TextColor3 = COR_TEXTO
-            b.Font = FONTE_TEXTO
-            b.TextSize = 11
-            b.Parent = quickTop
-            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-            b.MouseButton1Click:Connect(function() vibrar(); rodarComando(item[2]) end)
+        -- Ações únicas ficam distribuídas nas abas de uso correspondente.
+        local locationTab = frame:FindFirstChild("ContainerAba_location")
+        if locationTab then
+            criarAcaoRapida(locationTab, "AcaoNotificarPing", "Notificar ping", "notifyping")
+            criarAcaoRapida(locationTab, "AcaoCopiarPosicao", "Copiar posição", "copyposition")
+            criarAcaoRapida(locationTab, "AcaoReentrarServidor", "Reentrar no servidor", "rejoin")
+            criarAcaoRapida(locationTab, "AcaoTrocarServidor", "Trocar de servidor", "serverhop")
+
+            local notifyY = proximoY(locationTab)
+            local notifyCard = Instance.new("Frame")
+            notifyCard.Name = "AcaoNotificacaoPersonalizada"
+            notifyCard.Size = UDim2.new(1, -20, 0, 92)
+            notifyCard.Position = UDim2.new(0, 10, 0, notifyY)
+            notifyCard.BackgroundColor3 = COR_CARD
+            notifyCard.BorderSizePixel = 0
+            notifyCard.Parent = locationTab
+            Instance.new("UICorner", notifyCard).CornerRadius = UDim.new(0, 7)
+            local notifyTitle = Instance.new("TextLabel", notifyCard)
+            notifyTitle.BackgroundTransparency = 1
+            notifyTitle.Position = UDim2.new(0, 10, 0, 5)
+            notifyTitle.Size = UDim2.new(1, -20, 0, 20)
+            notifyTitle.Text = "Notificação personalizada"
+            notifyTitle.TextColor3 = COR_TEXTO
+            notifyTitle.Font = FONTE_TEXTO
+            notifyTitle.TextSize = 12
+            notifyTitle.TextXAlignment = Enum.TextXAlignment.Left
+            local notifyInput = Instance.new("TextBox", notifyCard)
+            notifyInput.Size = UDim2.new(0.62, -12, 0, 34)
+            notifyInput.Position = UDim2.new(0, 10, 0, 42)
+            notifyInput.BackgroundColor3 = COR_PAINEL
+            notifyInput.TextColor3 = COR_TEXTO
+            notifyInput.PlaceholderText = "Digite sua mensagem"
+            notifyInput.Text = ""
+            notifyInput.Font = FONTE_TEXTO
+            notifyInput.TextSize = 11
+            notifyInput.ClearTextOnFocus = false
+            notifyInput.BorderSizePixel = 0
+            notifyInput.Parent = notifyCard
+            Instance.new("UICorner", notifyInput).CornerRadius = UDim.new(0, 6)
+            local notifyButton = Instance.new("TextButton", notifyCard)
+            notifyButton.Size = UDim2.new(0.38, -12, 0, 34)
+            notifyButton.Position = UDim2.new(0.62, 2, 0, 42)
+            notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
+            notifyButton.Text = "ENVIAR"
+            notifyButton.TextColor3 = COR_TEXTO
+            notifyButton.Font = FONTE_TEXTO
+            notifyButton.TextSize = 11
+            notifyButton.BorderSizePixel = 0
+            notifyButton.Parent = notifyCard
+            Instance.new("UICorner", notifyButton).CornerRadius = UDim.new(0, 6)
+            notifyButton.MouseButton1Click:Connect(function()
+                vibrar()
+                local mensagem = (notifyInput.Text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+                if mensagem == "" then
+                    notifyButton.Text = "DIGITE UMA MENSAGEM"
+                    notifyButton.BackgroundColor3 = COR_ALERTA
+                    return
+                end
+                local ok = rodarComando("notify " .. mensagem)
+                notifyButton.Text = ok and "ENVIADO ✓" or "FALHA"
+                notifyButton.BackgroundColor3 = ok and COR_BOLINHA_VERDE or COR_ALERTA
+            end)
+            notifyInput:GetPropertyChangedSignal("Text"):Connect(function()
+                notifyButton.Text = "ENVIAR"
+                notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
+            end)
+            locationTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(locationTab) + 5)
         end
-        lista.Position = UDim2.new(0, 10, 0, 104 + quickTop.Size.Y.Offset + 8)
-        lista.Size = UDim2.new(1, -20, 1, -(112 + quickTop.Size.Y.Offset + 8))
+
+        -- A aba COMANDOS fica dedicada à lista completa do catálogo, sem botões duplicados.
+        lista.Position = UDim2.new(0, 10, 0, 104)
+        lista.Size = UDim2.new(1, -20, 1, -112)
 
         local catalogCommands = {
             {NAME = 'discord / support / help', DESC = 'Invite to the Celestial Hub Discord server.'},
