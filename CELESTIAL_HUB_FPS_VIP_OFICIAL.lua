@@ -2785,7 +2785,148 @@ do
             if spawnCircle then TweenService:Create(spawnCircle, TweenInfo.new(0.15), {Position = spawnAtivo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)}):Play() end
         end)
 
-        contLocation.CanvasSize = UDim2.new(0, 0, 0, 540)
+        -- X-High: toggle de Raio X na aba Location.
+        local molduraXHigh = criarMoldura(contLocation, 340, 85, "X-High")
+        local xhighBox, xhighBtn = criarToggle(molduraXHigh)
+        local xhighCircle = xhighBox:FindFirstChild("Circle")
+        local xhighAtivo = false
+
+        local function atualizarXHigh(ativo)
+            xhighAtivo = ativo
+            xrayEnabled = ativo
+            if type(xray) == "function" then
+                pcall(xray)
+            end
+            TweenService:Create(xhighBox, TweenInfo.new(0.15), {
+                BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or Color3.fromRGB(60, 60, 70)
+            }):Play()
+            if xhighCircle then
+                TweenService:Create(xhighCircle, TweenInfo.new(0.15), {
+                    Position = ativo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)
+                }):Play()
+            end
+        end
+
+        xhighBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            atualizarXHigh(not xhighAtivo)
+        end)
+
+        -- ESP Frozen Dimension: identifica e marca a ilha/alvo do Leviatã no mundo.
+        local molduraEspFrozen = criarMoldura(contLocation, 440, 85, "ESP Frozen Dimension")
+        local espFrozenBox, espFrozenBtn = criarToggle(molduraEspFrozen)
+        local espFrozenCircle = espFrozenBox:FindFirstChild("Circle")
+        local espFrozenAtivo = false
+        local espFrozenTag = nil
+        local espFrozenLoop = nil
+        local espFrozenAlvo = nil
+        local ultimaBuscaEspFrozen = 0
+
+        local function normalizarNomeEspFrozen(nome)
+            return string.lower(tostring(nome or "")):gsub("[%s_%-]", "")
+        end
+
+        local function parteDoAlvoFrozen(obj)
+            if not obj then return nil end
+            if obj:IsA("BasePart") then return obj end
+            if obj:IsA("Model") then
+                if obj.PrimaryPart then return obj.PrimaryPart end
+                return obj:FindFirstChild("HumanoidRootPart", true)
+                    or obj:FindFirstChildWhichIsA("BasePart", true)
+            end
+            return obj:FindFirstChildWhichIsA("BasePart", true)
+        end
+
+        local function procurarAlvoEspFrozen()
+            if espFrozenAlvo and espFrozenAlvo.Parent and espFrozenAlvo:IsDescendantOf(workspace) then
+                return espFrozenAlvo
+            end
+            if tick() - ultimaBuscaEspFrozen < 1 then return nil end
+            ultimaBuscaEspFrozen = tick()
+            espFrozenAlvo = nil
+            local prioridade = {"frozenwatcher", "leviathan", "frozenisland", "frozendimension", "frozen"}
+            local descendentes = workspace:GetDescendants()
+            for _, chave in ipairs(prioridade) do
+                for _, obj in ipairs(descendentes) do
+                    local nome = normalizarNomeEspFrozen(obj.Name)
+                    local corresponde = (chave == "frozen" and nome == "frozen")
+                        or (chave ~= "frozen" and string.find(nome, chave, 1, true) ~= nil)
+                    if corresponde and not string.find(nome, "frozenvillage", 1, true) then
+                        local parte = parteDoAlvoFrozen(obj)
+                        if parte then espFrozenAlvo = parte; return parte end
+                    end
+                end
+            end
+            return nil
+        end
+
+        local function atualizarEspFrozen()
+            local alvo = procurarAlvoEspFrozen()
+            if not alvo then
+                if espFrozenTag then espFrozenTag.Enabled = false end
+                return
+            end
+            if not espFrozenTag or not espFrozenTag.Parent or espFrozenTag.Adornee ~= alvo then
+                if espFrozenTag then pcall(function() espFrozenTag:Destroy() end) end
+                espFrozenTag = Instance.new("BillboardGui")
+                espFrozenTag.Name = "CELESTIAL_ESP_FROZEN_DIMENSION"
+                espFrozenTag.Size = UDim2.new(0, 220, 0, 48)
+                espFrozenTag.StudsOffset = Vector3.new(0, 5, 0)
+                espFrozenTag.AlwaysOnTop = true
+                espFrozenTag.ResetOnSpawn = false
+                espFrozenTag.Adornee = alvo
+                espFrozenTag.Parent = gui
+                local label = Instance.new("TextLabel")
+                label.Name = "Label"
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.Text = "FROZEN DIMENSION"
+                label.TextColor3 = Color3.fromRGB(100, 220, 255)
+                label.TextStrokeTransparency = 0
+                label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                label.Font = FONTE_TEXTO
+                label.TextSize = 14
+                label.Parent = espFrozenTag
+            end
+            espFrozenTag.Enabled = true
+            local char = player.Character
+            local root = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Head"))
+            local label = espFrozenTag:FindFirstChild("Label")
+            if root and label then
+                label.Text = "FROZEN DIMENSION\n" .. math.floor((alvo.Position - root.Position).Magnitude) .. "m"
+            end
+        end
+
+        local function setEspFrozen(ativo)
+            espFrozenAtivo = ativo
+            TweenService:Create(espFrozenBox, TweenInfo.new(0.15), {
+                BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or Color3.fromRGB(60, 60, 70)
+            }):Play()
+            if espFrozenCircle then
+                TweenService:Create(espFrozenCircle, TweenInfo.new(0.15), {
+                    Position = ativo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)
+                }):Play()
+            end
+            if ativo then
+                espFrozenLoop = task.spawn(function()
+                    while espFrozenAtivo do
+                        pcall(atualizarEspFrozen)
+                        task.wait(0.5)
+                    end
+                end)
+            else
+                if espFrozenLoop then pcall(task.cancel, espFrozenLoop); espFrozenLoop = nil end
+                if espFrozenTag then pcall(function() espFrozenTag:Destroy() end); espFrozenTag = nil end
+                espFrozenAlvo = nil
+            end
+        end
+
+        espFrozenBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            setEspFrozen(not espFrozenAtivo)
+        end)
+
+        contLocation.CanvasSize = UDim2.new(0, 0, 0, 740)
     end
 end
 -- ===================== FRUTAS =====================
@@ -3379,7 +3520,7 @@ do
     barcoInput.Position = UDim2.new(0, 10, 0, 38)
     barcoInput.BackgroundColor3 = COR_CARD
  barcoInput.TextColor3 = COR_TEXTO
- barcoInput.PlaceholderText = "1-455"
+ barcoInput.PlaceholderText = "1-400"
     barcoInput.PlaceholderColor3 = COR_TEXTO_SUB
  barcoInput.Text = ""
     barcoInput.Font = FONTE_TEXTO
@@ -3407,7 +3548,7 @@ do
  barcoMsgLabel.TextSize = 11
  barcoMsgLabel.TextWrapped = true
  barcoMsgLabel.TextXAlignment = Enum.TextXAlignment.Center
-    local BARCO_MAX = 455
+    local BARCO_MAX = 400
     local barcoValue = 0
     local barcoAtivo = false
     local barcoLoop = nil
@@ -3828,13 +3969,21 @@ do
                 if part then frozenAlvoCache = part; return part end
             end
         end
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            local nome = normalizarNome(obj.Name)
-            if string.find(nome, "frozendimension", 1, true) then
-                local part = obj:IsA("BasePart") and obj
-                    or obj.PrimaryPart
-                    or obj:FindFirstChildWhichIsA("BasePart", true)
-                if part then frozenAlvoCache = part; return part end
+        -- Se o watcher ainda não foi criado, procura também o Leviatã e a ilha Frozen.
+        local prioridades = {"leviathan", "frozenisland", "frozendimension", "frozen"}
+        local descendentes = workspace:GetDescendants()
+        for _, chave in ipairs(prioridades) do
+            for _, obj in ipairs(descendentes) do
+                local nome = normalizarNome(obj.Name)
+                local corresponde = (chave == "frozen" and nome == "frozen")
+                    or (chave ~= "frozen" and string.find(nome, chave, 1, true) ~= nil)
+                if corresponde and not string.find(nome, "frozenvillage", 1, true) then
+                    local part = obj:IsA("BasePart") and obj
+                        or obj.PrimaryPart
+                        or obj:FindFirstChild("HumanoidRootPart", true)
+                        or obj:FindFirstChildWhichIsA("BasePart", true)
+                    if part then frozenAlvoCache = part; return part end
+                end
             end
         end
         return nil
@@ -35867,13 +36016,45 @@ do
                 end
                 local ok = aplicar(value)
                 if ok then
-                    apply.Text = "APLICADO ✓"
+                    apply.Text = "APLICADO"
                     apply.BackgroundColor3 = COR_BOLINHA_VERDE
                 else
                     apply.Text = "FALHA AO APLICAR"
                     apply.BackgroundColor3 = COR_ALERTA
                 end
+                -- O botão continua clicável; o texto volta ao padrão após o retorno visual.
+                task.delay(1.5, function()
+                    if apply and apply.Parent then
+                        apply.Text = textoBotao
+                        apply.BackgroundColor3 = COR_BOTAO_ATIVO
+                    end
+                end)
             end)
+            return card
+        end
+
+        local function criarToggleAcaoUnica(parent, nome, titulo, comando)
+            local card, btn = criarAcaoUI(parent, nome, titulo, proximoY(parent), function(b)
+                b.Text = "ATIVANDO"
+                b.BackgroundColor3 = COR_BOLINHA_VERDE
+                local ok = rodarComando(comando)
+                if not ok then
+                    b.Text = "FALHA"
+                    b.BackgroundColor3 = COR_ALERTA
+                else
+                    b.Text = "ATIVO"
+                end
+                -- São ações pontuais: executam uma vez e retornam ao estado desligado.
+                task.delay(0.8, function()
+                    if b and b.Parent then
+                        b.Text = "DESATIVADO • TOQUE PARA ATIVAR"
+                        b.BackgroundColor3 = COR_BOTAO_ATIVO
+                    end
+                end)
+            end, 70)
+            btn.Text = "DESATIVADO • TOQUE PARA ATIVAR"
+            btn.Position = UDim2.new(0, 10, 0, 32)
+            btn.Size = UDim2.new(1, -20, 0, 28)
             return card
         end
 
@@ -35882,7 +36063,7 @@ do
             local card, btn = criarAcaoUI(parent, nome, titulo, y, function(b)
                 local ok = rodarComando(comando)
                 if ok then
-                    b.Text = "CONCLUÍDO ✓"
+                    b.Text = "CONCLUÍDO"
                     b.BackgroundColor3 = COR_BOLINHA_VERDE
                 else
                     b.Text = "FALHA • TENTAR NOVAMENTE"
@@ -35948,10 +36129,34 @@ do
         -- Ações únicas ficam distribuídas nas abas de uso correspondente.
         local locationTab = frame:FindFirstChild("ContainerAba_location")
         if locationTab then
-            criarAcaoRapida(locationTab, "AcaoNotificarPing", "Notificar ping", "notifyping")
-            criarAcaoRapida(locationTab, "AcaoCopiarPosicao", "Copiar posição", "copyposition")
-            criarAcaoRapida(locationTab, "AcaoReentrarServidor", "Reentrar no servidor", "rejoin")
-            criarAcaoRapida(locationTab, "AcaoTrocarServidor", "Trocar de servidor", "serverhop")
+            -- Ping é contínuo: ativar inicia avisos periódicos e desativar encerra o loop.
+            local pingAtivo = false
+            local pingCard = criarAcaoUI(locationTab, "ToggleNotificarPing", "Notificar ping", proximoY(locationTab), function(b)
+                pingAtivo = not pingAtivo
+                if pingAtivo then
+                    b.Text = "ATIVO • TOQUE PARA DESATIVAR"
+                    b.BackgroundColor3 = Color3.fromRGB(0, 120, 220)
+                    task.spawn(function()
+                        while pingAtivo and b and b.Parent do
+                            local ok, pingMs = pcall(function()
+                                return math.round(Players.LocalPlayer:GetNetworkPing() * 1000)
+                            end)
+                            if ok then notify("Ping", tostring(pingMs) .. "ms") end
+                            task.wait(3)
+                        end
+                    end)
+                else
+                    b.Text = "DESATIVADO • TOQUE PARA ATIVAR"
+                    b.BackgroundColor3 = COR_BOTAO_ATIVO
+                end
+            end, 70)
+            local pingBtn = pingCard:FindFirstChildWhichIsA("TextButton")
+            if pingBtn then pingBtn.Text = "DESATIVADO • TOQUE PARA ATIVAR"; pingBtn.Position = UDim2.new(0, 10, 0, 32); pingBtn.Size = UDim2.new(1, -20, 0, 28) end
+
+            -- Ações pontuais usam toggle momentâneo e voltam sozinhas para desligado.
+            criarToggleAcaoUnica(locationTab, "AcaoCopiarPosicao", "Copiar posição", "copyposition")
+            criarToggleAcaoUnica(locationTab, "AcaoReentrarServidor", "Reentrar no servidor", "rejoin")
+            criarToggleAcaoUnica(locationTab, "AcaoTrocarServidor", "Trocar de servidor", "serverhop")
 
             local notifyY = proximoY(locationTab)
             local notifyCard = Instance.new("Frame")
@@ -35988,7 +36193,7 @@ do
             notifyButton.Size = UDim2.new(0.38, -12, 0, 34)
             notifyButton.Position = UDim2.new(0.62, 2, 0, 42)
             notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
-            notifyButton.Text = "ENVIAR"
+            notifyButton.Text = "EXECUTAR"
             notifyButton.TextColor3 = COR_TEXTO
             notifyButton.Font = FONTE_TEXTO
             notifyButton.TextSize = 11
@@ -36004,11 +36209,17 @@ do
                     return
                 end
                 local ok = rodarComando("notify " .. mensagem)
-                notifyButton.Text = ok and "ENVIADO ✓" or "FALHA"
+                notifyButton.Text = ok and "ENVIADO" or "FALHA"
                 notifyButton.BackgroundColor3 = ok and COR_BOLINHA_VERDE or COR_ALERTA
+                task.delay(1.5, function()
+                    if notifyButton and notifyButton.Parent then
+                        notifyButton.Text = "EXECUTAR"
+                        notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
+                    end
+                end)
             end)
             notifyInput:GetPropertyChangedSignal("Text"):Connect(function()
-                notifyButton.Text = "ENVIAR"
+                notifyButton.Text = "EXECUTAR"
                 notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
             end)
             locationTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(locationTab) + 5)
