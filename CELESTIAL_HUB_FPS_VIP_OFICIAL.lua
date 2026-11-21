@@ -18329,17 +18329,44 @@ addcmd("antifling", {}, function(args, speaker)
 		antifling:Disconnect()
 		antifling = nil
 	end
+    local ultimoScanNPC = 0
 	antifling = RunService.Stepped:Connect(function()
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= speaker and player.Character then
-				for _, v in pairs(player.Character:GetDescendants()) do
-					if v:IsA("BasePart") then
-						v.CanCollide = false
-					end
-				end
-			end
-		end
-	end)
+        -- Evita colisões que costumam causar arremessões por jogadores e NPCs/Bosses.
+        for _, other in pairs(Players:GetPlayers()) do
+            if other ~= speaker and other.Character then
+                for _, part in pairs(other.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = false end
+                end
+            end
+        end
+        if os.clock() - ultimoScanNPC >= 1 then
+            ultimoScanNPC = os.clock()
+            for _, model in pairs(workspace:GetDescendants()) do
+                if model:IsA("Model") and not Players:GetPlayerFromCharacter(model)
+                    and model ~= speaker.Character and model:FindFirstChildOfClass("Humanoid") then
+                    local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso")
+                    if root then
+                        for _, part in pairs(model:GetDescendants()) do
+                            if part:IsA("BasePart") then part.CanCollide = false end
+                        end
+                    end
+                end
+            end
+        end
+        -- Proteção local contra impulsos extremos recebidos no personagem.
+        local character = speaker.Character
+        local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
+        if root and root:IsA("BasePart") then
+            local velocity = root.AssemblyLinearVelocity
+            if velocity.Magnitude > 65 then
+                root.AssemblyLinearVelocity = velocity.Unit * 65
+            end
+            local angular = root.AssemblyAngularVelocity
+            if angular.Magnitude > 20 then
+                root.AssemblyAngularVelocity = angular.Unit * 20
+            end
+        end
+    end)
 end)
 
 addcmd("unantifling", {}, function(args, speaker)
@@ -35677,6 +35704,214 @@ do
             end
             return true
         end
+
+        -- =====================================================
+        -- CONTROLES RÁPIDOS NAS ABAS CORRETAS
+        -- Os comandos originais continuam intactos na lista de 428 comandos.
+        -- =====================================================
+        local function criarAcaoUI(parent, nome, texto, y, callback, altura)
+            local card = Instance.new("Frame")
+            card.Name = nome
+            card.Size = UDim2.new(1, -20, 0, altura or 82)
+            card.Position = UDim2.new(0, 10, 0, y)
+            card.BackgroundColor3 = COR_CARD
+            card.BorderSizePixel = 0
+            card.Parent = parent
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 7)
+            local titulo = Instance.new("TextLabel")
+            titulo.BackgroundTransparency = 1
+            titulo.Position = UDim2.new(0, 10, 0, 5)
+            titulo.Size = UDim2.new(1, -20, 0, 22)
+            titulo.Font = FONTE_TEXTO
+            titulo.TextSize = 12
+            titulo.TextColor3 = COR_TEXTO
+            titulo.TextXAlignment = Enum.TextXAlignment.Left
+            titulo.Text = texto
+            titulo.Parent = card
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -20, 0, 32)
+            btn.Position = UDim2.new(0, 10, 0, 38)
+            btn.BackgroundColor3 = COR_BOTAO_ATIVO
+            btn.Text = "ATIVAR"
+            btn.TextColor3 = COR_TEXTO
+            btn.Font = FONTE_TEXTO
+            btn.TextSize = 11
+            btn.Parent = card
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+            addWhiteStroke(btn)
+            btn.MouseButton1Click:Connect(function()
+                vibrar()
+                callback(btn)
+            end)
+            return card, btn
+        end
+        local function rodarComando(comando)
+            if not garantirEngine() then
+                warn("[Celestial Hub] Não foi possível iniciar o mecanismo de comandos.")
+                return false
+            end
+            local ok, err = pcall(function() execCmd(comando, Players.LocalPlayer, true) end)
+            if not ok then warn("[Celestial Hub] " .. tostring(err)) end
+            return ok
+        end
+        local function criarToggleComando(parent, nome, titulo, y, comandoOn, comandoOff, altura)
+            local ativo = false
+            local card, btn = criarAcaoUI(parent, nome, titulo, y, function(b)
+                ativo = not ativo
+                local sucesso = rodarComando(ativo and comandoOn or comandoOff)
+                if not sucesso then ativo = not ativo end
+                b.Text = ativo and "ATIVO • TOQUE PARA DESATIVAR" or "DESATIVADO • TOQUE PARA ATIVAR"
+                b.BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or COR_BOTAO_ATIVO
+            end, altura or 82)
+            btn.Text = "DESATIVADO • TOQUE PARA ATIVAR"
+            return card
+        end
+
+        -- SETTINGS: FPS e volume configuráveis pelo usuário.
+        local settingsTab = frame:FindFirstChild("ContainerAba_settings")
+        if settingsTab then
+            local fpsCard = Instance.new("Frame")
+            fpsCard.Name = "ControleFPSCap"
+            fpsCard.Size = UDim2.new(1, -20, 0, 92)
+            fpsCard.Position = UDim2.new(0, 10, 0, 570)
+            fpsCard.BackgroundColor3 = COR_CARD
+            fpsCard.BorderSizePixel = 0
+            fpsCard.Parent = settingsTab
+            Instance.new("UICorner", fpsCard).CornerRadius = UDim.new(0, 7)
+            local fpsTitle = Instance.new("TextLabel", fpsCard)
+            fpsTitle.BackgroundTransparency = 1
+            fpsTitle.Position = UDim2.new(0, 10, 0, 5)
+            fpsTitle.Size = UDim2.new(1, -20, 0, 20)
+            fpsTitle.Text = "Limite de FPS (1–1000)"
+            fpsTitle.TextColor3 = COR_TEXTO
+            fpsTitle.Font = FONTE_TEXTO
+            fpsTitle.TextSize = 12
+            fpsTitle.TextXAlignment = Enum.TextXAlignment.Left
+            local fpsInput = Instance.new("TextBox", fpsCard)
+            fpsInput.Size = UDim2.new(0.48, -12, 0, 34)
+            fpsInput.Position = UDim2.new(0, 10, 0, 42)
+            fpsInput.BackgroundColor3 = COR_PAINEL
+            fpsInput.TextColor3 = COR_TEXTO
+            fpsInput.PlaceholderText = "Ex.: 120"
+            fpsInput.Text = "120"
+            fpsInput.Font = FONTE_TEXTO
+            fpsInput.TextSize = 12
+            fpsInput.ClearTextOnFocus = false
+            Instance.new("UICorner", fpsInput).CornerRadius = UDim.new(0, 6)
+            local fpsApply = Instance.new("TextButton", fpsCard)
+            fpsApply.Size = UDim2.new(0.48, -12, 0, 34)
+            fpsApply.Position = UDim2.new(0.52, 2, 0, 42)
+            fpsApply.BackgroundColor3 = COR_BOTAO_ATIVO
+            fpsApply.Text = "APLICAR FPS"
+            fpsApply.TextColor3 = COR_TEXTO
+            fpsApply.Font = FONTE_TEXTO
+            fpsApply.TextSize = 11
+            Instance.new("UICorner", fpsApply).CornerRadius = UDim.new(0, 6)
+            fpsApply.MouseButton1Click:Connect(function()
+                local n = tonumber(fpsInput.Text)
+                if n and n >= 1 and n <= 1000 then rodarComando("setfpscap " .. math.floor(n))
+                else fpsInput.Text = "Valor 1–1000" end
+            end)
+
+            local volCard = Instance.new("Frame")
+            volCard.Name = "ControleVolume"
+            volCard.Size = UDim2.new(1, -20, 0, 92)
+            volCard.Position = UDim2.new(0, 10, 0, 670)
+            volCard.BackgroundColor3 = COR_CARD
+            volCard.BorderSizePixel = 0
+            volCard.Parent = settingsTab
+            Instance.new("UICorner", volCard).CornerRadius = UDim.new(0, 7)
+            local volTitle = Instance.new("TextLabel", volCard)
+            volTitle.BackgroundTransparency = 1
+            volTitle.Position = UDim2.new(0, 10, 0, 5)
+            volTitle.Size = UDim2.new(1, -20, 0, 20)
+            volTitle.Text = "Volume do jogo (0–10)"
+            volTitle.TextColor3 = COR_TEXTO
+            volTitle.Font = FONTE_TEXTO
+            volTitle.TextSize = 12
+            volTitle.TextXAlignment = Enum.TextXAlignment.Left
+            local volInput = Instance.new("TextBox", volCard)
+            volInput.Size = UDim2.new(0.48, -12, 0, 34)
+            volInput.Position = UDim2.new(0, 10, 0, 42)
+            volInput.BackgroundColor3 = COR_PAINEL
+            volInput.TextColor3 = COR_TEXTO
+            volInput.PlaceholderText = "0 a 10"
+            volInput.Text = "5"
+            volInput.Font = FONTE_TEXTO
+            volInput.TextSize = 12
+            Instance.new("UICorner", volInput).CornerRadius = UDim.new(0, 6)
+            local volApply = Instance.new("TextButton", volCard)
+            volApply.Size = UDim2.new(0.48, -12, 0, 34)
+            volApply.Position = UDim2.new(0.52, 2, 0, 42)
+            volApply.BackgroundColor3 = COR_BOTAO_ATIVO
+            volApply.Text = "APLICAR VOLUME"
+            volApply.TextColor3 = COR_TEXTO
+            volApply.Font = FONTE_TEXTO
+            volApply.TextSize = 11
+            Instance.new("UICorner", volApply).CornerRadius = UDim.new(0, 6)
+            volApply.MouseButton1Click:Connect(function()
+                local n = tonumber(volInput.Text)
+                if n and n >= 0 and n <= 10 then rodarComando("volume " .. tostring(n))
+                else volInput.Text = "Valor 0–10" end
+            end)
+            settingsTab.CanvasSize = UDim2.new(0, 0, 0, 780)
+        end
+
+        -- MULTIFARM: noclip do personagem, noclip do barco e pulo infinito.
+        local multiTab = frame:FindFirstChild("ContainerAba_multifarm")
+        if multiTab then
+            criarToggleComando(multiTab, "ToggleNoclipPersonagem", "Noclip do personagem", 1110, "noclip", "unnoclip")
+            criarToggleComando(multiTab, "ToggleNoclipBarco", "Noclip do barco/veículo", 1200, "vehiclenoclip", "vehicleclip")
+            criarToggleComando(multiTab, "TogglePuloInfinito", "Pulo infinito", 1290, "infjump", "uninfjump")
+            multiTab.CanvasSize = UDim2.new(0, 0, 0, 1390)
+        end
+
+        -- PVP: proteção anti-arremesso contra colisões e impactos de NPC/Boss.
+        local pvpTab = frame:FindFirstChild("ContainerAba_pvp")
+        if pvpTab then
+            criarToggleComando(pvpTab, "ToggleAntiFlingBoss", "Anti-Fling (jogadores e Bosses)", 500, "antifling", "unantifling", 90)
+            pvpTab.CanvasSize = UDim2.new(0, 0, 0, 610)
+        end
+
+        -- Ações rápidas de uso único continuam disponíveis também na aba COMANDOS.
+        -- A lista completa existente não é removida nem reescrita.
+        local commandsQuick = {
+            {"Abrir console", "console"}, {"Notificar ping", "notifyping"},
+            {"Copiar posição", "copyposition"}, {"Informações do servidor", "serverinfo"},
+            {"Copiar JobId", "jobid"}, {"Reentrar no servidor", "rejoin"},
+            {"Trocar de servidor", "serverhop"}, {"Anti-idle", "antiafk"},
+            {"Notificação personalizada", "notify Celestial Hub"}
+        }
+        local quickTop = Instance.new("Frame")
+        quickTop.Name = "AcoesRapidasComandos"
+        quickTop.Size = UDim2.new(1, -20, 0, #commandsQuick * 38 + 12)
+        quickTop.Position = UDim2.new(0, 10, 0, 138)
+        quickTop.BackgroundColor3 = COR_CARD
+        quickTop.BorderSizePixel = 0
+        quickTop.Parent = comandosTab
+        Instance.new("UICorner", quickTop).CornerRadius = UDim.new(0, 7)
+        local quickLayout = Instance.new("UIListLayout", quickTop)
+        quickLayout.Padding = UDim.new(0, 3)
+        quickLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        local quickPad = Instance.new("UIPadding", quickTop)
+        quickPad.PaddingTop = UDim.new(0, 6)
+        quickPad.PaddingLeft = UDim.new(0, 6)
+        quickPad.PaddingRight = UDim.new(0, 6)
+        for i, item in ipairs(commandsQuick) do
+            local b = Instance.new("TextButton")
+            b.LayoutOrder = i
+            b.Size = UDim2.new(1, 0, 0, 34)
+            b.BackgroundColor3 = COR_BOTAO_ATIVO
+            b.Text = item[1]
+            b.TextColor3 = COR_TEXTO
+            b.Font = FONTE_TEXTO
+            b.TextSize = 11
+            b.Parent = quickTop
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+            b.MouseButton1Click:Connect(function() vibrar(); rodarComando(item[2]) end)
+        end
+        lista.Position = UDim2.new(0, 10, 0, 104 + quickTop.Size.Y.Offset + 8)
+        lista.Size = UDim2.new(1, -20, 1, -(112 + quickTop.Size.Y.Offset + 8))
 
         local catalogCommands = {
             {NAME = 'discord / support / help', DESC = 'Invite to the Celestial Hub Discord server.'},
