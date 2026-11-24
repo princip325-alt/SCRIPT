@@ -2785,6 +2785,180 @@ do
             if spawnCircle then TweenService:Create(spawnCircle, TweenInfo.new(0.15), {Position = spawnAtivo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)}):Play() end
         end)
 
+        -- ESP Player New: identificação avançada no estilo da referência.
+        -- Mostra nome, nível, distância e barra de vida de cada jogador.
+        local molduraSpawnNew = criarMoldura(contLocation, 290, 85, "ESP Player New")
+        local spawnNewBox, spawnNewBtn = criarToggle(molduraSpawnNew)
+        local spawnNewCircle = spawnNewBox:FindFirstChild("Circle")
+        local spawnNewAtivo = false
+        local spawnNewTags = {}
+        local spawnNewConns = {}
+        local spawnNewAddedConn, spawnNewRemovingConn, spawnNewLoop = nil, nil, nil
+
+        local function nivelDoJogador(p)
+            local data = p:FindFirstChild("Data")
+            local level = data and data:FindFirstChild("Level")
+            if not level then
+                local stats = p:FindFirstChild("leaderstats")
+                level = stats and (stats:FindFirstChild("Level") or stats:FindFirstChild("Lvl"))
+            end
+            local valor = level and tonumber(level.Value)
+            return valor and math.floor(valor) or nil
+        end
+
+        local function removerTagSpawnNew(p)
+            local tag = spawnNewTags[p]
+            if tag then
+                if tag.bb then pcall(function() tag.bb:Destroy() end) end
+                spawnNewTags[p] = nil
+            end
+        end
+
+        local function criarTagSpawnNew(p)
+            if p == player or not spawnNewAtivo then return end
+            local char = p.Character
+            local head = char and (char:FindFirstChild("Head") or char:WaitForChild("Head", 5))
+            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+            if not head or not humanoid or not spawnNewAtivo then return end
+            removerTagSpawnNew(p)
+
+            local bb = Instance.new("BillboardGui")
+            bb.Name = "CELESTIAL_ESP_PLAYER_NEW_" .. p.UserId
+            bb.Adornee = head
+            bb.AlwaysOnTop = true
+            bb.Size = UDim2.new(0, 230, 0, 58)
+            bb.StudsOffset = Vector3.new(0, 3.2, 0)
+            bb.ResetOnSpawn = false
+            bb.Parent = gui
+
+            local painel = Instance.new("Frame")
+            painel.Name = "Painel"
+            painel.Size = UDim2.new(1, 0, 1, 0)
+            painel.BackgroundColor3 = Color3.fromRGB(12, 20, 30)
+            painel.BackgroundTransparency = 0.22
+            painel.BorderSizePixel = 0
+            painel.Parent = bb
+            Instance.new("UICorner", painel).CornerRadius = UDim.new(0, 5)
+
+            local nome = Instance.new("TextLabel")
+            nome.Name = "Nome"
+            nome.BackgroundTransparency = 1
+            nome.Position = UDim2.new(0, 5, 0, 1)
+            nome.Size = UDim2.new(1, -10, 0, 25)
+            nome.Font = FONTE_TEXTO
+            nome.TextSize = 12
+            nome.TextColor3 = Color3.fromRGB(255, 255, 255)
+            nome.TextStrokeTransparency = 0.25
+            nome.TextXAlignment = Enum.TextXAlignment.Center
+            nome.TextTruncate = Enum.TextTruncate.AtEnd
+            nome.Parent = painel
+
+            local fundoVida = Instance.new("Frame")
+            fundoVida.Name = "FundoVida"
+            fundoVida.Position = UDim2.new(0, 7, 0, 31)
+            fundoVida.Size = UDim2.new(1, -14, 0, 11)
+            fundoVida.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+            fundoVida.BorderSizePixel = 0
+            fundoVida.Parent = painel
+            Instance.new("UICorner", fundoVida).CornerRadius = UDim.new(0, 4)
+
+            local barraVida = Instance.new("Frame")
+            barraVida.Name = "BarraVida"
+            barraVida.Size = UDim2.new(1, 0, 1, 0)
+            barraVida.BackgroundColor3 = Color3.fromRGB(50, 230, 80)
+            barraVida.BorderSizePixel = 0
+            barraVida.Parent = fundoVida
+            Instance.new("UICorner", barraVida).CornerRadius = UDim.new(0, 4)
+
+            local vidaTexto = Instance.new("TextLabel")
+            vidaTexto.Name = "VidaTexto"
+            vidaTexto.BackgroundTransparency = 1
+            vidaTexto.Size = UDim2.new(1, 0, 1, 0)
+            vidaTexto.Font = FONTE_TEXTO
+            vidaTexto.TextSize = 9
+            vidaTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
+            vidaTexto.TextStrokeTransparency = 0
+            vidaTexto.Text = "0/0 HP"
+            vidaTexto.Parent = fundoVida
+
+            spawnNewTags[p] = {
+                bb = bb, head = head, humanoid = humanoid,
+                nome = nome, barraVida = barraVida, vidaTexto = vidaTexto
+            }
+        end
+
+        local function atualizarTagsSpawnNew()
+            local charLocal = player.Character
+            local rootLocal = charLocal and (charLocal:FindFirstChild("HumanoidRootPart") or charLocal:FindFirstChild("Head"))
+            if not rootLocal then return end
+
+            for p, tag in pairs(spawnNewTags) do
+                if not p.Parent or not tag.head or not tag.head.Parent or not tag.humanoid or not tag.humanoid.Parent then
+                    removerTagSpawnNew(p)
+                else
+                    local nivel = nivelDoJogador(p)
+                    local distancia = math.floor((tag.head.Position - rootLocal.Position).Magnitude)
+                    local nomeVisivel = p.DisplayName ~= "" and p.DisplayName or p.Name
+                    local nivelTexto = nivel and (" [Lv. " .. nivel .. "]") or ""
+                    tag.nome.Text = nomeVisivel .. " (@" .. p.Name .. ")" .. nivelTexto .. " - " .. distancia .. "m"
+
+                    local maxVida = math.max(tag.humanoid.MaxHealth, 1)
+                    local vida = math.clamp(tag.humanoid.Health, 0, maxVida)
+                    local proporcao = vida / maxVida
+                    tag.barraVida.Size = UDim2.new(proporcao, 0, 1, 0)
+                    tag.barraVida.BackgroundColor3 = proporcao > 0.6
+                        and Color3.fromRGB(50, 230, 80)
+                        or (proporcao > 0.3 and Color3.fromRGB(255, 190, 40) or Color3.fromRGB(240, 65, 65))
+                    tag.vidaTexto.Text = math.floor(vida) .. "/" .. math.floor(maxVida) .. " HP"
+                end
+            end
+        end
+
+        local function observarSpawnNew(p)
+            if p == player or spawnNewConns[p] then return end
+            spawnNewConns[p] = p.CharacterAdded:Connect(function()
+                task.spawn(criarTagSpawnNew, p)
+            end)
+            if p.Character then task.spawn(criarTagSpawnNew, p) end
+        end
+
+        local function ativarSpawnNew()
+            spawnNewAtivo = true
+            for _, p in ipairs(PlayersService:GetPlayers()) do observarSpawnNew(p) end
+            spawnNewAddedConn = PlayersService.PlayerAdded:Connect(observarSpawnNew)
+            spawnNewRemovingConn = PlayersService.PlayerRemoving:Connect(function(p)
+                removerTagSpawnNew(p)
+                if spawnNewConns[p] then
+                    spawnNewConns[p]:Disconnect()
+                    spawnNewConns[p] = nil
+                end
+            end)
+            spawnNewLoop = RunService.Heartbeat:Connect(atualizarTagsSpawnNew)
+        end
+
+        local function desativarSpawnNew()
+            spawnNewAtivo = false
+            if spawnNewAddedConn then spawnNewAddedConn:Disconnect(); spawnNewAddedConn = nil end
+            if spawnNewRemovingConn then spawnNewRemovingConn:Disconnect(); spawnNewRemovingConn = nil end
+            if spawnNewLoop then spawnNewLoop:Disconnect(); spawnNewLoop = nil end
+            for _, conn in pairs(spawnNewConns) do conn:Disconnect() end
+            spawnNewConns = {}
+            for p in pairs(spawnNewTags) do removerTagSpawnNew(p) end
+        end
+
+        spawnNewBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            if spawnNewAtivo then desativarSpawnNew() else ativarSpawnNew() end
+            TweenService:Create(spawnNewBox, TweenInfo.new(0.15), {
+                BackgroundColor3 = spawnNewAtivo and Color3.fromRGB(0, 120, 220) or Color3.fromRGB(60, 60, 70)
+            }):Play()
+            if spawnNewCircle then
+                TweenService:Create(spawnNewCircle, TweenInfo.new(0.15), {
+                    Position = spawnNewAtivo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)
+                }):Play()
+            end
+        end)
+
         -- X-High: toggle de Raio X na aba Location.
         local molduraXHigh = criarMoldura(contLocation, 340, 85, "X-High")
         local xhighBox, xhighBtn = criarToggle(molduraXHigh)
@@ -2823,37 +2997,48 @@ do
         local ultimaBuscaEspFrozen = 0
 
         local function normalizarNomeEspFrozen(nome)
-            return string.lower(tostring(nome or "")):gsub("[%s_%-]", "")
+            return string.lower(tostring(nome or "")):gsub("[%s_%-<>]", "")
+        end
+
+        local function pertenceACharacterDeJogador(obj)
+            for _, jogador in ipairs(PlayersService:GetPlayers()) do
+                local character = jogador.Character
+                if character and obj:IsDescendantOf(character) then return true end
+            end
+            return false
         end
 
         local function parteDoAlvoFrozen(obj)
-            if not obj then return nil end
+            if not obj or pertenceACharacterDeJogador(obj) then return nil end
             if obj:IsA("BasePart") then return obj end
             if obj:IsA("Model") then
+                if obj:FindFirstChildOfClass("Humanoid") then return nil end
                 if obj.PrimaryPart then return obj.PrimaryPart end
                 return obj:FindFirstChild("HumanoidRootPart", true)
                     or obj:FindFirstChildWhichIsA("BasePart", true)
             end
-            return obj:FindFirstChildWhichIsA("BasePart", true)
+            return nil
         end
 
         local function procurarAlvoEspFrozen()
-            if espFrozenAlvo and espFrozenAlvo.Parent and espFrozenAlvo:IsDescendantOf(workspace) then
+            if espFrozenAlvo and espFrozenAlvo.Parent and espFrozenAlvo:IsDescendantOf(workspace)
+                and not pertenceACharacterDeJogador(espFrozenAlvo) then
                 return espFrozenAlvo
             end
             if tick() - ultimaBuscaEspFrozen < 1 then return nil end
             ultimaBuscaEspFrozen = tick()
             espFrozenAlvo = nil
-            local prioridade = {"frozenwatcher", "leviathan", "frozenisland", "frozendimension", "frozen"}
+            -- Só nomes de objetos do mapa/Sea Beast; não usar texto de títulos como <Frozen Dimension>.
+            local prioridade = {"frozenisland", "frozendimension", "frozenwatcher", "leviathan"}
             local descendentes = workspace:GetDescendants()
             for _, chave in ipairs(prioridade) do
                 for _, obj in ipairs(descendentes) do
-                    local nome = normalizarNomeEspFrozen(obj.Name)
-                    local corresponde = (chave == "frozen" and nome == "frozen")
-                        or (chave ~= "frozen" and string.find(nome, chave, 1, true) ~= nil)
-                    if corresponde and not string.find(nome, "frozenvillage", 1, true) then
-                        local parte = parteDoAlvoFrozen(obj)
-                        if parte then espFrozenAlvo = parte; return parte end
+                    if obj:IsA("Model") or obj:IsA("BasePart") then
+                        local nome = normalizarNomeEspFrozen(obj.Name)
+                        if nome == chave then
+                            local parte = parteDoAlvoFrozen(obj)
+                            if parte then espFrozenAlvo = parte; return parte end
+                        end
                     end
                 end
             end
@@ -2926,7 +3111,7 @@ do
             setEspFrozen(not espFrozenAtivo)
         end)
 
-        contLocation.CanvasSize = UDim2.new(0, 0, 0, 740)
+        contLocation.CanvasSize = UDim2.new(0, 0, 0, 860)
     end
 end
 -- ===================== FRUTAS =====================
@@ -3940,7 +4125,7 @@ do
     end
 
     local function normalizarNome(nome)
-        return string.lower(tostring(nome or "")):gsub("[%s_%-]", "")
+        return string.lower(tostring(nome or "")):gsub("[%s_%-<>]", "")
     end
 
     local molduraFrozen = criarMoldura(containerMar, 880, 65, "Auto Frozen Dimension")
@@ -3961,28 +4146,29 @@ do
         end
         ultimaBuscaFrozen = tick()
         frozenAlvoCache = nil
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if string.find(normalizarNome(obj.Name), "frozenwatcher", 1, true) then
-                local part = obj:IsA("BasePart") and obj
-                    or obj:FindFirstChild("HumanoidRootPart", true)
-                    or obj:FindFirstChildWhichIsA("BasePart", true)
-                if part then frozenAlvoCache = part; return part end
+        local function isPlayerCharacterPart(obj)
+            for _, jogador in ipairs(PlayersService:GetPlayers()) do
+                local character = jogador.Character
+                if character and obj:IsDescendantOf(character) then return true end
             end
+            return false
         end
-        -- Se o watcher ainda não foi criado, procura também o Leviatã e a ilha Frozen.
-        local prioridades = {"leviathan", "frozenisland", "frozendimension", "frozen"}
+        local prioridades = {"frozenwatcher", "leviathan", "frozenisland", "frozendimension"}
         local descendentes = workspace:GetDescendants()
         for _, chave in ipairs(prioridades) do
             for _, obj in ipairs(descendentes) do
-                local nome = normalizarNome(obj.Name)
-                local corresponde = (chave == "frozen" and nome == "frozen")
-                    or (chave ~= "frozen" and string.find(nome, chave, 1, true) ~= nil)
-                if corresponde and not string.find(nome, "frozenvillage", 1, true) then
-                    local part = obj:IsA("BasePart") and obj
-                        or obj.PrimaryPart
-                        or obj:FindFirstChild("HumanoidRootPart", true)
-                        or obj:FindFirstChildWhichIsA("BasePart", true)
-                    if part then frozenAlvoCache = part; return part end
+                if (obj:IsA("Model") or obj:IsA("BasePart")) and not isPlayerCharacterPart(obj) then
+                    local nome = normalizarNome(obj.Name)
+                    if nome == chave then
+                        local part = obj:IsA("BasePart") and obj
+                            or (obj.PrimaryPart
+                                or obj:FindFirstChild("HumanoidRootPart", true)
+                                or obj:FindFirstChildWhichIsA("BasePart", true))
+                        if part and not isPlayerCharacterPart(part) then
+                            frozenAlvoCache = part
+                            return part
+                        end
+                    end
                 end
             end
         end
@@ -35929,17 +36115,83 @@ do
             if not ok then warn("[Celestial Hub] " .. tostring(err)) end
             return ok
         end
-        local function criarToggleComando(parent, nome, titulo, y, comandoOn, comandoOff, altura)
+        local function criarToggleVisual(parent, nome, titulo, y, callback, altura)
+            local card = Instance.new("Frame")
+            card.Name = nome
+            card.Size = UDim2.new(1, -20, 0, altura or 64)
+            card.Position = UDim2.new(0, 10, 0, y)
+            card.BackgroundColor3 = COR_CARD
+            card.BorderSizePixel = 0
+            card.Parent = parent
+            Instance.new("UICorner", card).CornerRadius = UDim.new(0, 7)
+
+            local title = Instance.new("TextLabel", card)
+            title.BackgroundTransparency = 1
+            title.Position = UDim2.new(0, 10, 0, 0)
+            title.Size = UDim2.new(1, -82, 1, 0)
+            title.Text = titulo
+            title.TextColor3 = COR_TEXTO
+            title.Font = FONTE_TEXTO
+            title.TextSize = 12
+            title.TextWrapped = true
+            title.TextXAlignment = Enum.TextXAlignment.Left
+            title.TextYAlignment = Enum.TextYAlignment.Center
+
+            local box = Instance.new("Frame", card)
+            box.Size = UDim2.new(0, 48, 0, 26)
+            box.AnchorPoint = Vector2.new(1, 0.5)
+            box.Position = UDim2.new(1, -12, 0.5, 0)
+            box.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+            box.BorderSizePixel = 0
+            Instance.new("UICorner", box).CornerRadius = UDim.new(1, 0)
+            local circle = Instance.new("Frame", box)
+            circle.Name = "Circle"
+            circle.Size = UDim2.new(0, 20, 0, 20)
+            circle.Position = UDim2.new(0, 3, 0.5, -10)
+            circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            circle.BorderSizePixel = 0
+            Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
+            local hit = Instance.new("TextButton", card)
+            hit.Size = UDim2.new(0, 52, 0, 34)
+            hit.AnchorPoint = Vector2.new(1, 0.5)
+            hit.Position = UDim2.new(1, -10, 0.5, 0)
+            hit.BackgroundTransparency = 1
+            hit.Text = ""
+            hit.Parent = card
+
             local ativo = false
-            local card, btn = criarAcaoUI(parent, nome, titulo, y, function(b)
-                ativo = not ativo
-                local sucesso = rodarComando(ativo and comandoOn or comandoOff)
-                if not sucesso then ativo = not ativo end
-                b.Text = ativo and "ATIVO • TOQUE PARA DESATIVAR" or "DESATIVADO • TOQUE PARA ATIVAR"
-                b.BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or COR_BOTAO_ATIVO
-            end, altura or 82)
-            btn.Text = "DESATIVADO • TOQUE PARA ATIVAR"
-            return card
+            local function atualizarVisual()
+                TweenService:Create(box, TweenInfo.new(0.15), {
+                    BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or Color3.fromRGB(60, 60, 70)
+                }):Play()
+                TweenService:Create(circle, TweenInfo.new(0.15), {
+                    Position = ativo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)
+                }):Play()
+            end
+            local function definirEstado(novoEstado, silencioso)
+                local estadoAnterior = ativo
+                ativo = novoEstado
+                atualizarVisual()
+                if callback then
+                    local resultado = callback(ativo, function() definirEstado(false, true) end, silencioso)
+                    if resultado == false then
+                        ativo = estadoAnterior
+                        atualizarVisual()
+                    end
+                end
+            end
+            atualizarVisual()
+            hit.MouseButton1Click:Connect(function()
+                vibrar()
+                definirEstado(not ativo, false)
+            end)
+            return card, definirEstado
+        end
+
+        local function criarToggleComando(parent, nome, titulo, y, comandoOn, comandoOff, altura)
+            return criarToggleVisual(parent, nome, titulo, y, function(ativo)
+                return rodarComando(ativo and comandoOn or comandoOff)
+            end, altura or 64)
         end
 
         -- Calcula o próximo espaço livre com base nos elementos reais da aba.
@@ -36034,27 +36286,24 @@ do
         end
 
         local function criarToggleAcaoUnica(parent, nome, titulo, comando)
-            local card, btn = criarAcaoUI(parent, nome, titulo, proximoY(parent), function(b)
-                b.Text = "ATIVANDO"
-                b.BackgroundColor3 = COR_BOLINHA_VERDE
+            local card, definirEstado
+            local y = 36
+            for _, child in ipairs(parent:GetChildren()) do
+                if child:IsA("GuiObject") and child.Visible then
+                    y = math.max(y, child.Position.Y.Offset + child.Size.Y.Offset + 10)
+                end
+            end
+            card, definirEstado = criarToggleVisual(parent, nome, titulo, y, function(ativo, resetar)
+                if not ativo then return end
                 local ok = rodarComando(comando)
                 if not ok then
-                    b.Text = "FALHA"
-                    b.BackgroundColor3 = COR_ALERTA
-                else
-                    b.Text = "ATIVO"
+                    notify("Celestial Hub", "Não foi possível executar: " .. titulo)
                 end
-                -- São ações pontuais: executam uma vez e retornam ao estado desligado.
-                task.delay(0.8, function()
-                    if b and b.Parent then
-                        b.Text = "DESATIVADO • TOQUE PARA ATIVAR"
-                        b.BackgroundColor3 = COR_BOTAO_ATIVO
-                    end
+                -- Ações pontuais não ficam ligadas: o switch volta para OFF após disparar.
+                task.delay(0.65, function()
+                    if card and card.Parent then resetar() end
                 end)
-            end, 70)
-            btn.Text = "DESATIVADO • TOQUE PARA ATIVAR"
-            btn.Position = UDim2.new(0, 10, 0, 32)
-            btn.Size = UDim2.new(1, -20, 0, 28)
+            end, 64)
             return card
         end
 
@@ -36103,19 +36352,19 @@ do
                     return ok
                 end)
 
-            criarAcaoRapida(settingsTab, "AcaoConsole", "Abrir console", "console")
-            criarAcaoRapida(settingsTab, "AcaoInfoServidor", "Informações do servidor", "serverinfo")
-            criarAcaoRapida(settingsTab, "AcaoJobId", "Copiar JobId", "jobid")
-            criarToggleComando(settingsTab, "ToggleAntiIdle", "Anti-idle", proximoY(settingsTab), "antiafk", "unantiafk")
+            criarToggleAcaoUnica(settingsTab, "AcaoConsole", "Abrir console", "console")
+            criarToggleAcaoUnica(settingsTab, "AcaoInfoServidor", "Informações do servidor", "serverinfo")
+            criarToggleAcaoUnica(settingsTab, "AcaoJobId", "Copiar JobId", "jobid")
+            criarToggleComando(settingsTab, "ToggleAntiIdle", "Anti-Idle", proximoY(settingsTab), "antiafk", "unantiafk")
             settingsTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(settingsTab) + 5)
         end
 
         -- MULTIFARM: os controles entram logo após o último item existente.
         local multiTab = frame:FindFirstChild("ContainerAba_multifarm")
         if multiTab then
-            criarToggleComando(multiTab, "ToggleNoclipPersonagem", "Noclip do personagem", proximoY(multiTab), "noclip", "unnoclip")
-            criarToggleComando(multiTab, "ToggleNoclipBarco", "Noclip do barco", proximoY(multiTab), "vehiclenoclip", "vehicleclip")
-            criarToggleComando(multiTab, "TogglePuloInfinito", "Pulo infinito", proximoY(multiTab), "infjump", "uninfjump")
+            criarToggleComando(multiTab, "ToggleNoclipPersonagem", "Noclip do Personagem", proximoY(multiTab), "noclip", "unnoclip")
+            criarToggleComando(multiTab, "ToggleNoclipBarco", "Noclip do Barco", proximoY(multiTab), "vehiclenoclip", "vehicleclip")
+            criarToggleComando(multiTab, "TogglePuloInfinito", "Pulo Infinito", proximoY(multiTab), "infjump", "uninfjump")
             multiTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(multiTab) + 5)
         end
 
@@ -36129,15 +36378,16 @@ do
         -- Ações únicas ficam distribuídas nas abas de uso correspondente.
         local locationTab = frame:FindFirstChild("ContainerAba_location")
         if locationTab then
-            -- Ping é contínuo: ativar inicia avisos periódicos e desativar encerra o loop.
+            -- Ping é contínuo: o switch liga e encerra o loop de notificações.
             local pingAtivo = false
-            local pingCard = criarAcaoUI(locationTab, "ToggleNotificarPing", "Notificar ping", proximoY(locationTab), function(b)
-                pingAtivo = not pingAtivo
-                if pingAtivo then
-                    b.Text = "ATIVO • TOQUE PARA DESATIVAR"
-                    b.BackgroundColor3 = Color3.fromRGB(0, 120, 220)
+            local pingToken = 0
+            criarToggleVisual(locationTab, "ToggleNotificarPing", "Notificar Ping", proximoY(locationTab), function(ativo)
+                pingAtivo = ativo
+                pingToken = pingToken + 1
+                local token = pingToken
+                if ativo then
                     task.spawn(function()
-                        while pingAtivo and b and b.Parent do
+                        while pingAtivo and token == pingToken do
                             local ok, pingMs = pcall(function()
                                 return math.round(Players.LocalPlayer:GetNetworkPing() * 1000)
                             end)
@@ -36145,13 +36395,8 @@ do
                             task.wait(3)
                         end
                     end)
-                else
-                    b.Text = "DESATIVADO • TOQUE PARA ATIVAR"
-                    b.BackgroundColor3 = COR_BOTAO_ATIVO
                 end
-            end, 70)
-            local pingBtn = pingCard:FindFirstChildWhichIsA("TextButton")
-            if pingBtn then pingBtn.Text = "DESATIVADO • TOQUE PARA ATIVAR"; pingBtn.Position = UDim2.new(0, 10, 0, 32); pingBtn.Size = UDim2.new(1, -20, 0, 28) end
+            end, 64)
 
             -- Ações pontuais usam toggle momentâneo e voltam sozinhas para desligado.
             criarToggleAcaoUnica(locationTab, "AcaoCopiarPosicao", "Copiar posição", "copyposition")
