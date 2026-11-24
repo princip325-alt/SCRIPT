@@ -36363,8 +36363,8 @@ do
         local multiTab = frame:FindFirstChild("ContainerAba_multifarm")
         if multiTab then
             criarToggleComando(multiTab, "ToggleNoclipPersonagem", "Noclip do Personagem", proximoY(multiTab), "noclip", "unnoclip")
-            criarToggleComando(multiTab, "ToggleNoclipBarco", "Noclip do Barco", proximoY(multiTab), "vehiclenoclip", "vehicleclip")
             criarToggleComando(multiTab, "TogglePuloInfinito", "Pulo Infinito", proximoY(multiTab), "infjump", "uninfjump")
+            criarToggleComando(multiTab, "TogglePuloSegurado", "Pulo Segurado (Subida Contínua)", proximoY(multiTab), "flyjump", "unflyjump")
             multiTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(multiTab) + 5)
         end
 
