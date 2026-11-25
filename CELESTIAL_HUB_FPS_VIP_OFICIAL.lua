@@ -36362,21 +36362,15 @@ do
         keyboardWindow.ZIndex = 200
         keyboardWindow.Parent = gui
         Instance.new("UICorner", keyboardWindow).CornerRadius = UDim.new(0, 12)
+        -- RGB animado: mantém exatamente o layout e altera somente as bordas.
+        local keyboardRGBStrokes = {}
         local keyboardStroke = Instance.new("UIStroke", keyboardWindow)
         keyboardStroke.Color = Color3.fromRGB(145, 55, 235)
         keyboardStroke.Thickness = 2
+        table.insert(keyboardRGBStrokes, keyboardStroke)
 
-        local keyboardScale = Instance.new("UIScale", keyboardWindow)
-        local function ajustarEscalaTeclado()
-            local camera = workspace.CurrentCamera
-            if not camera then return end
-            local viewport = camera.ViewportSize
-            keyboardScale.Scale = math.clamp(math.min(viewport.X / 900, viewport.Y / 470), 0.48, 1)
-        end
-        ajustarEscalaTeclado()
-        if workspace.CurrentCamera then
-            workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(ajustarEscalaTeclado)
-        end
+        -- Tamanho fixo igual ao teclado da referência (aprox. 840 x 420).
+        -- Não aplicar UIScale automático: isso altera o tamanho visual entre aparelhos.
 
         local keyboardTitleBar = Instance.new("Frame", keyboardWindow)
         keyboardTitleBar.Size = UDim2.new(1, 0, 0, 42)
@@ -36467,14 +36461,14 @@ do
         -- linha inferior com barra de espaço e setas à direita.
         local rows = {
             {
-                {"Esc",0.95},{"F1",0.9},{"F2",0.9},{"F3",0.9},{"F4",0.9},
+                {"Esc",0.9},{"F1",0.9},{"F2",0.9},{"F3",0.9},{"F4",0.9},
                 {"F5",0.9},{"F6",0.9},{"F7",0.9},{"F8",0.9},{"F9",0.9},
-                {"F10",0.9},{"F11",0.9},{"F12",0.9},{"Del",1.65}
+                {"F10",0.9},{"F11",0.9},{"F12",0.9},{"Del",1.5}
             },
             {
                 {"`",0.9},{"1",0.9},{"2",0.9},{"3",0.9},{"4",0.9},{"5",0.9},
                 {"6",0.9},{"7",0.9},{"8",0.9},{"9",0.9},{"0",0.9},{"-",0.9},
-                {"=",0.9},{"Backspace",1.8}
+                {"=",0.9},{"Backspace",1.5}
             },
             {
                 {"Tab",1.35},{"Q",0.9},{"W",0.9},{"E",0.9},{"R",0.9},{"T",0.9},
@@ -36498,10 +36492,10 @@ do
             rowFrame.Name = "LinhaTeclas" .. rowIndex
             rowFrame.BackgroundTransparency = 1
             rowFrame.Position = UDim2.new(0, 0, 0, (rowIndex - 1) * 56)
-            rowFrame.Size = UDim2.new(1, 0, 0, 45)
+            rowFrame.Size = UDim2.new(1, 0, 0, 47)
             rowFrame.ZIndex = 202
 
-            local gap = 5
+            local gap = 6
             local totalWeight = 0
             for _, item in ipairs(row) do totalWeight = totalWeight + item[2] end
             local usableWidth = 824 - gap * (#row - 1)
@@ -36512,8 +36506,8 @@ do
                 local keyButton = Instance.new("TextButton", rowFrame)
                 keyButton.Name = "Key_" .. label:gsub("%W", "")
                 keyButton.Position = UDim2.new(0, x, 0, 0)
-                keyButton.Size = UDim2.new(0, keyWidth, 0, 43)
-                keyButton.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                keyButton.Size = UDim2.new(0, keyWidth, 0, 47)
+                keyButton.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
                 keyButton.BorderSizePixel = 0
                 keyButton.Text = label
                 keyButton.TextColor3 = Color3.fromRGB(245, 245, 250)
@@ -36523,8 +36517,9 @@ do
                 keyButton.ZIndex = 203
                 Instance.new("UICorner", keyButton).CornerRadius = UDim.new(0, 7)
                 local outline = Instance.new("UIStroke", keyButton)
-                outline.Color = Color3.fromRGB(139, 48, 226)
-                outline.Thickness = 1.5
+                outline.Color = Color3.fromRGB(150, 45, 245)
+                outline.Thickness = 1.8
+                table.insert(keyboardRGBStrokes, outline)
 
                 keyButton.MouseButton1Down:Connect(function()
                     if label == "Shift" then
@@ -36546,14 +36541,14 @@ do
                         enviarTecla(label, false)
                         keysPressionadas[label] = nil
                     end
-                    keyButton.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                    keyButton.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
                 end)
                 keyButton.MouseLeave:Connect(function()
                     if keysPressionadas[label] then
                         enviarTecla(label, false)
                         keysPressionadas[label] = nil
                     end
-                    keyButton.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                    keyButton.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
                 end)
                 x = x + keyWidth + gap
             end
@@ -36576,7 +36571,7 @@ do
             b.Name = "KeyBottom_" .. label:gsub("%W", "") .. tostring(math.floor(x * 1000))
             b.Position = UDim2.new(0, x, 0, y)
             b.Size = UDim2.new(0, width, 0, height)
-            b.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+            b.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
             b.BorderSizePixel = 0
             b.Text = label
             b.TextColor3 = Color3.fromRGB(245, 245, 250)
@@ -36585,8 +36580,9 @@ do
             b.ZIndex = 203
             Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
             local stroke = Instance.new("UIStroke", b)
-            stroke.Color = Color3.fromRGB(139, 48, 226)
-            stroke.Thickness = 1.5
+            stroke.Color = Color3.fromRGB(150, 45, 245)
+            stroke.Thickness = 1.8
+            table.insert(keyboardRGBStrokes, stroke)
             b.MouseButton1Down:Connect(function()
                 keysPressionadas[label] = true
                 enviarTecla(label, true)
@@ -36595,14 +36591,14 @@ do
             b.MouseButton1Up:Connect(function()
                 enviarTecla(label, false)
                 keysPressionadas[label] = nil
-                b.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                b.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
             end)
             b.MouseLeave:Connect(function()
                 if keysPressionadas[label] then
                     enviarTecla(label, false)
                     keysPressionadas[label] = nil
                 end
-                b.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                b.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
             end)
             return b
         end
@@ -36655,6 +36651,19 @@ do
             keyboardWindow.Size = UDim2.new(0, 840, 0, 420)
             keyboardBody.Visible = true
         end)
+        -- Ciclo RGB contínuo somente nos contornos; teclas, textos e dimensões ficam iguais.
+        local keyboardRGBHue = 0
+        local keyboardRGBConnection = RunService.Heartbeat:Connect(function(dt)
+            keyboardRGBHue = (keyboardRGBHue + dt * 0.16) % 1
+            local count = #keyboardRGBStrokes
+            for index, stroke in ipairs(keyboardRGBStrokes) do
+                if stroke and stroke.Parent then
+                    local hue = (keyboardRGBHue + (index - 1) / math.max(count, 1) * 0.22) % 1
+                    stroke.Color = Color3.fromHSV(hue, 0.9, 1)
+                end
+            end
+        end)
+
         keyboardClose.MouseButton1Click:Connect(function()
             soltarTodasTeclas()
             keyboardWindow.Visible = false
