@@ -486,7 +486,7 @@ local ABAS_COM_CONTEUDO = {
     idiomas = true, info = true, zoom = true, graficos = true, status = true,
     farmset = true, multifarm = true, seaevent = true, location = true,
     fruit = true, settings = true, pvp = true, main = true, shop = true,
-    raid = true, hide = true, comandos = true
+    raid = true, hide = true, comandos = true, keyboard = true
 }
 local bolinhasVerdes = {}
 local bordasRGBAbas = {}
@@ -549,6 +549,7 @@ do
         {"pvp","👥\nPVP","👥 PVP"},
         {"settings","🛠️\nSETTINGS","🛠️ SETTINGS"},
         {"comandos","⌘\nCOMANDOS","⌘ COMANDOS"},
+        {"keyboard","⌨️\nKEYBOARD","KEYBOARD"},
     }
     local yBase = 8
     for i, d in ipairs(novas) do
@@ -36323,6 +36324,341 @@ do
             btn.Size = UDim2.new(1, -20, 0, 28)
             return card
         end
+
+        -- =====================================================
+        -- ABA KEYBOARD: teclado virtual no estilo da referência.
+        -- O título foi personalizado para CELESTIAL HUB.
+        -- =====================================================
+        local keyboardWindow
+        local keyboardTab = frame:FindFirstChild("ContainerAba_keyboard")
+        if keyboardTab then
+            local keyboardCard, openKeyboardButton = criarAcaoUI(
+                keyboardTab, "AbrirTecladoCelestial", "Teclado virtual Celestial Hub", proximoY(keyboardTab),
+                function(btn)
+                    if keyboardWindow then
+                        keyboardWindow.Visible = true
+                        btn.Text = "TECLADO ABERTO"
+                        task.delay(1, function()
+                            if btn and btn.Parent then btn.Text = "ABRIR TECLADO" end
+                        end)
+                    end
+                end, 82
+            )
+            openKeyboardButton.Text = "ABRIR TECLADO"
+            keyboardTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(keyboardTab) + 5)
+        end
+
+        -- Janela flutuante do teclado; fica fora do painel principal para
+        -- poder ser usada enquanto o jogador interage com o jogo.
+        keyboardWindow = Instance.new("Frame")
+        keyboardWindow.Name = "CelestialHubKeyboard"
+        keyboardWindow.Size = UDim2.new(0, 840, 0, 420)
+        keyboardWindow.AnchorPoint = Vector2.new(0.5, 0.5)
+        keyboardWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
+        keyboardWindow.BackgroundColor3 = Color3.fromRGB(18, 17, 25)
+        keyboardWindow.BorderSizePixel = 0
+        keyboardWindow.Visible = false
+        keyboardWindow.Active = true
+        keyboardWindow.ZIndex = 200
+        keyboardWindow.Parent = gui
+        Instance.new("UICorner", keyboardWindow).CornerRadius = UDim.new(0, 12)
+        local keyboardStroke = Instance.new("UIStroke", keyboardWindow)
+        keyboardStroke.Color = Color3.fromRGB(145, 55, 235)
+        keyboardStroke.Thickness = 2
+
+        local keyboardScale = Instance.new("UIScale", keyboardWindow)
+        local function ajustarEscalaTeclado()
+            local camera = workspace.CurrentCamera
+            if not camera then return end
+            local viewport = camera.ViewportSize
+            keyboardScale.Scale = math.clamp(math.min(viewport.X / 900, viewport.Y / 470), 0.48, 1)
+        end
+        ajustarEscalaTeclado()
+        if workspace.CurrentCamera then
+            workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(ajustarEscalaTeclado)
+        end
+
+        local keyboardTitleBar = Instance.new("Frame", keyboardWindow)
+        keyboardTitleBar.Size = UDim2.new(1, 0, 0, 42)
+        keyboardTitleBar.BackgroundColor3 = Color3.fromRGB(25, 23, 34)
+        keyboardTitleBar.BorderSizePixel = 0
+        keyboardTitleBar.ZIndex = 201
+        Instance.new("UICorner", keyboardTitleBar).CornerRadius = UDim.new(0, 10)
+
+        local keyboardTitle = Instance.new("TextLabel", keyboardTitleBar)
+        keyboardTitle.BackgroundTransparency = 1
+        keyboardTitle.Position = UDim2.new(0, 16, 0, 0)
+        keyboardTitle.Size = UDim2.new(1, -130, 1, 0)
+        keyboardTitle.Font = FONTE_TITULO
+        keyboardTitle.Text = "Celestial Hub - Keyboard"
+        keyboardTitle.TextColor3 = Color3.fromRGB(245, 245, 250)
+        keyboardTitle.TextSize = 16
+        keyboardTitle.TextXAlignment = Enum.TextXAlignment.Left
+        keyboardTitle.ZIndex = 202
+
+        local function criarBotaoTopo(texto, x, largura)
+            local b = Instance.new("TextButton", keyboardTitleBar)
+            b.Size = UDim2.new(0, largura, 0, 30)
+            b.Position = UDim2.new(1, x, 0, 6)
+            b.BackgroundColor3 = Color3.fromRGB(42, 40, 52)
+            b.BorderSizePixel = 0
+            b.Text = texto
+            b.TextColor3 = Color3.fromRGB(255, 255, 255)
+            b.Font = FONTE_TEXTO
+            b.TextSize = 16
+            b.ZIndex = 203
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
+            return b
+        end
+        local keyboardMinimize = criarBotaoTopo("–", -112, 30)
+        local keyboardHide = criarBotaoTopo("□", -72, 30)
+        local keyboardClose = criarBotaoTopo("X", -42, 30)
+
+        local keyboardBody = Instance.new("Frame", keyboardWindow)
+        keyboardBody.BackgroundTransparency = 1
+        keyboardBody.Position = UDim2.new(0, 8, 0, 48)
+        keyboardBody.Size = UDim2.new(1, -16, 1, -56)
+        keyboardBody.ZIndex = 201
+
+        local vimService
+        pcall(function() vimService = game:GetService("VirtualInputManager") end)
+        local shiftAtivo = false
+        local keysPressionadas = {}
+
+        local keyMap = {
+            ["`"] = "Backquote", ["-"] = "Minus", ["="] = "Equals",
+            ["["] = "LeftBracket", ["]"] = "RightBracket", ["\\"] = "BackSlash",
+            [";"] = "Semicolon", ["'"] = "Quote", [","] = "Comma",
+            ["."] = "Period", ["/"] = "Slash", ["Del"] = "Delete",
+            ["Backspace"] = "Backspace", ["Caps Lock"] = "CapsLock",
+            ["Tab"] = "Tab", ["Enter"] = "Return", ["Esc"] = "Escape",
+            ["Ctrl"] = "LeftControl", ["Alt"] = "LeftAlt", ["Shift"] = "LeftShift",
+            ["Space"] = "Space", ["Up"] = "Up", ["Down"] = "Down",
+            ["Left"] = "Left", ["Right"] = "Right"
+        }
+
+        local function resolverKeyCode(label)
+            local nome = keyMap[label] or label
+            local ok, result = pcall(function() return Enum.KeyCode[nome] end)
+            if ok then return result end
+            return nil
+        end
+
+        local function enviarTecla(label, pressionada)
+            local keyCode = resolverKeyCode(label)
+            if not keyCode or not vimService then return end
+            pcall(function()
+                vimService:SendKeyEvent(pressionada, keyCode, false, game)
+            end)
+        end
+
+        local function soltarTodasTeclas()
+            for label in pairs(keysPressionadas) do
+                enviarTecla(label, false)
+                keysPressionadas[label] = nil
+            end
+            if shiftAtivo then
+                enviarTecla("Shift", false)
+                shiftAtivo = false
+            end
+        end
+
+        -- Layout fiel à referência do Delta Mobile: cinco fileiras QWERTY,
+        -- linha inferior com barra de espaço e setas à direita.
+        local rows = {
+            {
+                {"Esc",0.95},{"F1",0.9},{"F2",0.9},{"F3",0.9},{"F4",0.9},
+                {"F5",0.9},{"F6",0.9},{"F7",0.9},{"F8",0.9},{"F9",0.9},
+                {"F10",0.9},{"F11",0.9},{"F12",0.9},{"Del",1.65}
+            },
+            {
+                {"`",0.9},{"1",0.9},{"2",0.9},{"3",0.9},{"4",0.9},{"5",0.9},
+                {"6",0.9},{"7",0.9},{"8",0.9},{"9",0.9},{"0",0.9},{"-",0.9},
+                {"=",0.9},{"Backspace",1.8}
+            },
+            {
+                {"Tab",1.35},{"Q",0.9},{"W",0.9},{"E",0.9},{"R",0.9},{"T",0.9},
+                {"Y",0.9},{"U",0.9},{"I",0.9},{"O",0.9},{"P",0.9},{"[",0.9},
+                {"]",0.9},{"\\",1.2}
+            },
+            {
+                {"Caps Lock",1.75},{"A",0.9},{"S",0.9},{"D",0.9},{"F",0.9},
+                {"G",0.9},{"H",0.9},{"J",0.9},{"K",0.9},{"L",0.9},
+                {";",0.9},{"'",0.9},{"Enter",1.75}
+            },
+            {
+                {"Shift",2.05},{"Z",0.9},{"X",0.9},{"C",0.9},{"V",0.9},
+                {"B",0.9},{"N",0.9},{"M",0.9},{",",0.9},{".",0.9},
+                {"/",0.9},{"Shift",2.05}
+            }
+        }
+
+        local function criarLinhaTeclas(row, rowIndex)
+            local rowFrame = Instance.new("Frame", keyboardBody)
+            rowFrame.Name = "LinhaTeclas" .. rowIndex
+            rowFrame.BackgroundTransparency = 1
+            rowFrame.Position = UDim2.new(0, 0, 0, (rowIndex - 1) * 56)
+            rowFrame.Size = UDim2.new(1, 0, 0, 45)
+            rowFrame.ZIndex = 202
+
+            local gap = 5
+            local totalWeight = 0
+            for _, item in ipairs(row) do totalWeight = totalWeight + item[2] end
+            local usableWidth = 824 - gap * (#row - 1)
+            local x = 0
+            for _, keyData in ipairs(row) do
+                local label, weight = keyData[1], keyData[2]
+                local keyWidth = math.floor(usableWidth * weight / totalWeight)
+                local keyButton = Instance.new("TextButton", rowFrame)
+                keyButton.Name = "Key_" .. label:gsub("%W", "")
+                keyButton.Position = UDim2.new(0, x, 0, 0)
+                keyButton.Size = UDim2.new(0, keyWidth, 0, 43)
+                keyButton.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                keyButton.BorderSizePixel = 0
+                keyButton.Text = label
+                keyButton.TextColor3 = Color3.fromRGB(245, 245, 250)
+                keyButton.Font = FONTE_TEXTO
+                keyButton.TextSize = 15
+                keyButton.TextWrapped = true
+                keyButton.ZIndex = 203
+                Instance.new("UICorner", keyButton).CornerRadius = UDim.new(0, 7)
+                local outline = Instance.new("UIStroke", keyButton)
+                outline.Color = Color3.fromRGB(139, 48, 226)
+                outline.Thickness = 1.5
+
+                keyButton.MouseButton1Down:Connect(function()
+                    if label == "Shift" then
+                        if not shiftAtivo then
+                            shiftAtivo = true
+                            enviarTecla("Shift", true)
+                        end
+                    elseif label == "Caps Lock" then
+                        enviarTecla(label, true)
+                        task.delay(0.05, function() enviarTecla(label, false) end)
+                    else
+                        keysPressionadas[label] = true
+                        enviarTecla(label, true)
+                    end
+                    keyButton.BackgroundColor3 = Color3.fromRGB(75, 43, 105)
+                end)
+                keyButton.MouseButton1Up:Connect(function()
+                    if label ~= "Shift" and label ~= "Caps Lock" then
+                        enviarTecla(label, false)
+                        keysPressionadas[label] = nil
+                    end
+                    keyButton.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                end)
+                keyButton.MouseLeave:Connect(function()
+                    if keysPressionadas[label] then
+                        enviarTecla(label, false)
+                        keysPressionadas[label] = nil
+                    end
+                    keyButton.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+                end)
+                x = x + keyWidth + gap
+            end
+        end
+
+        for rowIndex, row in ipairs(rows) do
+            criarLinhaTeclas(row, rowIndex)
+        end
+
+        -- Linha inferior: Ctrl / Alt / espaço / Alt / Ctrl e setas em cruz.
+        local bottomRow = Instance.new("Frame", keyboardBody)
+        bottomRow.Name = "LinhaInferior"
+        bottomRow.BackgroundTransparency = 1
+        bottomRow.Position = UDim2.new(0, 0, 0, 282)
+        bottomRow.Size = UDim2.new(1, 0, 0, 48)
+        bottomRow.ZIndex = 202
+
+        local function criarTeclaInferior(label, x, y, width, height)
+            local b = Instance.new("TextButton", bottomRow)
+            b.Name = "KeyBottom_" .. label:gsub("%W", "") .. tostring(math.floor(x * 1000))
+            b.Position = UDim2.new(0, x, 0, y)
+            b.Size = UDim2.new(0, width, 0, height)
+            b.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+            b.BorderSizePixel = 0
+            b.Text = label
+            b.TextColor3 = Color3.fromRGB(245, 245, 250)
+            b.Font = FONTE_TEXTO
+            b.TextSize = 14
+            b.ZIndex = 203
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
+            local stroke = Instance.new("UIStroke", b)
+            stroke.Color = Color3.fromRGB(139, 48, 226)
+            stroke.Thickness = 1.5
+            b.MouseButton1Down:Connect(function()
+                keysPressionadas[label] = true
+                enviarTecla(label, true)
+                b.BackgroundColor3 = Color3.fromRGB(75, 43, 105)
+            end)
+            b.MouseButton1Up:Connect(function()
+                enviarTecla(label, false)
+                keysPressionadas[label] = nil
+                b.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+            end)
+            b.MouseLeave:Connect(function()
+                if keysPressionadas[label] then
+                    enviarTecla(label, false)
+                    keysPressionadas[label] = nil
+                end
+                b.BackgroundColor3 = Color3.fromRGB(13, 12, 20)
+            end)
+            return b
+        end
+        criarTeclaInferior("Ctrl", 0, 0, 104, 43)
+        criarTeclaInferior("Alt", 116, 0, 94, 43)
+        criarTeclaInferior("Space", 222, 0, 280, 43)
+        criarTeclaInferior("Alt", 514, 0, 46, 43)
+        criarTeclaInferior("Ctrl", 570, 0, 42, 43)
+        criarTeclaInferior("Up", 690, 0, 72, 20)
+        criarTeclaInferior("Left", 646, 23, 72, 20)
+        criarTeclaInferior("Down", 721, 23, 72, 20)
+        criarTeclaInferior("Right", 796, 23, 28, 20)
+
+        local keyboardStatus = Instance.new("TextLabel", keyboardBody)
+        keyboardStatus.BackgroundTransparency = 1
+        keyboardStatus.Position = UDim2.new(0, 0, 1, -20)
+        keyboardStatus.Size = UDim2.new(0, 100, 0, 18)
+        keyboardStatus.Text = "a +"
+        keyboardStatus.TextColor3 = Color3.fromRGB(235, 235, 245)
+        keyboardStatus.TextSize = 12
+        keyboardStatus.Font = FONTE_TEXTO
+        keyboardStatus.TextXAlignment = Enum.TextXAlignment.Left
+        keyboardStatus.ZIndex = 203
+
+        local shiftToggle = Instance.new("TextButton", keyboardBody)
+        shiftToggle.Name = "EnableShift"
+        shiftToggle.Size = UDim2.new(0, 145, 0, 30)
+        shiftToggle.Position = UDim2.new(1, -150, 1, -31)
+        shiftToggle.BackgroundColor3 = Color3.fromRGB(35, 210, 65)
+        shiftToggle.BorderSizePixel = 0
+        shiftToggle.Text = "Enable Shift"
+        shiftToggle.TextColor3 = Color3.fromRGB(10, 20, 10)
+        shiftToggle.Font = FONTE_TEXTO
+        shiftToggle.TextSize = 12
+        shiftToggle.ZIndex = 203
+        Instance.new("UICorner", shiftToggle).CornerRadius = UDim.new(0, 7)
+        shiftToggle.MouseButton1Click:Connect(function()
+            shiftAtivo = not shiftAtivo
+            enviarTecla("Shift", shiftAtivo)
+            shiftToggle.BackgroundColor3 = shiftAtivo and Color3.fromRGB(35, 210, 65) or Color3.fromRGB(70, 70, 80)
+            shiftToggle.Text = shiftAtivo and "Shift: ON" or "Enable Shift"
+        end)
+
+        keyboardMinimize.MouseButton1Click:Connect(function()
+            keyboardBody.Visible = not keyboardBody.Visible
+            keyboardWindow.Size = keyboardBody.Visible and UDim2.new(0, 840, 0, 420) or UDim2.new(0, 840, 0, 42)
+            keyboardMinimize.Text = keyboardBody.Visible and "–" or "+"
+        end)
+        keyboardHide.MouseButton1Click:Connect(function()
+            keyboardWindow.Size = UDim2.new(0, 840, 0, 420)
+            keyboardBody.Visible = true
+        end)
+        keyboardClose.MouseButton1Click:Connect(function()
+            soltarTodasTeclas()
+            keyboardWindow.Visible = false
+        end)
 
         -- SETTINGS: FPS, volume e utilitários que pertencem às configurações.
         local settingsTab = frame:FindFirstChild("ContainerAba_settings")
