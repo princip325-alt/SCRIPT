@@ -36861,6 +36861,154 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
         if pvpTab then
             criarToggleComando(pvpTab, "ToggleAntiFlingBoss", "Anti-Fling (Jogadores e Bosses)", proximoY(pvpTab), "antifling", "unantifling", 90)
 
+            -- ESP PVP: caixas, linha, vida e escudo/mana (quando exposto pelo jogo).
+            _G.CelestialESPEnabled = false
+            _G.CelestialAimAssistEnabled = false
+            _G.CelestialAimFOV = 240
+            local espObjects = {}
+            local function clearESP(plr)
+                local obj = espObjects[plr]
+                if obj then
+                    for _, inst in ipairs(obj) do pcall(function() inst:Destroy() end) end
+                    espObjects[plr] = nil
+                end
+            end
+            local function makeESP(plr)
+                if plr == player or espObjects[plr] then return end
+                local overlay = Instance.new("Frame")
+                overlay.Name = "CelestialESP_" .. plr.UserId
+                overlay.Size = UDim2.fromScale(1,1)
+                overlay.BackgroundTransparency = 1
+                overlay.BorderSizePixel = 0
+                overlay.Parent = gui
+                local line = Instance.new("Frame")
+                line.Name = "Tracer"; line.AnchorPoint = Vector2.new(0, 0.5)
+                line.BorderSizePixel = 0; line.BackgroundColor3 = Color3.fromRGB(45,255,35)
+                line.Visible = false; line.Parent = overlay
+                local box = Instance.new("Frame")
+                box.Name = "PlayerBox"; box.BackgroundTransparency = 1
+                box.BorderSizePixel = 0; box.Visible = false; box.Parent = overlay
+                local stroke = Instance.new("UIStroke", box)
+                stroke.Color = Color3.fromRGB(45,255,35); stroke.Thickness = 1.5
+                local info = Instance.new("TextLabel")
+                info.Name = "Vitals"; info.BackgroundTransparency = 1
+                info.TextColor3 = Color3.new(1,1,1); info.TextStrokeTransparency = 0.25
+                info.Font = Enum.Font.GothamBold; info.TextSize = 11
+                info.Size = UDim2.fromOffset(150,18); info.Visible = false; info.Parent = overlay
+                local hpBack = Instance.new("Frame")
+                hpBack.BorderSizePixel = 0; hpBack.BackgroundColor3 = Color3.fromRGB(35,35,35)
+                hpBack.Visible = false; hpBack.Parent = overlay
+                local hpFill = Instance.new("Frame")
+                hpFill.BorderSizePixel = 0; hpFill.BackgroundColor3 = Color3.fromRGB(50,230,80)
+                hpFill.Size = UDim2.fromScale(1,1); hpFill.Parent = hpBack
+                local manaBack = Instance.new("Frame")
+                manaBack.BorderSizePixel = 0; manaBack.BackgroundColor3 = Color3.fromRGB(35,35,35)
+                manaBack.Visible = false; manaBack.Parent = overlay
+                local manaFill = Instance.new("Frame")
+                manaFill.BorderSizePixel = 0; manaFill.BackgroundColor3 = Color3.fromRGB(55,150,255)
+                manaFill.Size = UDim2.fromScale(1,1); manaFill.Parent = manaBack
+                espObjects[plr] = {line,box,info,hpBack,hpFill,manaBack,manaFill}
+            end
+            local function getMana(character, humanoid)
+                local names = {"Mana","Shield","Energy","Magic","Escudo"}
+                for _, name in ipairs(names) do
+                    local value = character:GetAttribute(name)
+                    if typeof(value) == "number" then return value end
+                    local child = character:FindFirstChild(name)
+                    if child and (child:IsA("NumberValue") or child:IsA("IntValue")) then return child.Value end
+                end
+                return nil
+            end
+            local function updateESP()
+                local camera = workspace.CurrentCamera
+                if not camera then return end
+                for _, plr in ipairs(PlayersService:GetPlayers()) do
+                    if plr ~= player then
+                        if _G.CelestialESPEnabled then makeESP(plr) end
+                        local obj = espObjects[plr]
+                        if obj then
+                            local line,box,info,hpBack,hpFill,manaBack,manaFill = table.unpack(obj)
+                            local char = plr.Character
+                            local root = char and char:FindFirstChild("HumanoidRootPart")
+                            local head = char and char:FindFirstChild("Head")
+                            local hum = char and char:FindFirstChildOfClass("Humanoid")
+                            local visible = _G.CelestialESPEnabled and root and hum and hum.Health > 0
+                            if visible then
+                                local pos, onScreen = camera:WorldToViewportPoint(root.Position)
+                                visible = onScreen and pos.Z > 0
+                                if visible then
+                                    local height = math.clamp(2200 / pos.Z, 35, 260)
+                                    local width = height * 0.55
+                                    box.Position = UDim2.fromOffset(pos.X-width/2, pos.Y-height/2)
+                                    box.Size = UDim2.fromOffset(width,height); box.Visible = true
+                                    line.Position = UDim2.fromOffset(camera.ViewportSize.X/2, camera.ViewportSize.Y-4)
+                                    local dx,dy = pos.X-camera.ViewportSize.X/2, pos.Y-camera.ViewportSize.Y-4
+                                    line.Size = UDim2.fromOffset(math.sqrt(dx*dx+dy*dy),2)
+                                    line.Rotation = math.deg(math.atan2(dy,dx)); line.Visible = true
+                                    local hp = math.clamp(hum.Health / math.max(hum.MaxHealth,1),0,1)
+                                    hpBack.Position = UDim2.fromOffset(pos.X-width/2,pos.Y+height/2+3)
+                                    hpBack.Size = UDim2.fromOffset(width,4); hpBack.Visible = true
+                                    hpFill.Size = UDim2.fromScale(hp,1)
+                                    local mana = getMana(char, hum)
+                                    local maxMana = char:GetAttribute("MaxMana") or char:GetAttribute("MaxShield") or 100
+                                    manaBack.Position = UDim2.fromOffset(pos.X-width/2,pos.Y+height/2+8)
+                                    manaBack.Size = UDim2.fromOffset(width,4); manaBack.Visible = mana ~= nil
+                                    if mana ~= nil then manaFill.Size = UDim2.fromScale(math.clamp(mana/math.max(maxMana,1),0,1),1) end
+                                    info.Position = UDim2.fromOffset(pos.X-width/2,pos.Y-height/2-19)
+                                    info.Text = string.format("%s  HP %d/%d  %s",plr.DisplayName,hum.Health,hum.MaxHealth,mana and ("MP "..math.floor(mana)) or "")
+                                    info.Visible = true
+                                end
+                            end
+                            if not visible then
+                                box.Visible=false; line.Visible=false; info.Visible=false; hpBack.Visible=false; manaBack.Visible=false
+                            end
+                        end
+                    end
+                end
+            end
+            criarToggleVisual(pvpTab, "ToggleESPPlayers", "ESP • caixas, linhas, vida e escudo", proximoY(pvpTab), function(ativo)
+                _G.CelestialESPEnabled = ativo
+                if not ativo then for plr in pairs(espObjects) do clearESP(plr) end end
+                return true
+            end, 68)
+            PlayersService.PlayerRemoving:Connect(clearESP)
+            RunService.RenderStepped:Connect(updateESP)
+
+            -- Assistência local de câmera ao tocar/clicar: mira no jogador mais próximo
+            -- do centro da tela dentro do FOV; não altera RemoteEvents nem tiros do servidor.
+            criarToggleVisual(pvpTab, "ToggleSilentAimDemo", "Silent Aim • assistência de mira ao clicar", proximoY(pvpTab), function(ativo)
+                _G.CelestialAimAssistEnabled = ativo
+                return true
+            end, 68)
+            local function aimAtNearest()
+                if not _G.CelestialAimAssistEnabled then return end
+                local camera = workspace.CurrentCamera; if not camera then return end
+                local character = player.Character
+                if not character or not character:FindFirstChildOfClass("Tool") then return end
+                local center = Vector2.new(camera.ViewportSize.X/2,camera.ViewportSize.Y/2)
+                local best, bestDistance = nil, _G.CelestialAimFOV or 240
+                for _, target in ipairs(PlayersService:GetPlayers()) do
+                    if target ~= player and target.Character then
+                        local hum = target.Character:FindFirstChildOfClass("Humanoid")
+                        local part = target.Character:FindFirstChild("Head") or target.Character:FindFirstChild("HumanoidRootPart")
+                        if hum and hum.Health > 0 and part then
+                            local point, onScreen = camera:WorldToViewportPoint(part.Position)
+                            if onScreen and point.Z > 0 then
+                                local distance = (Vector2.new(point.X,point.Y)-center).Magnitude
+                                if distance < bestDistance then bestDistance=distance; best=part end
+                            end
+                        end
+                    end
+                end
+                if best then camera.CFrame = CFrame.lookAt(camera.CFrame.Position,best.Position) end
+            end
+            UserInputService.InputBegan:Connect(function(input, processed)
+                if processed then return end
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    aimAtNearest()
+                end
+            end)
+
             local fovCircle = Instance.new("Frame")
             fovCircle.Name = "CelestialFOVVisual"
             fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
