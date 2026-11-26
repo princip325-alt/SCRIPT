@@ -36371,7 +36371,8 @@ do
 
         -- Escala única para redimensionar o teclado inteiro sem deformar o layout.
         local keyboardScale = Instance.new("UIScale")
-        keyboardScale.Scale = 1
+        -- Tamanho inicial compacto para celular: 80% do layout original.
+        keyboardScale.Scale = 0.8
         keyboardScale.Parent = keyboardWindow
 
         local keyboardTitleBar = Instance.new("Frame", keyboardWindow)
