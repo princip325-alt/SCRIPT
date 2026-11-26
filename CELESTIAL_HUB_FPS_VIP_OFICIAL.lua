@@ -36337,12 +36337,8 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
                 keyboardTab, "AbrirTecladoCelestial", "Teclado virtual Celestial Hub", proximoY(keyboardTab),
                 function(btn)
                     if keyboardWindow then
-                        -- Ativa a captura de entrada somente enquanto o teclado estiver aberto.
-                        if keyboardInputLock then
-                            keyboardInputLock.Active = true
-                            keyboardInputLock.Modal = true
-                            keyboardInputLock.Visible = true
-                        end
+                        -- O teclado é uma janela flutuante: não bloqueia o ícone do
+                        -- hub nem os demais controles fora da própria janela.
                         keyboardWindow.Visible = true
                         btn.Text = "TECLADO ABERTO"
                         task.delay(1, function()
@@ -36355,9 +36351,8 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
             keyboardTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(keyboardTab) + 5)
         end
 
-        -- Bloqueio de toque/clique no jogo enquanto o teclado estiver aberto.
-        -- IMPORTANTE: Modal precisa ser desligado ao fechar, senão o Roblox continua
-        -- capturando os toques e parece que a tela inteira ficou travada.
+        -- Compatibilidade: camada antiga mantida invisível e desativada.
+        -- Ela não pode capturar toques, pois o teclado agora é uma janela flutuante.
         keyboardInputLock = Instance.new("TextButton")
         keyboardInputLock.Name = "KeyboardInputLock"
         keyboardInputLock.Size = UDim2.new(1, 0, 1, 0)
@@ -36402,7 +36397,51 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
         keyboardTitleBar.BackgroundColor3 = Color3.fromRGB(25, 23, 34)
         keyboardTitleBar.BorderSizePixel = 0
         keyboardTitleBar.ZIndex = 201
+        keyboardTitleBar.Active = true
         Instance.new("UICorner", keyboardTitleBar).CornerRadius = UDim.new(0, 10)
+
+        -- Arrastar pela barra superior para reposicionar o teclado.
+        -- A posição fica guardada na própria janela e não é redefinida ao reabrir.
+        local draggingKeyboard = false
+        local dragInput = nil
+        local dragStart = nil
+        local windowStartPosition = nil
+
+        keyboardTitleBar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                draggingKeyboard = true
+                dragInput = input
+                dragStart = input.Position
+                windowStartPosition = keyboardWindow.Position
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if not draggingKeyboard then return end
+            if input.UserInputType == Enum.UserInputType.MouseMovement
+                or input.UserInputType == Enum.UserInputType.Touch then
+                local delta = input.Position - dragStart
+                keyboardWindow.Position = UDim2.new(
+                    windowStartPosition.X.Scale,
+                    windowStartPosition.X.Offset + delta.X,
+                    windowStartPosition.Y.Scale,
+                    windowStartPosition.Y.Offset + delta.Y
+                )
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if draggingKeyboard and (
+                input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch
+            ) then
+                draggingKeyboard = false
+                dragInput = nil
+                dragStart = nil
+                windowStartPosition = nil
+            end
+        end)
 
         local keyboardTitle = Instance.new("TextLabel", keyboardTitleBar)
         keyboardTitle.BackgroundTransparency = 1
@@ -36753,15 +36792,14 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
             -- Solta qualquer tecla virtual que ainda esteja pressionada.
             soltarTodasTeclas()
 
-            -- Desativa completamente a camada modal antes de esconder o teclado.
-            -- Apenas Visible=false não basta: Modal=true pode continuar bloqueando
-            -- os controles do jogo em alguns clientes/executores.
+            -- Garante que a camada antiga permaneça totalmente inativa.
             if keyboardInputLock then
                 keyboardInputLock.Modal = false
                 keyboardInputLock.Active = false
                 keyboardInputLock.Visible = false
             end
 
+            -- Não altera Position nem Scale: ao reabrir, mantém local e tamanho.
             keyboardWindow.Visible = false
         end)
 
