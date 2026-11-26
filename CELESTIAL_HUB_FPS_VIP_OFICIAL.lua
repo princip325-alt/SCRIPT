@@ -36352,7 +36352,7 @@ do
         -- poder ser usada enquanto o jogador interage com o jogo.
         keyboardWindow = Instance.new("Frame")
         keyboardWindow.Name = "CelestialHubKeyboard"
-        keyboardWindow.Size = UDim2.new(0, 840, 0, 420)
+        keyboardWindow.Size = UDim2.new(0, 846, 0, 418)
         keyboardWindow.AnchorPoint = Vector2.new(0.5, 0.5)
         keyboardWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
         keyboardWindow.BackgroundColor3 = Color3.fromRGB(18, 17, 25)
@@ -36369,8 +36369,10 @@ do
         keyboardStroke.Thickness = 2
         table.insert(keyboardRGBStrokes, keyboardStroke)
 
-        -- Tamanho fixo igual ao teclado da referência (aprox. 840 x 420).
-        -- Não aplicar UIScale automático: isso altera o tamanho visual entre aparelhos.
+        -- Escala única para redimensionar o teclado inteiro sem deformar o layout.
+        local keyboardScale = Instance.new("UIScale")
+        keyboardScale.Scale = 1
+        keyboardScale.Parent = keyboardWindow
 
         local keyboardTitleBar = Instance.new("Frame", keyboardWindow)
         keyboardTitleBar.Size = UDim2.new(1, 0, 0, 42)
@@ -36382,7 +36384,7 @@ do
         local keyboardTitle = Instance.new("TextLabel", keyboardTitleBar)
         keyboardTitle.BackgroundTransparency = 1
         keyboardTitle.Position = UDim2.new(0, 16, 0, 0)
-        keyboardTitle.Size = UDim2.new(1, -130, 1, 0)
+        keyboardTitle.Size = UDim2.new(1, -62, 1, 0)
         keyboardTitle.Font = FONTE_TITULO
         keyboardTitle.Text = "Celestial Hub - Keyboard"
         keyboardTitle.TextColor3 = Color3.fromRGB(245, 245, 250)
@@ -36404,8 +36406,7 @@ do
             Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
             return b
         end
-        local keyboardMinimize = criarBotaoTopo("–", -112, 30)
-        local keyboardHide = criarBotaoTopo("□", -72, 30)
+        -- Único botão da barra superior: fechar.
         local keyboardClose = criarBotaoTopo("X", -42, 30)
 
         local keyboardBody = Instance.new("Frame", keyboardWindow)
@@ -36642,14 +36643,75 @@ do
             shiftToggle.Text = shiftAtivo and "Shift: ON" or "Enable Shift"
         end)
 
-        keyboardMinimize.MouseButton1Click:Connect(function()
-            keyboardBody.Visible = not keyboardBody.Visible
-            keyboardWindow.Size = keyboardBody.Visible and UDim2.new(0, 840, 0, 420) or UDim2.new(0, 840, 0, 42)
-            keyboardMinimize.Text = keyboardBody.Visible and "–" or "+"
+        -- Alça circular discreta no canto inferior direito para redimensionar o teclado.
+        local keyboardResize = Instance.new("TextButton", keyboardWindow)
+        keyboardResize.Name = "ResizeHandle"
+        keyboardResize.AnchorPoint = Vector2.new(1, 1)
+        keyboardResize.Position = UDim2.new(1, -7, 1, -7)
+        keyboardResize.Size = UDim2.new(0, 24, 0, 24)
+        keyboardResize.BackgroundColor3 = Color3.fromRGB(32, 23, 45)
+        keyboardResize.BackgroundTransparency = 0.05
+        keyboardResize.BorderSizePixel = 0
+        keyboardResize.Text = ""
+        keyboardResize.AutoButtonColor = true
+        keyboardResize.ZIndex = 210
+        Instance.new("UICorner", keyboardResize).CornerRadius = UDim.new(1, 0)
+        local resizeStroke = Instance.new("UIStroke", keyboardResize)
+        resizeStroke.Color = Color3.fromRGB(170, 65, 255)
+        resizeStroke.Thickness = 2
+        table.insert(keyboardRGBStrokes, resizeStroke)
+
+        local resizeDot = Instance.new("Frame", keyboardResize)
+        resizeDot.Name = "ResizeDot"
+        resizeDot.AnchorPoint = Vector2.new(0.5, 0.5)
+        resizeDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+        resizeDot.Size = UDim2.new(0, 8, 0, 8)
+        resizeDot.BackgroundColor3 = Color3.fromRGB(225, 195, 255)
+        resizeDot.BorderSizePixel = 0
+        resizeDot.ZIndex = 211
+        Instance.new("UICorner", resizeDot).CornerRadius = UDim.new(1, 0)
+
+        local resizingKeyboard = false
+        local resizeInput = nil
+        local resizeStartPosition = nil
+        local resizeStartScale = 1
+        local MIN_KEYBOARD_SCALE = 0.55
+        local MAX_KEYBOARD_SCALE = 1.5
+
+        keyboardResize.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch then
+                resizingKeyboard = true
+                resizeInput = input
+                resizeStartPosition = input.Position
+                resizeStartScale = keyboardScale.Scale
+            end
         end)
-        keyboardHide.MouseButton1Click:Connect(function()
-            keyboardWindow.Size = UDim2.new(0, 840, 0, 420)
-            keyboardBody.Visible = true
+
+        UserInputService.InputChanged:Connect(function(input)
+            if not resizingKeyboard then return end
+            if input.UserInputType == Enum.UserInputType.MouseMovement
+                or input.UserInputType == Enum.UserInputType.Touch then
+                local currentPosition = input.Position
+                local delta = currentPosition - resizeStartPosition
+                local scaleDelta = math.max(delta.X / 846, delta.Y / 418)
+                keyboardScale.Scale = math.clamp(
+                    resizeStartScale + scaleDelta,
+                    MIN_KEYBOARD_SCALE,
+                    MAX_KEYBOARD_SCALE
+                )
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if resizingKeyboard and (
+                input.UserInputType == Enum.UserInputType.MouseButton1
+                or input.UserInputType == Enum.UserInputType.Touch
+            ) then
+                resizingKeyboard = false
+                resizeInput = nil
+                resizeStartPosition = nil
+            end
         end)
         -- Ciclo RGB contínuo somente nos contornos; teclas, textos e dimensões ficam iguais.
         local keyboardRGBHue = 0
