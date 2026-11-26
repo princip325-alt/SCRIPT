@@ -36330,6 +36330,7 @@ do
         -- O título foi personalizado para CELESTIAL HUB.
         -- =====================================================
         local keyboardWindow
+local keyboardInputLock -- declarado antes do callback da aba para evitar referência global nil
         local keyboardTab = frame:FindFirstChild("ContainerAba_keyboard")
         if keyboardTab then
             local keyboardCard, openKeyboardButton = criarAcaoUI(
@@ -36351,7 +36352,7 @@ do
 
         -- Bloqueio de toque/clique no jogo enquanto o teclado estiver aberto.
         -- O overlay fica atrás do teclado: entradas dentro dele continuam funcionando.
-        local keyboardInputLock = Instance.new("TextButton")
+        keyboardInputLock = Instance.new("TextButton")
         keyboardInputLock.Name = "KeyboardInputLock"
         keyboardInputLock.Size = UDim2.new(1, 0, 1, 0)
         keyboardInputLock.Position = UDim2.new(0, 0, 0, 0)
