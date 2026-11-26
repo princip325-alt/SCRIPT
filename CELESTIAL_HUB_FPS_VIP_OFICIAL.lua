@@ -36855,10 +36855,116 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
             multiTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(multiTab) + 5)
         end
 
-        -- PVP: Anti-Fling com capitalização e sem deixar um vão na aba.
+        -- PVP: Anti-Fling + mira visual FOV (somente indicador na tela).
+        -- O círculo não altera a mira, não seleciona jogadores e não executa Silent Aim.
         local pvpTab = frame:FindFirstChild("ContainerAba_pvp")
         if pvpTab then
             criarToggleComando(pvpTab, "ToggleAntiFlingBoss", "Anti-Fling (Jogadores e Bosses)", proximoY(pvpTab), "antifling", "unantifling", 90)
+
+            local fovCircle = Instance.new("Frame")
+            fovCircle.Name = "CelestialFOVVisual"
+            fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+            fovCircle.Position = UDim2.new(0.5, 0, 0.5, 0)
+            fovCircle.Size = UDim2.fromOffset(240, 240)
+            fovCircle.BackgroundTransparency = 1
+            fovCircle.BorderSizePixel = 0
+            fovCircle.Active = false
+            fovCircle.Visible = false
+            fovCircle.ZIndex = 20
+            fovCircle.Parent = gui
+            Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
+            local fovStroke = Instance.new("UIStroke")
+            fovStroke.Name = "NeonOutline"
+            fovStroke.Thickness = 2
+            fovStroke.Color = Color3.fromRGB(45, 255, 35)
+            fovStroke.Transparency = 0.08
+            fovStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            fovStroke.Parent = fovCircle
+            local fovAspect = Instance.new("UIAspectRatioConstraint")
+            fovAspect.AspectRatio = 1
+            fovAspect.Parent = fovCircle
+
+            _G.CelestialFOVVisual = fovCircle
+            _G.CelestialFOVVisualEnabled = false
+            _G.CelestialFOVVisualSize = 240
+            _G.CelestialFOVVisualTransparency = 0.08
+
+            criarToggleVisual(pvpTab, "ToggleShowFOV", "Show FOV • círculo visual", proximoY(pvpTab), function(ativo)
+                _G.CelestialFOVVisualEnabled = ativo
+                fovCircle.Visible = ativo
+                return true
+            end, 68)
+
+            criarCampoAplicacao(pvpTab, "ControleTamanhoFOV", "Tamanho do círculo FOV (80–700 px)", "Ex.: 240", "240", "APLICAR TAMANHO",
+                function(texto)
+                    local n = tonumber(texto)
+                    if n and n >= 80 and n <= 700 then return math.floor(n) end
+                    return nil
+                end,
+                function(n)
+                    _G.CelestialFOVVisualSize = n
+                    fovCircle.Size = UDim2.fromOffset(n, n)
+                    return true
+                end)
+
+            criarCampoAplicacao(pvpTab, "ControleTransparenciaFOV", "Transparência da borda (0–100%)", "Ex.: 8", "8", "APLICAR OPACIDADE",
+                function(texto)
+                    local n = tonumber(texto)
+                    if n and n >= 0 and n <= 100 then return n / 100 end
+                    return nil
+                end,
+                function(n)
+                    _G.CelestialFOVVisualTransparency = n
+                    fovStroke.Transparency = n
+                    return true
+                end)
+
+            local corCard = Instance.new("Frame")
+            corCard.Name = "ControleCorFOV"
+            corCard.Size = UDim2.new(1, -20, 0, 54)
+            corCard.Position = UDim2.new(0, 10, 0, proximoY(pvpTab))
+            corCard.BackgroundColor3 = COR_CARD
+            corCard.BorderSizePixel = 0
+            corCard.Parent = pvpTab
+            Instance.new("UICorner", corCard).CornerRadius = UDim.new(0, 7)
+            local corLabel = Instance.new("TextLabel")
+            corLabel.BackgroundTransparency = 1
+            corLabel.Position = UDim2.new(0, 10, 0, 0)
+            corLabel.Size = UDim2.new(1, -125, 1, 0)
+            corLabel.Text = "Cor do contorno neon"
+            corLabel.TextColor3 = COR_TEXTO
+            corLabel.Font = FONTE_TEXTO
+            corLabel.TextSize = 12
+            corLabel.TextXAlignment = Enum.TextXAlignment.Left
+            corLabel.Parent = corCard
+            local corBtn = Instance.new("TextButton")
+            corBtn.Size = UDim2.new(0, 100, 0, 32)
+            corBtn.AnchorPoint = Vector2.new(1, 0.5)
+            corBtn.Position = UDim2.new(1, -10, 0.5, 0)
+            corBtn.BackgroundColor3 = Color3.fromRGB(45, 255, 35)
+            corBtn.BorderSizePixel = 0
+            corBtn.Text = "VERDE NEON"
+            corBtn.TextColor3 = Color3.fromRGB(10, 20, 10)
+            corBtn.Font = FONTE_TITULO
+            corBtn.TextSize = 10
+            corBtn.Parent = corCard
+            Instance.new("UICorner", corBtn).CornerRadius = UDim.new(0, 6)
+            local fovVerde = true
+            corBtn.MouseButton1Click:Connect(function()
+                vibrar()
+                fovVerde = not fovVerde
+                if fovVerde then
+                    fovStroke.Color = Color3.fromRGB(45, 255, 35)
+                    corBtn.BackgroundColor3 = Color3.fromRGB(45, 255, 35)
+                    corBtn.Text = "VERDE NEON"
+                    corBtn.TextColor3 = Color3.fromRGB(10, 20, 10)
+                else
+                    fovStroke.Color = Color3.fromRGB(180, 70, 255)
+                    corBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 255)
+                    corBtn.Text = "ROXO NEON"
+                    corBtn.TextColor3 = COR_TEXTO
+                end
+            end)
             pvpTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(pvpTab) + 5)
         end
 
