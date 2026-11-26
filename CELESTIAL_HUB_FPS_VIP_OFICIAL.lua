@@ -36337,7 +36337,12 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                 keyboardTab, "AbrirTecladoCelestial", "Teclado virtual Celestial Hub", proximoY(keyboardTab),
                 function(btn)
                     if keyboardWindow then
-                        keyboardInputLock.Visible = true
+                        -- Ativa a captura de entrada somente enquanto o teclado estiver aberto.
+                        if keyboardInputLock then
+                            keyboardInputLock.Active = true
+                            keyboardInputLock.Modal = true
+                            keyboardInputLock.Visible = true
+                        end
                         keyboardWindow.Visible = true
                         btn.Text = "TECLADO ABERTO"
                         task.delay(1, function()
@@ -36351,7 +36356,8 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
         end
 
         -- Bloqueio de toque/clique no jogo enquanto o teclado estiver aberto.
-        -- O overlay fica atr√°s do teclado: entradas dentro dele continuam funcionando.
+        -- IMPORTANTE: Modal precisa ser desligado ao fechar, sen√£o o Roblox continua
+        -- capturando os toques e parece que a tela inteira ficou travada.
         keyboardInputLock = Instance.new("TextButton")
         keyboardInputLock.Name = "KeyboardInputLock"
         keyboardInputLock.Size = UDim2.new(1, 0, 1, 0)
@@ -36359,8 +36365,8 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
         keyboardInputLock.BackgroundTransparency = 1
         keyboardInputLock.Text = ""
         keyboardInputLock.AutoButtonColor = false
-        keyboardInputLock.Active = true
-        keyboardInputLock.Modal = true
+        keyboardInputLock.Active = false
+        keyboardInputLock.Modal = false
         keyboardInputLock.Visible = false
         keyboardInputLock.ZIndex = 199
         keyboardInputLock.Parent = gui
@@ -36744,7 +36750,18 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
         end)
 
         keyboardClose.MouseButton1Click:Connect(function()
+            -- Solta qualquer tecla virtual que ainda esteja pressionada.
             soltarTodasTeclas()
+
+            -- Desativa completamente a camada modal antes de esconder o teclado.
+            -- Apenas Visible=false n√£o basta: Modal=true pode continuar bloqueando
+            -- os controles do jogo em alguns clientes/executores.
+            if keyboardInputLock then
+                keyboardInputLock.Modal = false
+                keyboardInputLock.Active = false
+                keyboardInputLock.Visible = false
+            end
+
             keyboardWindow.Visible = false
         end)
 
