@@ -36336,6 +36336,7 @@ do
                 keyboardTab, "AbrirTecladoCelestial", "Teclado virtual Celestial Hub", proximoY(keyboardTab),
                 function(btn)
                     if keyboardWindow then
+                        keyboardInputLock.Visible = true
                         keyboardWindow.Visible = true
                         btn.Text = "TECLADO ABERTO"
                         task.delay(1, function()
@@ -36348,8 +36349,22 @@ do
             keyboardTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(keyboardTab) + 5)
         end
 
-        -- Janela flutuante do teclado; fica fora do painel principal para
-        -- poder ser usada enquanto o jogador interage com o jogo.
+        -- Bloqueio de toque/clique no jogo enquanto o teclado estiver aberto.
+        -- O overlay fica atrás do teclado: entradas dentro dele continuam funcionando.
+        local keyboardInputLock = Instance.new("TextButton")
+        keyboardInputLock.Name = "KeyboardInputLock"
+        keyboardInputLock.Size = UDim2.new(1, 0, 1, 0)
+        keyboardInputLock.Position = UDim2.new(0, 0, 0, 0)
+        keyboardInputLock.BackgroundTransparency = 1
+        keyboardInputLock.Text = ""
+        keyboardInputLock.AutoButtonColor = false
+        keyboardInputLock.Active = true
+        keyboardInputLock.Modal = true
+        keyboardInputLock.Visible = false
+        keyboardInputLock.ZIndex = 199
+        keyboardInputLock.Parent = gui
+
+        -- Janela flutuante do teclado; permanece acima da trava de entrada.
         keyboardWindow = Instance.new("Frame")
         keyboardWindow.Name = "CelestialHubKeyboard"
         keyboardWindow.Size = UDim2.new(0, 846, 0, 418)
@@ -36371,8 +36386,8 @@ do
 
         -- Escala única para redimensionar o teclado inteiro sem deformar o layout.
         local keyboardScale = Instance.new("UIScale")
-        -- Tamanho inicial compacto para celular: 80% do layout original.
-        keyboardScale.Scale = 0.8
+        -- Tamanho inicial menor para celular; a bolinha permite ajustar livremente.
+        keyboardScale.Scale = 0.55
         keyboardScale.Parent = keyboardWindow
 
         local keyboardTitleBar = Instance.new("Frame", keyboardWindow)
@@ -36676,8 +36691,8 @@ do
         local resizeInput = nil
         local resizeStartPosition = nil
         local resizeStartScale = 1
-        local MIN_KEYBOARD_SCALE = 0.55
-        local MAX_KEYBOARD_SCALE = 1.5
+        local MIN_KEYBOARD_SCALE = 0.35
+        local MAX_KEYBOARD_SCALE = 1.2
 
         keyboardResize.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1
