@@ -36520,8 +36520,16 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
             end
         end
 
-        -- Layout fiel √† refer√™ncia do Delta Mobile: cinco fileiras QWERTY,
-        -- linha inferior com barra de espa√ßo e setas √† direita.
+        -- Layout seguindo a refer√™ncia do Delta Mobile, tecla por tecla:
+        -- 1) Esc/F1-F12/Del; 2) `/1-0/-/=/Backspace;
+        -- 3) Tab/QWERTY/[ ]/\\; 4) Caps/ASDF/; '/Enter;
+        -- 5) Shift/ZXCV/,.//Shift; 6) Ctrl/Alt/Space/Alt/Ctrl + setas.
+        -- As fileiras usam a mesma altura, espa√ßamento e ordem da imagem.
+        local KEY_ROW_HEIGHT = 47
+        local KEY_ROW_STEP = 56
+        local KEY_GAP = 6
+        local KEY_ROW_WIDTH = 824
+
         local rows = {
             {
                 {"Esc",0.9},{"F1",0.9},{"F2",0.9},{"F3",0.9},{"F4",0.9},
@@ -36554,14 +36562,14 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
             local rowFrame = Instance.new("Frame", keyboardBody)
             rowFrame.Name = "LinhaTeclas" .. rowIndex
             rowFrame.BackgroundTransparency = 1
-            rowFrame.Position = UDim2.new(0, 0, 0, (rowIndex - 1) * 56)
-            rowFrame.Size = UDim2.new(1, 0, 0, 47)
+            rowFrame.Position = UDim2.new(0, 0, 0, (rowIndex - 1) * KEY_ROW_STEP)
+            rowFrame.Size = UDim2.new(1, 0, 0, KEY_ROW_HEIGHT)
             rowFrame.ZIndex = 202
 
-            local gap = 6
+            local gap = KEY_GAP
             local totalWeight = 0
             for _, item in ipairs(row) do totalWeight = totalWeight + item[2] end
-            local usableWidth = 824 - gap * (#row - 1)
+            local usableWidth = KEY_ROW_WIDTH - gap * (#row - 1)
             local x = 0
             for _, keyData in ipairs(row) do
                 local label, weight = keyData[1], keyData[2]
@@ -36569,18 +36577,18 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                 local keyButton = Instance.new("TextButton", rowFrame)
                 keyButton.Name = "Key_" .. label:gsub("%W", "")
                 keyButton.Position = UDim2.new(0, x, 0, 0)
-                keyButton.Size = UDim2.new(0, keyWidth, 0, 47)
-                keyButton.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
+                keyButton.Size = UDim2.new(0, keyWidth, 0, KEY_ROW_HEIGHT)
+                keyButton.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
                 keyButton.BorderSizePixel = 0
                 keyButton.Text = label
-                keyButton.TextColor3 = Color3.fromRGB(245, 245, 250)
+                keyButton.TextColor3 = Color3.fromRGB(245, 245, 245)
                 keyButton.Font = FONTE_TEXTO
                 keyButton.TextSize = 15
                 keyButton.TextWrapped = true
                 keyButton.ZIndex = 203
                 Instance.new("UICorner", keyButton).CornerRadius = UDim.new(0, 7)
                 local outline = Instance.new("UIStroke", keyButton)
-                outline.Color = Color3.fromRGB(150, 45, 245)
+                outline.Color = Color3.fromRGB(235, 190, 35)
                 outline.Thickness = 1.8
                 table.insert(keyboardRGBStrokes, outline)
 
@@ -36597,21 +36605,21 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                         keysPressionadas[label] = true
                         enviarTecla(label, true)
                     end
-                    keyButton.BackgroundColor3 = Color3.fromRGB(75, 43, 105)
+                    keyButton.BackgroundColor3 = Color3.fromRGB(65, 57, 28)
                 end)
                 keyButton.MouseButton1Up:Connect(function()
                     if label ~= "Shift" and label ~= "Caps Lock" then
                         enviarTecla(label, false)
                         keysPressionadas[label] = nil
                     end
-                    keyButton.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
+                    keyButton.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
                 end)
                 keyButton.MouseLeave:Connect(function()
                     if keysPressionadas[label] then
                         enviarTecla(label, false)
                         keysPressionadas[label] = nil
                     end
-                    keyButton.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
+                    keyButton.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
                 end)
                 x = x + keyWidth + gap
             end
@@ -36634,34 +36642,34 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
             b.Name = "KeyBottom_" .. label:gsub("%W", "") .. tostring(math.floor(x * 1000))
             b.Position = UDim2.new(0, x, 0, y)
             b.Size = UDim2.new(0, width, 0, height)
-            b.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
+            b.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
             b.BorderSizePixel = 0
             b.Text = label
-            b.TextColor3 = Color3.fromRGB(245, 245, 250)
+            b.TextColor3 = Color3.fromRGB(245, 245, 245)
             b.Font = FONTE_TEXTO
             b.TextSize = 14
             b.ZIndex = 203
             Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
             local stroke = Instance.new("UIStroke", b)
-            stroke.Color = Color3.fromRGB(150, 45, 245)
+            stroke.Color = Color3.fromRGB(235, 190, 35)
             stroke.Thickness = 1.8
             table.insert(keyboardRGBStrokes, stroke)
             b.MouseButton1Down:Connect(function()
                 keysPressionadas[label] = true
                 enviarTecla(label, true)
-                b.BackgroundColor3 = Color3.fromRGB(75, 43, 105)
+                b.BackgroundColor3 = Color3.fromRGB(65, 57, 28)
             end)
             b.MouseButton1Up:Connect(function()
                 enviarTecla(label, false)
                 keysPressionadas[label] = nil
-                b.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
+                b.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
             end)
             b.MouseLeave:Connect(function()
                 if keysPressionadas[label] then
                     enviarTecla(label, false)
                     keysPressionadas[label] = nil
                 end
-                b.BackgroundColor3 = Color3.fromRGB(8, 7, 13)
+                b.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
             end)
             return b
         end
