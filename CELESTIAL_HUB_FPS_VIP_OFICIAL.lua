@@ -3963,6 +3963,99 @@ do
         end
     end)
 
+    -- Contador de pessoas no barco (aba SEA/CIA Event)
+    local molduraPessoas = criarMoldura(containerMar, 475, 68, "Pessoas no barco")
+    local pessoasBox, pessoasBtn = criarToggleDireita(molduraPessoas, 35)
+    local pessoasCircle = pessoasBox:FindFirstChild("Circle")
+    local pessoasAtivo = false
+    local pessoasLoop = nil
+
+    local pessoasPopup = Instance.new("Frame")
+    pessoasPopup.Name = "PessoasNoBarcoPopup"
+    pessoasPopup.Size = UDim2.new(0, 190, 0, 54)
+    pessoasPopup.Position = UDim2.new(0.5, -95, 0.18, 0)
+    pessoasPopup.BackgroundColor3 = Color3.fromRGB(20, 22, 30)
+    pessoasPopup.BackgroundTransparency = 0.08
+    pessoasPopup.BorderSizePixel = 0
+    pessoasPopup.Visible = false
+    pessoasPopup.Active = true
+    pessoasPopup.ZIndex = 1000
+    pessoasPopup.Parent = gui
+    Instance.new("UICorner", pessoasPopup).CornerRadius = UDim.new(0, 9)
+    local popupStroke = Instance.new("UIStroke", pessoasPopup)
+    popupStroke.Color = Color3.fromRGB(0, 170, 255)
+    popupStroke.Thickness = 1
+    local pessoasTexto = Instance.new("TextLabel", pessoasPopup)
+    pessoasTexto.Size = UDim2.new(1, -16, 1, 0)
+    pessoasTexto.Position = UDim2.new(0, 8, 0, 0)
+    pessoasTexto.BackgroundTransparency = 1
+    pessoasTexto.Text = "Pessoas no barco: 0"
+    pessoasTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
+    pessoasTexto.Font = FONTE_TEXTO
+    pessoasTexto.TextSize = 14
+    pessoasTexto.TextXAlignment = Enum.TextXAlignment.Center
+    pessoasTexto.ZIndex = 1001
+
+    -- Arraste o pop-up com mouse ou toque (celular).
+    local popupDragging, popupDragInput, popupDragStart, popupStartPos
+    pessoasPopup.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            popupDragging = true
+            popupDragStart = input.Position
+            popupStartPos = pessoasPopup.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then popupDragging = false end
+            end)
+        end
+    end)
+    pessoasPopup.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then popupDragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if popupDragging and input == popupDragInput then
+            local delta = input.Position - popupDragStart
+            pessoasPopup.Position = UDim2.new(popupStartPos.X.Scale, popupStartPos.X.Offset + delta.X, popupStartPos.Y.Scale, popupStartPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    local function contarPessoasNoBarco()
+        local char = player.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local seat = hum and hum.SeatPart
+        local modelo = seat and seat:IsA("VehicleSeat") and modeloDoBarco(seat)
+        if not modelo then return 0 end
+        local total = 0
+        for _, obj in ipairs(modelo:GetDescendants()) do
+            if obj:IsA("Seat") or obj:IsA("VehicleSeat") then
+                if obj.Occupant then total = total + 1 end
+            end
+        end
+        return total
+    end
+
+    local function setPessoasToggle(ativo)
+        TweenService:Create(pessoasBox, TweenInfo.new(0.15), {BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or Color3.fromRGB(60, 60, 70)}):Play()
+        if pessoasCircle then
+            TweenService:Create(pessoasCircle, TweenInfo.new(0.15), {Position = ativo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)}):Play()
+        end
+    end
+
+    pessoasBtn.MouseButton1Click:Connect(function()
+        vibrar()
+        pessoasAtivo = not pessoasAtivo
+        setPessoasToggle(pessoasAtivo)
+        pessoasPopup.Visible = pessoasAtivo
+        if pessoasLoop then pessoasLoop:Disconnect(); pessoasLoop = nil end
+        if pessoasAtivo then
+            local function atualizarContagem()
+                if not pessoasAtivo then return end
+                pessoasTexto.Text = "Pessoas no barco: " .. tostring(contarPessoasNoBarco())
+            end
+            atualizarContagem()
+            pessoasLoop = RunService.Heartbeat:Connect(atualizarContagem)
+        end
+    end)
+
  local molduraRochas = criarMoldura(containerMar, 485, 85, "Remover Rochas")
     local rochaBox, rochaBtn = criarToggleDireita(molduraRochas, 22)
     local rochaCircle = rochaBox:FindFirstChild("Circle")
@@ -4289,8 +4382,8 @@ do
                     local delta = alvo.Position - seat.Position
                     local distancia = delta.Magnitude
                     if distancia > 70 then
-                        local localDir = seat.CFrame:VectorToObjectSpace(delta.Unit)
-                        seat.Steer = math.clamp(localDir.X, -1, 1)
+                        -- Avança em linha reta: não aplica direção lateral.
+                        seat.Steer = 0
                         seat.Throttle = 1
                     else
                         seat.Throttle = 0
