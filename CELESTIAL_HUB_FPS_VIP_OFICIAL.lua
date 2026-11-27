@@ -318,7 +318,58 @@ naoBtn.TextSize = 14
 Instance.new("UICorner", naoBtn).CornerRadius = UDim.new(0, 8)
 
 closeBtn.MouseButton1Click:Connect(function() vibrar(); confirmFrame.Visible = true end)
-simBtn.MouseButton1Click:Connect(function() vibrar(); gui:Destroy() end)
+-- Encerramento centralizado do CELESTIAL HUB.
+-- O X (confirmado em "Sim") remove a interface e desativa os estados globais conhecidos.
+local celestialHubEncerrado = false
+local function encerrarCelestialHub()
+    if celestialHubEncerrado then return end
+    celestialHubEncerrado = true
+
+    -- Sinaliza o encerramento para rotinas do próprio hub que consultem esta flag.
+    _G.CelestialHubShutdown = true
+    _G.CelestialHubAdmin1Unload = true
+
+    -- Desativa estados globais usados por recursos do hub.
+    _G.AutoDevilFruit = false
+    _G.AutoStoreFruit = false
+    _G.ACHubToggleFly = false
+    _G.CelestialAimAssistEnabled = false
+    _G.CelestialESPEnabled = false
+    _G.CelestialFOVVisualEnabled = false
+    _G.AntBanAtivo = false
+
+    -- Remove a interface principal e todos os pop-ups/elementos que sejam filhos dela.
+    pcall(function()
+        if gui and gui.Parent then gui:Destroy() end
+    end)
+
+    -- Remove outras interfaces auxiliares do próprio hub, caso existam.
+    pcall(function()
+        local pg = player:FindFirstChildOfClass("PlayerGui")
+        if pg then
+            for _, item in ipairs(pg:GetChildren()) do
+                local n = string.lower(item.Name)
+                if n:find("celestial") or n == "settings_config" then
+                    item:Destroy()
+                end
+            end
+        end
+    end)
+    pcall(function()
+        local cg = game:GetService("CoreGui")
+        for _, item in ipairs(cg:GetChildren()) do
+            local n = string.lower(item.Name)
+            if n:find("celestial") or n == "settings_config" then
+                item:Destroy()
+            end
+        end
+    end)
+end
+
+simBtn.MouseButton1Click:Connect(function()
+    vibrar()
+    encerrarCelestialHub()
+end)
 naoBtn.MouseButton1Click:Connect(function() vibrar(); confirmFrame.Visible = false end)
 
 local sairConfirmFrame = Instance.new("Frame", gui)
@@ -4056,6 +4107,184 @@ do
         end
     end)
 
+    -- Radar do Leviatã: mostra coordenadas somente quando o objeto da dimensão
+    -- estiver replicado no cliente. Não inventa posição quando não há alvo.
+    local molduraRadarLevi = criarMoldura(containerMar, 475, 68, "Leviatã Radar")
+    local radarLeviBox, radarLeviBtn = criarToggleDireita(molduraRadarLevi, 35)
+    local radarLeviCircle = radarLeviBox:FindFirstChild("Circle")
+    local radarLeviAtivo, radarLeviLoop = false, nil
+    local radarLeviPopup = Instance.new("Frame")
+    radarLeviPopup.Name = "LeviathanRadarPopup"
+    radarLeviPopup.Size = UDim2.new(0, 230, 0, 58)
+    radarLeviPopup.Position = UDim2.new(0.5, -115, 0.25, 0)
+    radarLeviPopup.BackgroundColor3 = Color3.fromRGB(18, 22, 32)
+    radarLeviPopup.BackgroundTransparency = 0.12
+    radarLeviPopup.BorderSizePixel = 0
+    radarLeviPopup.Active = true
+    radarLeviPopup.Visible = false
+    radarLeviPopup.ZIndex = 1100
+    radarLeviPopup.Parent = gui
+    Instance.new("UICorner", radarLeviPopup).CornerRadius = UDim.new(0, 8)
+    local radarLeviStroke = Instance.new("UIStroke", radarLeviPopup)
+    radarLeviStroke.Color = Color3.fromRGB(80, 190, 255)
+    radarLeviStroke.Thickness = 1
+    local radarLeviText = Instance.new("TextLabel")
+    radarLeviText.BackgroundTransparency = 1
+    radarLeviText.Size = UDim2.new(1, -12, 1, -8)
+    radarLeviText.Position = UDim2.new(0, 6, 0, 4)
+    radarLeviText.Font = FONTE_TEXTO
+    radarLeviText.TextSize = 13
+    radarLeviText.TextColor3 = Color3.fromRGB(235, 245, 255)
+    radarLeviText.TextWrapped = true
+    radarLeviText.Text = "Leviatã: procurando dimensão..."
+    radarLeviText.ZIndex = 1101
+    radarLeviText.Parent = radarLeviPopup
+
+    local radarDrag, radarDragInput, radarDragStart, radarStartPos
+    radarLeviPopup.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            radarDrag, radarDragStart, radarStartPos = true, input.Position, radarLeviPopup.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then radarDrag = false end end)
+        end
+    end)
+    radarLeviPopup.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then radarDragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if radarDrag and input == radarDragInput then
+            local delta = input.Position - radarDragStart
+            radarLeviPopup.Position = UDim2.new(radarStartPos.X.Scale, radarStartPos.X.Offset + delta.X, radarStartPos.Y.Scale, radarStartPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    local function acharDimensaoLevi()
+        local nomes = {frozenisland = true, frozendimension = true, frozenwatcher = true, leviathan = true}
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            local nome = string.lower(tostring(obj.Name)):gsub("[%s_%-<>]", "")
+            if nomes[nome] then
+                if obj:IsA("BasePart") then return obj end
+                if obj:IsA("Model") and not obj:FindFirstChildOfClass("Humanoid") then
+                    local parte = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true)
+                    if parte then return parte end
+                end
+            end
+        end
+        return nil
+    end
+    local function setRadarLevi(ativo)
+        radarLeviAtivo = ativo
+        TweenService:Create(radarLeviBox, TweenInfo.new(0.15), {BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or Color3.fromRGB(60, 60, 70)}):Play()
+        if radarLeviCircle then TweenService:Create(radarLeviCircle, TweenInfo.new(0.15), {Position = ativo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)}):Play() end
+        radarLeviPopup.Visible = ativo
+        if radarLeviLoop then task.cancel(radarLeviLoop); radarLeviLoop = nil end
+        if ativo then
+            radarLeviLoop = task.spawn(function()
+                while radarLeviAtivo do
+                    local alvo = acharDimensaoLevi()
+                    if alvo then
+                        local p = alvo.Position
+                        radarLeviText.Text = string.format("DIMENSÃO DETECTADA\nX: %.0f  Y: %.0f  Z: %.0f", p.X, p.Y, p.Z)
+                    else
+                        radarLeviText.Text = "Leviatã: dimensão não detectada\nAguardando dados do jogo..."
+                    end
+                    task.wait(1.5)
+                end
+            end)
+        end
+    end
+    radarLeviBtn.MouseButton1Click:Connect(function() vibrar(); setRadarLevi(not radarLeviAtivo) end)
+
+    -- Cooldown do Spy só pode ser identificado se o servidor replicar um atributo
+    -- público no Player. Sem esse dado, o painel informa que não está disponível.
+    local molduraCooldownSpy = criarMoldura(containerMar, 475, 68, "Pessoas em Cooldown (Spy)")
+    local cooldownSpyBox, cooldownSpyBtn = criarToggleDireita(molduraCooldownSpy, 35)
+    local cooldownSpyCircle = cooldownSpyBox:FindFirstChild("Circle")
+    local cooldownSpyAtivo, cooldownSpyLoop = false, nil
+    local cooldownSpyPopup = Instance.new("Frame")
+    cooldownSpyPopup.Name = "SpyCooldownPopup"
+    cooldownSpyPopup.Size = UDim2.new(0, 245, 0, 64)
+    cooldownSpyPopup.Position = UDim2.new(0.5, -122, 0.34, 0)
+    cooldownSpyPopup.BackgroundColor3 = Color3.fromRGB(18, 22, 32)
+    cooldownSpyPopup.BackgroundTransparency = 0.12
+    cooldownSpyPopup.BorderSizePixel = 0
+    cooldownSpyPopup.Active = true
+    cooldownSpyPopup.Visible = false
+    cooldownSpyPopup.ZIndex = 1100
+    cooldownSpyPopup.Parent = gui
+    Instance.new("UICorner", cooldownSpyPopup).CornerRadius = UDim.new(0, 8)
+    local spyPopupStroke = Instance.new("UIStroke", cooldownSpyPopup)
+    spyPopupStroke.Color = Color3.fromRGB(80, 190, 255)
+    spyPopupStroke.Thickness = 1
+    local cooldownSpyText = Instance.new("TextLabel")
+    cooldownSpyText.BackgroundTransparency = 1
+    cooldownSpyText.Size = UDim2.new(1, -12, 1, -8)
+    cooldownSpyText.Position = UDim2.new(0, 6, 0, 4)
+    cooldownSpyText.Font = FONTE_TEXTO
+    cooldownSpyText.TextSize = 12
+    cooldownSpyText.TextColor3 = Color3.fromRGB(235, 245, 255)
+    cooldownSpyText.TextWrapped = true
+    cooldownSpyText.ZIndex = 1101
+    cooldownSpyText.Parent = cooldownSpyPopup
+    local spyDrag, spyDragInput, spyDragStart, spyStartPos
+    cooldownSpyPopup.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            spyDrag, spyDragStart, spyStartPos = true, input.Position, cooldownSpyPopup.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then spyDrag = false end end)
+        end
+    end)
+    cooldownSpyPopup.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then spyDragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if spyDrag and input == spyDragInput then
+            local delta = input.Position - spyDragStart
+            cooldownSpyPopup.Position = UDim2.new(spyStartPos.X.Scale, spyStartPos.X.Offset + delta.X, spyStartPos.Y.Scale, spyStartPos.Y.Offset + delta.Y)
+        end
+    end)
+    local function consultarCooldownSpy()
+        local disponiveis, emCooldown, semDado = {}, {}, 0
+        for _, plr in ipairs(PlayersService:GetPlayers()) do
+            local achou = false
+            local canPay = plr:GetAttribute("CanPaySpy")
+            local cooldown = plr:GetAttribute("SpyCooldown")
+            local ready = plr:GetAttribute("SpyReady")
+            if canPay ~= nil then
+                achou = true
+                if canPay == true then table.insert(disponiveis, plr.Name) else table.insert(emCooldown, plr.Name) end
+            elseif ready ~= nil then
+                achou = true
+                if ready == true then table.insert(disponiveis, plr.Name) else table.insert(emCooldown, plr.Name) end
+            elseif cooldown ~= nil then
+                achou = true
+                if tonumber(cooldown) and tonumber(cooldown) <= 0 then table.insert(disponiveis, plr.Name) else table.insert(emCooldown, plr.Name) end
+            end
+            if not achou then semDado = semDado + 1 end
+        end
+        return disponiveis, emCooldown, semDado
+    end
+    local function setCooldownSpy(ativo)
+        cooldownSpyAtivo = ativo
+        TweenService:Create(cooldownSpyBox, TweenInfo.new(0.15), {BackgroundColor3 = ativo and Color3.fromRGB(0, 120, 220) or Color3.fromRGB(60, 60, 70)}):Play()
+        if cooldownSpyCircle then TweenService:Create(cooldownSpyCircle, TweenInfo.new(0.15), {Position = ativo and UDim2.new(0, 25, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)}):Play() end
+        cooldownSpyPopup.Visible = ativo
+        if cooldownSpyLoop then task.cancel(cooldownSpyLoop); cooldownSpyLoop = nil end
+        if ativo then
+            cooldownSpyLoop = task.spawn(function()
+                while cooldownSpyAtivo do
+                    local prontos, cooldown, semDado = consultarCooldownSpy()
+                    if #prontos + #cooldown == 0 then
+                        cooldownSpyText.Text = "Spy: nenhum dado público disponível no cliente."
+                    else
+                        cooldownSpyText.Text = "Pode pagar: " .. (#prontos > 0 and table.concat(prontos, ", ") or "ninguém") .. "\nEm cooldown: " .. (#cooldown > 0 and table.concat(cooldown, ", ") or "ninguém")
+                        if semDado > 0 then cooldownSpyText.Text = cooldownSpyText.Text .. "\nSem informação: " .. semDado end
+                    end
+                    task.wait(2)
+                end
+            end)
+        end
+    end
+    cooldownSpyBtn.MouseButton1Click:Connect(function() vibrar(); setCooldownSpy(not cooldownSpyAtivo) end)
+
  local molduraRochas = criarMoldura(containerMar, 485, 85, "Remover Rochas")
     local rochaBox, rochaBtn = criarToggleDireita(molduraRochas, 22)
     local rochaCircle = rochaBox:FindFirstChild("Circle")
@@ -4382,8 +4611,8 @@ do
                     local delta = alvo.Position - seat.Position
                     local distancia = delta.Magnitude
                     if distancia > 70 then
-                        local localDir = seat.CFrame:VectorToObjectSpace(delta.Unit)
-                        seat.Steer = math.clamp(localDir.X, -1, 1)
+                        -- Avança em linha reta: não aplica direção lateral.
+                        seat.Steer = 0
                         seat.Throttle = 1
                     else
                         seat.Throttle = 0
