@@ -318,58 +318,7 @@ naoBtn.TextSize = 14
 Instance.new("UICorner", naoBtn).CornerRadius = UDim.new(0, 8)
 
 closeBtn.MouseButton1Click:Connect(function() vibrar(); confirmFrame.Visible = true end)
--- Encerramento centralizado do CELESTIAL HUB.
--- O X (confirmado em "Sim") remove a interface e desativa os estados globais conhecidos.
-local celestialHubEncerrado = false
-local function encerrarCelestialHub()
-    if celestialHubEncerrado then return end
-    celestialHubEncerrado = true
-
-    -- Sinaliza o encerramento para rotinas do próprio hub que consultem esta flag.
-    _G.CelestialHubShutdown = true
-    _G.CelestialHubAdmin1Unload = true
-
-    -- Desativa estados globais usados por recursos do hub.
-    _G.AutoDevilFruit = false
-    _G.AutoStoreFruit = false
-    _G.ACHubToggleFly = false
-    _G.CelestialAimAssistEnabled = false
-    _G.CelestialESPEnabled = false
-    _G.CelestialFOVVisualEnabled = false
-    _G.AntBanAtivo = false
-
-    -- Remove a interface principal e todos os pop-ups/elementos que sejam filhos dela.
-    pcall(function()
-        if gui and gui.Parent then gui:Destroy() end
-    end)
-
-    -- Remove outras interfaces auxiliares do próprio hub, caso existam.
-    pcall(function()
-        local pg = player:FindFirstChildOfClass("PlayerGui")
-        if pg then
-            for _, item in ipairs(pg:GetChildren()) do
-                local n = string.lower(item.Name)
-                if n:find("celestial") or n == "settings_config" then
-                    item:Destroy()
-                end
-            end
-        end
-    end)
-    pcall(function()
-        local cg = game:GetService("CoreGui")
-        for _, item in ipairs(cg:GetChildren()) do
-            local n = string.lower(item.Name)
-            if n:find("celestial") or n == "settings_config" then
-                item:Destroy()
-            end
-        end
-    end)
-end
-
-simBtn.MouseButton1Click:Connect(function()
-    vibrar()
-    encerrarCelestialHub()
-end)
+simBtn.MouseButton1Click:Connect(function() vibrar(); gui:Destroy() end)
 naoBtn.MouseButton1Click:Connect(function() vibrar(); confirmFrame.Visible = false end)
 
 local sairConfirmFrame = Instance.new("Frame", gui)
