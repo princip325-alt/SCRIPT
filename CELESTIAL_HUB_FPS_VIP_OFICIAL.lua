@@ -2836,7 +2836,7 @@ do
             painel.Name = "Painel"
             painel.Size = UDim2.new(1, 0, 1, 0)
             painel.BackgroundColor3 = Color3.fromRGB(12, 20, 30)
-            painel.BackgroundTransparency = 0.22
+            painel.BackgroundTransparency = 1
             painel.BorderSizePixel = 0
             painel.Parent = bb
             Instance.new("UICorner", painel).CornerRadius = UDim.new(0, 5)
@@ -2918,8 +2918,8 @@ do
         end
 
         local function lerEnergiaSpawnNew(p, character)
-            local nomesValor = {"Energia", "Energy", "Shield", "Escudo", "Mana"}
-            local nomesMax = {"MaxEnergia", "MaxEnergy", "MaxShield", "MaxEscudo", "MaxMana"}
+            local nomesValor = {"N", "Energia", "Energy", "Shield", "Escudo", "Mana"}
+            local nomesMax = {"MaxN", "NMax", "MaxEnergia", "MaxEnergy", "MaxShield", "MaxEscudo", "MaxMana"}
             local fontes = {character, p}
             local valorAtual, valorMax
             for _, fonte in ipairs(fontes) do
@@ -2927,7 +2927,7 @@ do
                     for _, nomeValor in ipairs(nomesValor) do
                         local atributo = fonte:GetAttribute(nomeValor)
                         if typeof(atributo) == "number" then valorAtual = atributo; break end
-                        local objeto = fonte:FindFirstChild(nomeValor)
+                        local objeto = fonte:FindFirstChild(nomeValor, true)
                         if objeto and (objeto:IsA("NumberValue") or objeto:IsA("IntValue")) then
                             valorAtual = objeto.Value; break
                         end
@@ -2940,7 +2940,7 @@ do
                     for _, nomeMaximo in ipairs(nomesMax) do
                         local atributo = fonte:GetAttribute(nomeMaximo)
                         if typeof(atributo) == "number" then valorMax = atributo; break end
-                        local objeto = fonte:FindFirstChild(nomeMaximo)
+                        local objeto = fonte:FindFirstChild(nomeMaximo, true)
                         if objeto and (objeto:IsA("NumberValue") or objeto:IsA("IntValue")) then
                             valorMax = objeto.Value; break
                         end
@@ -36985,14 +36985,14 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                 espObjects[plr] = {box,info,hpBack,hpFill,manaBack,manaFill}
             end
             local function getMana(character, humanoid, plr)
-                local names = {"Energia","Energy","Shield","Escudo","Mana","Magic"}
+                local names = {"N","Energia","Energy","Shield","Escudo","Mana","Magic"}
                 local sources = {character, plr}
                 for _, source in ipairs(sources) do
                     if source then
                         for _, name in ipairs(names) do
                             local value = source:GetAttribute(name)
                             if typeof(value) == "number" then return value end
-                            local child = source:FindFirstChild(name)
+                            local child = source:FindFirstChild(name, true)
                             if child and (child:IsA("NumberValue") or child:IsA("IntValue")) then return child.Value end
                         end
                     end
@@ -37000,18 +37000,34 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                 return nil
             end
             local function getMaxMana(character, plr)
-                local names = {"MaxEnergia","MaxEnergy","MaxShield","MaxEscudo","MaxMana"}
+                local names = {"MaxN","NMax","MaxEnergia","MaxEnergy","MaxShield","MaxEscudo","MaxMana"}
                 for _, source in ipairs({character, plr}) do
                     if source then
                         for _, name in ipairs(names) do
                             local value = source:GetAttribute(name)
                             if typeof(value) == "number" then return math.max(value, 1) end
-                            local child = source:FindFirstChild(name)
+                            local child = source:FindFirstChild(name, true)
                             if child and (child:IsA("NumberValue") or child:IsA("IntValue")) then return math.max(child.Value, 1) end
                         end
                     end
                 end
                 return 100
+            end
+            local function readPlayerStat(plr, character, names)
+                local sources = {character, plr}
+                for _, source in ipairs(sources) do
+                    if source then
+                        for _, name in ipairs(names) do
+                            local attr = source:GetAttribute(name)
+                            if typeof(attr) == "number" then return attr end
+                            local value = source:FindFirstChild(name, true)
+                            if value and (value:IsA("NumberValue") or value:IsA("IntValue")) then
+                                return value.Value
+                            end
+                        end
+                    end
+                end
+                return nil
             end
             local function updateESP()
                 local camera = workspace.CurrentCamera
@@ -37035,7 +37051,11 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                                     local width = height * 0.55
                                     box.Position = UDim2.fromOffset(pos.X-width/2, pos.Y-height/2)
                                     box.Size = UDim2.fromOffset(width,height); box.Visible = true
-                                    local hp = math.clamp(hum.Health / math.max(hum.MaxHealth,1),0,1)
+                                    local pv = readPlayerStat(plr, char, {"PV"})
+                                    local maxPV = readPlayerStat(plr, char, {"MaxPV", "PVMax"}) or hum.MaxHealth
+                                    local vidaAtual = pv ~= nil and pv or hum.Health
+                                    local vidaMaxima = math.max(tonumber(maxPV) or hum.MaxHealth, 1)
+                                    local hp = math.clamp(vidaAtual / vidaMaxima,0,1)
                                     hpBack.Position = UDim2.fromOffset(pos.X-width/2,pos.Y+height/2+3)
                                     hpBack.Size = UDim2.fromOffset(width,4); hpBack.Visible = true
                                     hpFill.Size = UDim2.fromScale(hp,1)
@@ -37045,7 +37065,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                                     manaBack.Size = UDim2.fromOffset(width,4); manaBack.Visible = mana ~= nil
                                     if mana ~= nil then manaFill.Size = UDim2.fromScale(math.clamp(mana/math.max(maxMana,1),0,1),1) end
                                     info.Position = UDim2.fromOffset(pos.X-width/2,pos.Y-height/2-19)
-                                    info.Text = string.format("%s  HP %d/%d  %s",plr.DisplayName,hum.Health,hum.MaxHealth,mana and ("MP "..math.floor(mana)) or "")
+                                    info.Text = string.format("%s  PV %d/%d  %s",plr.DisplayName,vidaAtual,vidaMaxima,mana and ("EN "..math.floor(mana)) or "EN --")
                                     info.Visible = true
                                 end
                             end
