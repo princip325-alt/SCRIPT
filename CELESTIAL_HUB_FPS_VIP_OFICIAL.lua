@@ -4382,8 +4382,8 @@ do
                     local delta = alvo.Position - seat.Position
                     local distancia = delta.Magnitude
                     if distancia > 70 then
-                        -- Avança em linha reta: não aplica direção lateral.
-                        seat.Steer = 0
+                        local localDir = seat.CFrame:VectorToObjectSpace(delta.Unit)
+                        seat.Steer = math.clamp(localDir.X, -1, 1)
                         seat.Throttle = 1
                     else
                         seat.Throttle = 0
