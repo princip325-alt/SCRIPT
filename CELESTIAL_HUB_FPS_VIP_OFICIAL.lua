@@ -4056,6 +4056,145 @@ do
         end
     end)
 
+    -- Contador local de eventos marítimos para acompanhar o cooldown do Spy.
+    -- Só observa inimigos marítimos dentro de workspace.Enemies; não conta NPCs,
+    -- jogadores, mobs terrestres nem o barco do próprio jogador.
+    local EVENTOS_MARITIMOS_META = 20
+    local eventosMaritimosRestantes = EVENTOS_MARITIMOS_META
+    local eventosMaritimosContados = {}
+    local eventosMaritimosConexoes = {}
+
+    local molduraEventos = criarMoldura(containerMar, 0, 112, "Eventos marítimos / Cooldown")
+    local eventosStatus = Instance.new("TextLabel", molduraEventos)
+    eventosStatus.Size = UDim2.new(1, -20, 0, 22)
+    eventosStatus.Position = UDim2.new(0, 10, 0, 31)
+    eventosStatus.BackgroundTransparency = 1
+    eventosStatus.Text = "Cooldown: aguardando eventos"
+    eventosStatus.TextColor3 = Color3.fromRGB(255, 205, 90)
+    eventosStatus.Font = FONTE_TEXTO
+    eventosStatus.TextSize = 11
+    eventosStatus.TextXAlignment = Enum.TextXAlignment.Left
+
+    local eventosContagem = Instance.new("TextLabel", molduraEventos)
+    eventosContagem.Size = UDim2.new(1, -125, 0, 22)
+    eventosContagem.Position = UDim2.new(0, 10, 0, 56)
+    eventosContagem.BackgroundTransparency = 1
+    eventosContagem.Text = "Faltam: 20 eventos marítimos"
+    eventosContagem.TextColor3 = COR_TEXTO
+    eventosContagem.Font = FONTE_TITULO
+    eventosContagem.TextSize = 12
+    eventosContagem.TextXAlignment = Enum.TextXAlignment.Left
+
+    local atualizarEventosBtn = Instance.new("TextButton", molduraEventos)
+    atualizarEventosBtn.Size = UDim2.new(0, 96, 0, 28)
+    atualizarEventosBtn.Position = UDim2.new(1, -108, 0, 53)
+    atualizarEventosBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 220)
+    atualizarEventosBtn.BorderSizePixel = 0
+    atualizarEventosBtn.Text = "ATUALIZAR"
+    atualizarEventosBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    atualizarEventosBtn.Font = FONTE_TITULO
+    atualizarEventosBtn.TextSize = 10
+    Instance.new("UICorner", atualizarEventosBtn).CornerRadius = UDim.new(0, 6)
+    addWhiteStroke(atualizarEventosBtn)
+
+    local function atualizarTextoEventos()
+        eventosMaritimosRestantes = math.clamp(eventosMaritimosRestantes, 0, EVENTOS_MARITIMOS_META)
+        if eventosMaritimosRestantes > 0 then
+            eventosStatus.Text = "Cooldown: progresso local estimado"
+            eventosStatus.TextColor3 = Color3.fromRGB(255, 205, 90)
+            eventosContagem.Text = "Faltam: " .. tostring(eventosMaritimosRestantes) .. " eventos marítimos"
+            eventosContagem.TextColor3 = COR_TEXTO
+        else
+            eventosStatus.Text = "Contagem concluída — confira no Spy"
+            eventosStatus.TextColor3 = Color3.fromRGB(70, 230, 120)
+            eventosContagem.Text = "Faltam: 0 eventos marítimos"
+            eventosContagem.TextColor3 = Color3.fromRGB(70, 230, 120)
+        end
+    end
+
+    local function nomeEhEventoMaritimo(nome)
+        local n = string.lower(tostring(nome or "")):gsub("[%s_%-<>]", "")
+        -- Nomes comuns de Sea Events e navios inimigos do Blox Fruits.
+        return n:find("seabeast", 1, true) ~= nil
+            or n:find("terrorshark", 1, true) ~= nil
+            or n:find("piranha", 1, true) ~= nil
+            or n == "shark" or n:find("shark", 1, true) ~= nil
+            or n:find("piratebrigade", 1, true) ~= nil
+            or n:find("grandbrigade", 1, true) ~= nil
+            or n:find("pirateship", 1, true) ~= nil
+            or n:find("fishboat", 1, true) ~= nil
+            or n == "ship" or n:find("enemyship", 1, true) ~= nil
+    end
+
+    local function registrarEventoMaritimo(modelo)
+        if not modelo or eventosMaritimosContados[modelo] then return end
+        eventosMaritimosContados[modelo] = true
+        eventosMaritimosRestantes = math.max(0, eventosMaritimosRestantes - 1)
+        atualizarTextoEventos()
+    end
+
+    local function observarEventoMaritimo(modelo)
+        if not modelo or not modelo:IsA("Model") or eventosMaritimosConexoes[modelo] then return end
+        if not nomeEhEventoMaritimo(modelo.Name) then return end
+        eventosMaritimosConexoes[modelo] = {}
+
+        local function conectarHumanoid(obj)
+            if obj and obj:IsA("Humanoid") and not eventosMaritimosConexoes[modelo].humanoid then
+                eventosMaritimosConexoes[modelo].humanoid = obj
+                eventosMaritimosConexoes[modelo].died = obj.Died:Connect(function()
+                    registrarEventoMaritimo(modelo)
+                end)
+            end
+        end
+
+        local function conectarVida(obj)
+            if not (obj:IsA("NumberValue") or obj:IsA("IntValue")) then return end
+            local nome = string.lower(obj.Name)
+            if nome ~= "health" and nome ~= "hp" and nome ~= "boathealth" then return end
+            if eventosMaritimosConexoes[modelo][obj] then return end
+            local vidaAnterior = obj.Value
+            eventosMaritimosConexoes[modelo][obj] = obj.Changed:Connect(function(novoValor)
+                if vidaAnterior > 0 and tonumber(novoValor) and tonumber(novoValor) <= 0 then
+                    registrarEventoMaritimo(modelo)
+                end
+                vidaAnterior = tonumber(novoValor) or vidaAnterior
+            end)
+        end
+
+        for _, desc in ipairs(modelo:GetDescendants()) do
+            conectarHumanoid(desc)
+            conectarVida(desc)
+        end
+        conectarHumanoid(modelo:FindFirstChildOfClass("Humanoid"))
+        eventosMaritimosConexoes[modelo].descendant = modelo.DescendantAdded:Connect(function(desc)
+            conectarHumanoid(desc)
+            conectarVida(desc)
+        end)
+    end
+
+    local pastaInimigosMar = workspace:FindFirstChild("Enemies")
+    if pastaInimigosMar then
+        for _, inimigo in ipairs(pastaInimigosMar:GetChildren()) do
+            observarEventoMaritimo(inimigo)
+        end
+        pastaInimigosMar.ChildAdded:Connect(function(inimigo)
+            task.defer(function() observarEventoMaritimo(inimigo) end)
+        end)
+    end
+
+    atualizarEventosBtn.MouseButton1Click:Connect(function()
+        vibrar()
+        -- A detecção é contínua; o botão apenas atualiza a exibição do contador.
+        atualizarTextoEventos()
+        atualizarEventosBtn.Text = "ATUALIZADO"
+        task.delay(1, function()
+            if atualizarEventosBtn and atualizarEventosBtn.Parent then
+                atualizarEventosBtn.Text = "ATUALIZAR"
+            end
+        end)
+    end)
+    atualizarTextoEventos()
+
  local molduraRochas = criarMoldura(containerMar, 485, 85, "Remover Rochas")
     local rochaBox, rochaBtn = criarToggleDireita(molduraRochas, 22)
     local rochaCircle = rochaBox:FindFirstChild("Circle")
@@ -4425,7 +4564,7 @@ do
     end)
     -- ===================== FIM AUTO FROZEN DIMENSION / SEA EVENTS =====================
 
-    containerSeaEvent.CanvasSize = UDim2.new(0, 0, 0, 985)
+    containerSeaEvent.CanvasSize = UDim2.new(0, 0, 0, 1105)
 end
 -- ===================== MULTIFARM =====================
 do
