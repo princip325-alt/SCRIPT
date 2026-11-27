@@ -2827,7 +2827,7 @@ do
             bb.Name = "CELESTIAL_ESP_PLAYER_NEW_" .. p.UserId
             bb.Adornee = head
             bb.AlwaysOnTop = true
-            bb.Size = UDim2.new(0, 230, 0, 58)
+            bb.Size = UDim2.new(0, 230, 0, 72)
             bb.StudsOffset = Vector3.new(0, 3.2, 0)
             bb.ResetOnSpawn = false
             bb.Parent = gui
@@ -2882,10 +2882,74 @@ do
             vidaTexto.Text = "0/0 HP"
             vidaTexto.Parent = fundoVida
 
+            local fundoEnergia = Instance.new("Frame")
+            fundoEnergia.Name = "FundoEnergia"
+            fundoEnergia.Position = UDim2.new(0, 7, 0, 47)
+            fundoEnergia.Size = UDim2.new(1, -14, 0, 9)
+            fundoEnergia.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+            fundoEnergia.BorderSizePixel = 0
+            fundoEnergia.Parent = painel
+            Instance.new("UICorner", fundoEnergia).CornerRadius = UDim.new(0, 4)
+
+            local barraEnergia = Instance.new("Frame")
+            barraEnergia.Name = "BarraEnergia"
+            barraEnergia.Size = UDim2.new(0, 0, 1, 0)
+            barraEnergia.BackgroundColor3 = Color3.fromRGB(55, 150, 255)
+            barraEnergia.BorderSizePixel = 0
+            barraEnergia.Parent = fundoEnergia
+            Instance.new("UICorner", barraEnergia).CornerRadius = UDim.new(0, 4)
+
+            local energiaTexto = Instance.new("TextLabel")
+            energiaTexto.Name = "EnergiaTexto"
+            energiaTexto.BackgroundTransparency = 1
+            energiaTexto.Size = UDim2.new(1, 0, 1, 0)
+            energiaTexto.Font = FONTE_TEXTO
+            energiaTexto.TextSize = 8
+            energiaTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
+            energiaTexto.TextStrokeTransparency = 0
+            energiaTexto.Text = "ENERGIA"
+            energiaTexto.Parent = fundoEnergia
+
             spawnNewTags[p] = {
                 bb = bb, head = head, humanoid = humanoid,
-                nome = nome, barraVida = barraVida, vidaTexto = vidaTexto
+                nome = nome, barraVida = barraVida, vidaTexto = vidaTexto,
+                barraEnergia = barraEnergia, energiaTexto = energiaTexto
             }
+        end
+
+        local function lerEnergiaSpawnNew(p, character)
+            local nomesValor = {"Energia", "Energy", "Shield", "Escudo", "Mana"}
+            local nomesMax = {"MaxEnergia", "MaxEnergy", "MaxShield", "MaxEscudo", "MaxMana"}
+            local fontes = {character, p}
+            local valorAtual, valorMax
+            for _, fonte in ipairs(fontes) do
+                if fonte then
+                    for _, nomeValor in ipairs(nomesValor) do
+                        local atributo = fonte:GetAttribute(nomeValor)
+                        if typeof(atributo) == "number" then valorAtual = atributo; break end
+                        local objeto = fonte:FindFirstChild(nomeValor)
+                        if objeto and (objeto:IsA("NumberValue") or objeto:IsA("IntValue")) then
+                            valorAtual = objeto.Value; break
+                        end
+                    end
+                    if valorAtual ~= nil then break end
+                end
+            end
+            for _, fonte in ipairs(fontes) do
+                if fonte then
+                    for _, nomeMaximo in ipairs(nomesMax) do
+                        local atributo = fonte:GetAttribute(nomeMaximo)
+                        if typeof(atributo) == "number" then valorMax = atributo; break end
+                        local objeto = fonte:FindFirstChild(nomeMaximo)
+                        if objeto and (objeto:IsA("NumberValue") or objeto:IsA("IntValue")) then
+                            valorMax = objeto.Value; break
+                        end
+                    end
+                    if valorMax ~= nil then break end
+                end
+            end
+            if valorAtual == nil then return nil, nil end
+            return math.max(0, valorAtual), math.max(1, tonumber(valorMax) or 100)
         end
 
         local function atualizarTagsSpawnNew()
@@ -2911,6 +2975,17 @@ do
                         and Color3.fromRGB(50, 230, 80)
                         or (proporcao > 0.3 and Color3.fromRGB(255, 190, 40) or Color3.fromRGB(240, 65, 65))
                     tag.vidaTexto.Text = math.floor(vida) .. "/" .. math.floor(maxVida) .. " HP"
+
+                    local energia, maxEnergia = lerEnergiaSpawnNew(p, p.Character)
+                    if energia ~= nil then
+                        tag.barraEnergia.Visible = true
+                        tag.energiaTexto.Parent.Visible = true
+                        tag.barraEnergia.Size = UDim2.new(math.clamp(energia / maxEnergia, 0, 1), 0, 1, 0)
+                        tag.energiaTexto.Text = "ENERGIA " .. math.floor(energia) .. "/" .. math.floor(maxEnergia)
+                    else
+                        tag.barraEnergia.Visible = false
+                        tag.energiaTexto.Parent.Visible = false
+                    end
                 end
             end
         end
@@ -36379,7 +36454,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
         keyboardWindow.ZIndex = 200
         keyboardWindow.Parent = gui
         Instance.new("UICorner", keyboardWindow).CornerRadius = UDim.new(0, 12)
-        -- RGB animado: mant√©m exatamente o layout e altera somente as bordas.
+        -- Contorno externo roxo; as teclas usam bordas amarelas finas como na refer√™ncia.
         local keyboardRGBStrokes = {}
         local keyboardStroke = Instance.new("UIStroke", keyboardWindow)
         keyboardStroke.Color = Color3.fromRGB(145, 55, 235)
@@ -36589,7 +36664,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                 Instance.new("UICorner", keyButton).CornerRadius = UDim.new(0, 7)
                 local outline = Instance.new("UIStroke", keyButton)
                 outline.Color = Color3.fromRGB(235, 190, 35)
-                outline.Thickness = 1.8
+                outline.Thickness = 1.0
                 table.insert(keyboardRGBStrokes, outline)
 
                 keyButton.MouseButton1Down:Connect(function()
@@ -36652,7 +36727,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
             Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
             local stroke = Instance.new("UIStroke", b)
             stroke.Color = Color3.fromRGB(235, 190, 35)
-            stroke.Thickness = 1.8
+            stroke.Thickness = 1.0
             table.insert(keyboardRGBStrokes, stroke)
             b.MouseButton1Down:Connect(function()
                 keysPressionadas[label] = true
@@ -36851,7 +36926,11 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
         if multiTab then
             criarToggleComando(multiTab, "ToggleNoclipPersonagem", "Noclip do Personagem", proximoY(multiTab), "noclip", "unnoclip")
             criarToggleComando(multiTab, "TogglePuloInfinito", "Pulo Infinito", proximoY(multiTab), "infjump", "uninfjump")
-            criarToggleComando(multiTab, "TogglePuloSegurado", "Pulo Segurado (Subida Cont√≠nua)", proximoY(multiTab), "flyjump", "unflyjump")
+            local _, definirPuloSegurado = criarToggleComando(multiTab, "TogglePuloSegurado", "Pulo Segurado (Subida Cont√≠nua)", proximoY(multiTab), "flyjump", "unflyjump")
+            -- Ativa por padr√£o ao iniciar o script e mant√©m o toggle visual sincronizado.
+            if definirPuloSegurado then
+                definirPuloSegurado(true, true)
+            end
             multiTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(multiTab) + 5)
         end
 
@@ -36861,7 +36940,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
         if pvpTab then
             criarToggleComando(pvpTab, "ToggleAntiFlingBoss", "Anti-Fling (Jogadores e Bosses)", proximoY(pvpTab), "antifling", "unantifling", 90)
 
-            -- ESP PVP: caixas, linha, vida e escudo/mana (quando exposto pelo jogo).
+            -- ESP PVP: somente caixas, vida e escudo/energia (quando exposto pelo jogo).
             _G.CelestialESPEnabled = false
             _G.CelestialAimAssistEnabled = false
             _G.CelestialAimFOV = 240
@@ -36881,10 +36960,6 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                 overlay.BackgroundTransparency = 1
                 overlay.BorderSizePixel = 0
                 overlay.Parent = gui
-                local line = Instance.new("Frame")
-                line.Name = "Tracer"; line.AnchorPoint = Vector2.new(0, 0.5)
-                line.BorderSizePixel = 0; line.BackgroundColor3 = Color3.fromRGB(45,255,35)
-                line.Visible = false; line.Parent = overlay
                 local box = Instance.new("Frame")
                 box.Name = "PlayerBox"; box.BackgroundTransparency = 1
                 box.BorderSizePixel = 0; box.Visible = false; box.Parent = overlay
@@ -36907,17 +36982,36 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                 local manaFill = Instance.new("Frame")
                 manaFill.BorderSizePixel = 0; manaFill.BackgroundColor3 = Color3.fromRGB(55,150,255)
                 manaFill.Size = UDim2.fromScale(1,1); manaFill.Parent = manaBack
-                espObjects[plr] = {line,box,info,hpBack,hpFill,manaBack,manaFill}
+                espObjects[plr] = {box,info,hpBack,hpFill,manaBack,manaFill}
             end
-            local function getMana(character, humanoid)
-                local names = {"Mana","Shield","Energy","Magic","Escudo"}
-                for _, name in ipairs(names) do
-                    local value = character:GetAttribute(name)
-                    if typeof(value) == "number" then return value end
-                    local child = character:FindFirstChild(name)
-                    if child and (child:IsA("NumberValue") or child:IsA("IntValue")) then return child.Value end
+            local function getMana(character, humanoid, plr)
+                local names = {"Energia","Energy","Shield","Escudo","Mana","Magic"}
+                local sources = {character, plr}
+                for _, source in ipairs(sources) do
+                    if source then
+                        for _, name in ipairs(names) do
+                            local value = source:GetAttribute(name)
+                            if typeof(value) == "number" then return value end
+                            local child = source:FindFirstChild(name)
+                            if child and (child:IsA("NumberValue") or child:IsA("IntValue")) then return child.Value end
+                        end
+                    end
                 end
                 return nil
+            end
+            local function getMaxMana(character, plr)
+                local names = {"MaxEnergia","MaxEnergy","MaxShield","MaxEscudo","MaxMana"}
+                for _, source in ipairs({character, plr}) do
+                    if source then
+                        for _, name in ipairs(names) do
+                            local value = source:GetAttribute(name)
+                            if typeof(value) == "number" then return math.max(value, 1) end
+                            local child = source:FindFirstChild(name)
+                            if child and (child:IsA("NumberValue") or child:IsA("IntValue")) then return math.max(child.Value, 1) end
+                        end
+                    end
+                end
+                return 100
             end
             local function updateESP()
                 local camera = workspace.CurrentCamera
@@ -36927,7 +37021,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                         if _G.CelestialESPEnabled then makeESP(plr) end
                         local obj = espObjects[plr]
                         if obj then
-                            local line,box,info,hpBack,hpFill,manaBack,manaFill = table.unpack(obj)
+                            local box,info,hpBack,hpFill,manaBack,manaFill = table.unpack(obj)
                             local char = plr.Character
                             local root = char and char:FindFirstChild("HumanoidRootPart")
                             local head = char and char:FindFirstChild("Head")
@@ -36941,16 +37035,12 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                                     local width = height * 0.55
                                     box.Position = UDim2.fromOffset(pos.X-width/2, pos.Y-height/2)
                                     box.Size = UDim2.fromOffset(width,height); box.Visible = true
-                                    line.Position = UDim2.fromOffset(camera.ViewportSize.X/2, camera.ViewportSize.Y-4)
-                                    local dx,dy = pos.X-camera.ViewportSize.X/2, pos.Y-camera.ViewportSize.Y-4
-                                    line.Size = UDim2.fromOffset(math.sqrt(dx*dx+dy*dy),2)
-                                    line.Rotation = math.deg(math.atan2(dy,dx)); line.Visible = true
                                     local hp = math.clamp(hum.Health / math.max(hum.MaxHealth,1),0,1)
                                     hpBack.Position = UDim2.fromOffset(pos.X-width/2,pos.Y+height/2+3)
                                     hpBack.Size = UDim2.fromOffset(width,4); hpBack.Visible = true
                                     hpFill.Size = UDim2.fromScale(hp,1)
-                                    local mana = getMana(char, hum)
-                                    local maxMana = char:GetAttribute("MaxMana") or char:GetAttribute("MaxShield") or 100
+                                    local mana = getMana(char, hum, plr)
+                                    local maxMana = getMaxMana(char, plr)
                                     manaBack.Position = UDim2.fromOffset(pos.X-width/2,pos.Y+height/2+8)
                                     manaBack.Size = UDim2.fromOffset(width,4); manaBack.Visible = mana ~= nil
                                     if mana ~= nil then manaFill.Size = UDim2.fromScale(math.clamp(mana/math.max(maxMana,1),0,1),1) end
@@ -36960,13 +37050,13 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
                                 end
                             end
                             if not visible then
-                                box.Visible=false; line.Visible=false; info.Visible=false; hpBack.Visible=false; manaBack.Visible=false
+                                box.Visible=false; info.Visible=false; hpBack.Visible=false; manaBack.Visible=false
                             end
                         end
                     end
                 end
             end
-            criarToggleVisual(pvpTab, "ToggleESPPlayers", "ESP ‚Ä¢ caixas, linhas, vida e escudo", proximoY(pvpTab), function(ativo)
+            criarToggleVisual(pvpTab, "ToggleESPPlayers", "ESP ‚Ä¢ caixas, vida e escudo", proximoY(pvpTab), function(ativo)
                 _G.CelestialESPEnabled = ativo
                 if not ativo then for plr in pairs(espObjects) do clearESP(plr) end end
                 return true
