@@ -38246,4 +38246,3 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer√
         task.defer(atualizarCanvasComandos)
     end
 end
-
