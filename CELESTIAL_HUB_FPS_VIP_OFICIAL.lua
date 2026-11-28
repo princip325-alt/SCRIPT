@@ -1155,6 +1155,11 @@ do
 
         local ARQUIVO_TEMA = "CelestialHub_Tema.txt"
         local function salvarTema(nome)
+            -- Guarda na memória do executor (vale enquanto o executor estiver aberto)...
+            pcall(function()
+                if getgenv then getgenv().CelestialHubTemaSalvo = nome end
+            end)
+            -- ...e em arquivo (vale também depois de fechar e abrir o Roblox de novo).
             pcall(function()
                 if writefile then writefile(ARQUIVO_TEMA, nome) end
             end)
@@ -1164,7 +1169,14 @@ do
                 if isfile and readfile and isfile(ARQUIVO_TEMA) then return readfile(ARQUIVO_TEMA) end
                 return nil
             end)
-            if ok and type(texto) == "string" and texto ~= "" then return texto end
+            if ok and type(texto) == "string" then
+                texto = (texto:gsub("^%s+", ""):gsub("%s+$", ""))
+                if texto ~= "" then return texto end
+            end
+            local okMem, memoria = pcall(function()
+                return getgenv and getgenv().CelestialHubTemaSalvo or nil
+            end)
+            if okMem and type(memoria) == "string" and memoria ~= "" then return memoria end
             return nil
         end
 
@@ -1329,7 +1341,11 @@ do
 
         local function atualizarMarcas()
             for _, item in ipairs(botoesTema) do
-                item.botao.Text = (item.tema == temaAtual and "✓  " or "") .. item.tema.nome
+                if item.tema == temaAtual then
+                    item.botao.Text = "<s>" .. item.tema.nome .. "</s>"
+                else
+                    item.botao.Text = item.tema.nome
+                end
             end
         end
 
@@ -1350,6 +1366,7 @@ do
         for i, tema in ipairs(temas) do
             local botao = Instance.new("TextButton", temaLista)
             botao.Name = "Tema_" .. tostring(i)
+            botao.RichText = true
             botao.Size = UDim2.new(1, -4, 0, 30)
             botao.BackgroundColor3 = COR_PAINEL
             botao.Text = tema.nome
@@ -4325,7 +4342,7 @@ do
     pessoasTexto.Size = UDim2.new(1, -16, 1, -8)
     pessoasTexto.Position = UDim2.new(0, 8, 0, 4)
     pessoasTexto.BackgroundTransparency = 1
-    pessoasTexto.Text = "TOTAL: 0\\nEm pé: 0  |  Sentado: 0"
+    pessoasTexto.Text = "TOTAL: 0\nEm pé: 0\nSentado: 0"
     pessoasTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
     pessoasTexto.Font = FONTE_TEXTO
     pessoasTexto.TextSize = 13
@@ -4449,7 +4466,7 @@ do
                 if not pessoasAtivo then return end
                 local total, emPe, sentado = contarPessoasNoBarco()
                 pessoasTexto.Text = "TOTAL: " .. tostring(total)
-                    .. "\\nEm pé: " .. tostring(emPe) .. "  |  Sentado: " .. tostring(sentado)
+                    .. "\nEm pé: " .. tostring(emPe) .. "\nSentado: " .. tostring(sentado)
             end
             atualizarContagem()
             pessoasLoop = RunService.Heartbeat:Connect(atualizarContagem)
@@ -4470,7 +4487,7 @@ do
     local grupoMaritimoAtual = nil
     local pastaInimigosMar = nil
 
-    local molduraEventos = criarMoldura(containerMar, 0, 112, "Eventos marítimos / Cooldown")
+    local molduraEventos = criarMoldura(containerMar, 0, 124, "Eventos marítimos - Cooldown")
     local eventosStatus = Instance.new("TextLabel", molduraEventos)
     eventosStatus.Size = UDim2.new(1, -20, 0, 22)
     eventosStatus.Position = UDim2.new(0, 10, 0, 31)
@@ -4482,7 +4499,7 @@ do
     eventosStatus.TextXAlignment = Enum.TextXAlignment.Left
 
     local eventosContagem = Instance.new("TextLabel", molduraEventos)
-    eventosContagem.Size = UDim2.new(1, -125, 0, 22)
+    eventosContagem.Size = UDim2.new(1, -20, 0, 22)
     eventosContagem.Position = UDim2.new(0, 10, 0, 56)
     eventosContagem.BackgroundTransparency = 1
     eventosContagem.Text = "Faltam: 20 eventos marítimos"
@@ -4492,8 +4509,8 @@ do
     eventosContagem.TextXAlignment = Enum.TextXAlignment.Left
 
     local atualizarEventosBtn = Instance.new("TextButton", molduraEventos)
-    atualizarEventosBtn.Size = UDim2.new(0, 96, 0, 28)
-    atualizarEventosBtn.Position = UDim2.new(1, -108, 0, 53)
+    atualizarEventosBtn.Size = UDim2.new(1, -20, 0, 28)
+    atualizarEventosBtn.Position = UDim2.new(0, 10, 0, 86)
     atualizarEventosBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 220)
     atualizarEventosBtn.BorderSizePixel = 0
     atualizarEventosBtn.Text = "ATUALIZAR"
@@ -5076,7 +5093,7 @@ do
     end)
     -- ===================== FIM AUTO FROZEN DIMENSION / SEA EVENTS =====================
 
-    containerSeaEvent.CanvasSize = UDim2.new(0, 0, 0, 1105)
+    containerSeaEvent.CanvasSize = UDim2.new(0, 0, 0, 1117)
     end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
 end
 -- ===================== MULTIFARM =====================
