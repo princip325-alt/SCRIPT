@@ -3175,8 +3175,8 @@ do
             bb.Name = "CELESTIAL_ESP_PLAYER_NEW_" .. p.UserId
             bb.Adornee = head
             bb.AlwaysOnTop = true
-            bb.Size = UDim2.new(0, 290, 0, 84)
-            bb.StudsOffset = Vector3.new(0, 3.6, 0)
+            bb.Size = UDim2.new(0, 170, 0, 50)
+            bb.StudsOffset = Vector3.new(0, 3, 0)
             bb.ResetOnSpawn = false
             bb.Parent = gui
 
@@ -3191,7 +3191,7 @@ do
             local foto = Instance.new("ImageLabel")
             foto.Name = "Foto"
             foto.Position = UDim2.new(0, 0, 0, 0)
-            foto.Size = UDim2.new(0, 38, 0, 38)
+            foto.Size = UDim2.new(0, 24, 0, 24)
             foto.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
             foto.BorderSizePixel = 0
             foto.Image = "rbxthumb://type=AvatarHeadShot&id=" .. p.UserId .. "&w=150&h=150"
@@ -3199,16 +3199,16 @@ do
             Instance.new("UICorner", foto).CornerRadius = UDim.new(1, 0)
             local fotoBorda = Instance.new("UIStroke", foto)
             fotoBorda.Color = Color3.fromRGB(80, 220, 120)
-            fotoBorda.Thickness = 2
+            fotoBorda.Thickness = 1
 
             -- Linha 1: Nome @usuario [Nv. X] · distância (dourado)
             local nome = Instance.new("TextLabel")
             nome.Name = "Nome"
             nome.BackgroundTransparency = 1
-            nome.Position = UDim2.new(0, 44, 0, 0)
-            nome.Size = UDim2.new(1, -44, 0, 13)
+            nome.Position = UDim2.new(0, 28, 0, 0)
+            nome.Size = UDim2.new(1, -28, 0, 9)
             nome.Font = FONTE_TEXTO
-            nome.TextSize = 11
+            nome.TextSize = 8
             nome.TextColor3 = Color3.fromRGB(255, 215, 60)
             nome.TextStrokeTransparency = 0.3
             nome.TextXAlignment = Enum.TextXAlignment.Left
@@ -3218,8 +3218,8 @@ do
             -- Barra de vida (verde) "x/y PV"
             local fundoVida = Instance.new("Frame")
             fundoVida.Name = "FundoVida"
-            fundoVida.Position = UDim2.new(0, 44, 0, 15)
-            fundoVida.Size = UDim2.new(1, -44, 0, 11)
+            fundoVida.Position = UDim2.new(0, 28, 0, 10)
+            fundoVida.Size = UDim2.new(1, -28, 0, 7)
             fundoVida.BackgroundColor3 = Color3.fromRGB(35, 70, 45)
             fundoVida.BorderSizePixel = 0
             fundoVida.Parent = painel
@@ -3241,7 +3241,7 @@ do
             vidaTexto.BackgroundTransparency = 1
             vidaTexto.Size = UDim2.new(1, 0, 1, 0)
             vidaTexto.Font = FONTE_TEXTO
-            vidaTexto.TextSize = 8
+            vidaTexto.TextSize = 6
             vidaTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
             vidaTexto.TextStrokeTransparency = 0.4
             vidaTexto.Text = "0/0 PV"
@@ -3250,8 +3250,8 @@ do
             -- Barra de energia (azul) "x/y EN"
             local fundoEnergia = Instance.new("Frame")
             fundoEnergia.Name = "FundoEnergia"
-            fundoEnergia.Position = UDim2.new(0, 44, 0, 28)
-            fundoEnergia.Size = UDim2.new(1, -44, 0, 11)
+            fundoEnergia.Position = UDim2.new(0, 28, 0, 18)
+            fundoEnergia.Size = UDim2.new(1, -28, 0, 7)
             fundoEnergia.BackgroundColor3 = Color3.fromRGB(25, 55, 75)
             fundoEnergia.BorderSizePixel = 0
             fundoEnergia.Parent = painel
@@ -3273,7 +3273,7 @@ do
             energiaTexto.BackgroundTransparency = 1
             energiaTexto.Size = UDim2.new(1, 0, 1, 0)
             energiaTexto.Font = FONTE_TEXTO
-            energiaTexto.TextSize = 8
+            energiaTexto.TextSize = 6
             energiaTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
             energiaTexto.TextStrokeTransparency = 0.4
             energiaTexto.Text = "0/0 EN"
@@ -3283,10 +3283,10 @@ do
             local ilhaLbl = Instance.new("TextLabel")
             ilhaLbl.Name = "Ilha"
             ilhaLbl.BackgroundTransparency = 1
-            ilhaLbl.Position = UDim2.new(0, 0, 0, 44)
-            ilhaLbl.Size = UDim2.new(1, 0, 0, 14)
+            ilhaLbl.Position = UDim2.new(0, 0, 0, 27)
+            ilhaLbl.Size = UDim2.new(1, 0, 0, 10)
             ilhaLbl.Font = FONTE_TEXTO
-            ilhaLbl.TextSize = 11
+            ilhaLbl.TextSize = 8
             ilhaLbl.TextColor3 = Color3.fromRGB(170, 150, 235)
             ilhaLbl.TextStrokeTransparency = 0.4
             ilhaLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -3298,10 +3298,10 @@ do
             local infoLbl = Instance.new("TextLabel")
             infoLbl.Name = "Info"
             infoLbl.BackgroundTransparency = 1
-            infoLbl.Position = UDim2.new(0, 0, 0, 59)
-            infoLbl.Size = UDim2.new(1, 0, 0, 14)
+            infoLbl.Position = UDim2.new(0, 0, 0, 38)
+            infoLbl.Size = UDim2.new(1, 0, 0, 10)
             infoLbl.Font = FONTE_TEXTO
-            infoLbl.TextSize = 11
+            infoLbl.TextSize = 8
             infoLbl.RichText = true
             infoLbl.TextColor3 = Color3.fromRGB(220, 225, 240)
             infoLbl.TextStrokeTransparency = 0.4
@@ -3314,43 +3314,52 @@ do
                 bb = bb, head = head, humanoid = humanoid,
                 nome = nome, barraVida = barraVida, vidaTexto = vidaTexto,
                 barraEnergia = barraEnergia, energiaTexto = energiaTexto,
-                ilha = ilhaLbl, info = infoLbl, ultimoIlha = 0, ilhaTexto = "?"
+                ilha = ilhaLbl, info = infoLbl, ultimoIlha = 0, ilhaTexto = "?", maxEnergiaVisto = 0
             }
         end
 
         local function lerEnergiaSpawnNew(p, character)
-            local nomesValor = {"N", "Energia", "Energy", "Shield", "Escudo", "Mana"}
-            local nomesMax = {"MaxN", "NMax", "MaxEnergia", "MaxEnergy", "MaxShield", "MaxEscudo", "MaxMana"}
+            -- No Blox Fruits a energia costuma ser um valor "Energy" (inclusive do tipo
+            -- DoubleConstrainedValue, que tem Value e MaxValue). Lemos qualquer tipo.
+            local nomesValor = {"Energy", "Energia", "N", "Shield", "Escudo", "Mana"}
+            local nomesMax = {"MaxEnergy", "EnergyMax", "MaxEnergia", "MaxN", "NMax", "MaxShield", "MaxEscudo", "MaxMana"}
             local fontes = {character, p}
             local valorAtual, valorMax
             for _, fonte in ipairs(fontes) do
-                if fonte then
+                if fonte and valorAtual == nil then
                     for _, nomeValor in ipairs(nomesValor) do
                         local atributo = fonte:GetAttribute(nomeValor)
                         if typeof(atributo) == "number" then valorAtual = atributo; break end
                         local objeto = fonte:FindFirstChild(nomeValor, true)
-                        if objeto and (objeto:IsA("NumberValue") or objeto:IsA("IntValue")) then
-                            valorAtual = objeto.Value; break
+                        if objeto then
+                            local ok, v = pcall(function() return objeto.Value end)
+                            if ok and type(v) == "number" then
+                                valorAtual = v
+                                local ok2, m = pcall(function() return objeto.MaxValue end)
+                                if ok2 and type(m) == "number" and m > 0 then valorMax = m end
+                                break
+                            end
                         end
                     end
-                    if valorAtual ~= nil then break end
-                end
-            end
-            for _, fonte in ipairs(fontes) do
-                if fonte then
-                    for _, nomeMaximo in ipairs(nomesMax) do
-                        local atributo = fonte:GetAttribute(nomeMaximo)
-                        if typeof(atributo) == "number" then valorMax = atributo; break end
-                        local objeto = fonte:FindFirstChild(nomeMaximo, true)
-                        if objeto and (objeto:IsA("NumberValue") or objeto:IsA("IntValue")) then
-                            valorMax = objeto.Value; break
-                        end
-                    end
-                    if valorMax ~= nil then break end
                 end
             end
             if valorAtual == nil then return nil, nil end
-            return math.max(0, valorAtual), math.max(1, tonumber(valorMax) or 100)
+            if valorMax == nil then
+                for _, fonte in ipairs(fontes) do
+                    if fonte and valorMax == nil then
+                        for _, nomeMaximo in ipairs(nomesMax) do
+                            local atributo = fonte:GetAttribute(nomeMaximo)
+                            if typeof(atributo) == "number" then valorMax = atributo; break end
+                            local objeto = fonte:FindFirstChild(nomeMaximo, true)
+                            if objeto then
+                                local ok, v = pcall(function() return objeto.Value end)
+                                if ok and type(v) == "number" then valorMax = v; break end
+                            end
+                        end
+                    end
+                end
+            end
+            return math.max(0, valorAtual), math.max(1, tonumber(valorMax) or valorAtual)
         end
 
         -- Nomes das ilhas em português (como aparece no jogo); o que não estiver aqui usa o nome original.
@@ -3465,6 +3474,9 @@ do
 
                     local energia, maxEnergia = lerEnergiaSpawnNew(p, p.Character)
                     if energia ~= nil then
+                        -- Se o jogo não informar o máximo, usa o maior valor já visto.
+                        tag.maxEnergiaVisto = math.max(tag.maxEnergiaVisto or 0, maxEnergia, energia)
+                        maxEnergia = tag.maxEnergiaVisto
                         tag.barraEnergia.Size = UDim2.new(math.clamp(energia / maxEnergia, 0, 1), 0, 1, 0)
                         tag.energiaTexto.Text = math.floor(energia) .. "/" .. math.floor(maxEnergia) .. " EN"
                     else
@@ -4604,7 +4616,7 @@ do
                         comprarSelBtn.Text = b.nome .. " ▼"
                         comprarSelBtn.TextColor3 = Color3.fromRGB(150, 255, 150)
                         comprarStatus.TextColor3 = COR_TEXTO_SUB
-                        comprarStatus.Text = "Preço: " .. b.preco .. " | " .. b.req
+                        comprarStatus.Text = "Preço: " .. b.preco .. " - " .. b.req
                         fecharDropdownComprar()
                     end)
                 end
@@ -5076,16 +5088,43 @@ do
                 return
             end
             grupo.concluido = true
+            -- Só conta se você atacou algum bicho do grupo E está em cooldown.
+            local contou = false
+            for _, m in ipairs(grupo.membros) do
+                if m.contou then contou = true; break end
+            end
+            if not (contou and cooldownSpy.emCooldown) then return end
             eventosMaritimosConcluidos = eventosMaritimosConcluidos + 1
             eventosMaritimosRestantes = math.max(0, EVENTOS_MARITIMOS_META - eventosMaritimosConcluidos)
             atualizarTextoEventos()
         end)
     end
 
-    local function marcarMembroDerrotado(grupo, membro)
+    -- remocao = true quando o modelo só sumiu do mundo (ex.: você se afastou navegando).
+    local function marcarMembroDerrotado(grupo, membro, remocao)
         if not grupo or not membro or membro.derrotado then return end
         membro.derrotado = true
+        if membro.atacado then
+            if remocao then
+                -- Sumiu do mundo: só vale se já estava quase sem vida.
+                membro.contou = (membro.vidaFracao or 1) <= 0.1
+            else
+                membro.contou = true
+            end
+        end
         tentarConcluirGrupo(grupo)
+    end
+
+    -- Marca que você atacou este bicho: a vida dele caiu, você está em cooldown e perto dele.
+    local function registrarDanoMaritimo(membro, modelo)
+        if membro.atacado or not cooldownSpy.emCooldown then return end
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root or not modelo or not modelo.Parent then return end
+        local ok, pos = pcall(function() return modelo:GetPivot().Position end)
+        if ok and (pos - root.Position).Magnitude <= 600 then
+            membro.atacado = true
+        end
     end
 
     local function obterGrupoParaSpawn()
@@ -5117,6 +5156,15 @@ do
                 if obj.Health <= 0 then
                     marcarMembroDerrotado(grupo, membro)
                 else
+                    membro.ultimaVida = obj.Health
+                    membro.vidaFracao = obj.Health / math.max(obj.MaxHealth, 1)
+                    table.insert(dados.conexoes, obj.HealthChanged:Connect(function(h)
+                        if membro.ultimaVida and h < membro.ultimaVida then
+                            registrarDanoMaritimo(membro, modelo)
+                        end
+                        membro.ultimaVida = h
+                        membro.vidaFracao = h / math.max(obj.MaxHealth, 1)
+                    end))
                     table.insert(dados.conexoes, obj.Died:Connect(function()
                         marcarMembroDerrotado(grupo, membro)
                     end))
@@ -5133,6 +5181,9 @@ do
             dados[obj] = true
             table.insert(dados.conexoes, obj.Changed:Connect(function(novoValor)
                 local vidaAtual = tonumber(novoValor)
+                if vidaAtual and vidaAtual < vidaAnterior then
+                    registrarDanoMaritimo(membro, modelo)
+                end
                 if vidaAnterior > 0 and vidaAtual and vidaAtual <= 0 then
                     marcarMembroDerrotado(grupo, membro)
                 end
@@ -5152,8 +5203,8 @@ do
         end))
         table.insert(dados.conexoes, modelo.AncestryChanged:Connect(function(_, novoPai)
             if novoPai == nil then
-                -- Modelos removidos após a derrota também encerram sua participação.
-                marcarMembroDerrotado(grupo, membro)
+                -- Modelo removido: encerra a participação, mas só conta se você o atacou.
+                marcarMembroDerrotado(grupo, membro, true)
             end
         end))
     end
@@ -8073,12 +8124,31 @@ do
             return "$" .. fmt
         end
 
+        -- Executa fn numa thread própria e desiste depois de "seg" segundos
+        -- (o InvokeServer pode ficar esperando para sempre e travar o "Carregando a loja...").
+        local function comTimeout(fn, seg)
+            local feito, ok, res = false, false, nil
+            local th = task.spawn(function()
+                local o, r = pcall(fn)
+                ok, res = o, r
+                feito = true
+            end)
+            local t0 = os.clock()
+            while not feito and os.clock() - t0 < seg do task.wait(0.05) end
+            if not feito then
+                pcall(task.cancel, th)
+                return false, nil
+            end
+            return ok, res
+        end
+        local ultimoEstoque, ultimoModo = nil, nil
+
         -- Estoque atual da loja. Retorna mapa e o modo ("flags" ou "destaque"); nil se não conseguiu ler.
         local function lerEstoque()
             local remotes = ReplicatedStorage:FindFirstChild("Remotes")
             local commF = remotes and remotes:FindFirstChild("CommF_")
             if commF then
-                local ok, res = pcall(function() return commF:InvokeServer("GetFruits") end)
+                local ok, res = comTimeout(function() return commF:InvokeServer("GetFruits") end, 5)
                 if ok and type(res) == "table" then
                     local mapa, temFlag = {}, false
                     for _, e in pairs(res) do
@@ -8093,7 +8163,9 @@ do
                 end
             end
             -- Alternativa: módulo do jogo com GetFeaturedFruits (frutas em destaque = à venda).
+            local limiteBusca = os.clock() + 4
             for _, m in ipairs(ReplicatedStorage:GetDescendants()) do
+                if os.clock() > limiteBusca then break end
                 if m:IsA("ModuleScript") and string.find(string.lower(m.Name), "fruit", 1, true) then
                     local okReq, mod = pcall(require, m)
                     if okReq and type(mod) == "table" and type(mod.GetFeaturedFruits) == "function" then
@@ -8209,83 +8281,109 @@ do
         frutasLista.ElasticBehavior = Enum.ElasticBehavior.Never
         Instance.new("UIListLayout", frutasLista).Padding = UDim.new(0, 3)
 
+        local function renderizarFrutas(mapa, modo, final)
+
+            local linhas, usadas = {}, {}
+            for _, f in ipairs(FRUTAS) do
+                local chave = baseDaChave(chaveFruta(f[1]))
+                local e = mapa and mapa[chave]
+                usadas[chave] = true
+                local disp = nil
+                if modo == "flags" then
+                    disp = e ~= nil and e.disp == true
+                elseif modo == "destaque" then
+                    disp = e ~= nil
+                end
+                local preco = f[2]
+                if e and e.preco and e.preco > 0 then preco = e.preco end
+                table.insert(linhas, { nome = f[1], preco = preco, disp = disp })
+            end
+            -- Frutas novas que o jogo informar e que ainda não estão na tabela.
+            if mapa then
+                for chave, e in pairs(mapa) do
+                    if not usadas[chave] and e.preco and e.preco > 0 then
+                        local nomeCurto = string.match(e.nome, "^(.-)%-") or e.nome
+                        local disp = nil
+                        if modo == "flags" then disp = e.disp == true else disp = true end
+                        table.insert(linhas, { nome = nomeCurto, preco = e.preco, disp = disp })
+                    end
+                end
+            end
+
+            table.sort(linhas, function(a, b)
+                local da = a.disp == true and 0 or 1
+                local db = b.disp == true and 0 or 1
+                if da ~= db then return da < db end
+                if a.preco ~= b.preco then return a.preco < b.preco end
+                return a.nome < b.nome
+            end)
+
+            for _, c in ipairs(frutasLista:GetChildren()) do
+                if c:IsA("TextLabel") then c:Destroy() end
+            end
+            local naLoja = 0
+            for _, l in ipairs(linhas) do
+                if l.disp == true then naLoja = naLoja + 1 end
+                local item = Instance.new("TextLabel", frutasLista)
+                item.Size = UDim2.new(1, -6, 0, 26)
+                item.BackgroundColor3 = Color3.fromRGB(60, 40, 80)
+                item.Text = l.nome .. "  -  " .. formatarBeli(l.preco)
+                if l.disp == true then
+                    item.TextColor3 = COR_BOLINHA_VERDE
+                elseif l.disp == false then
+                    item.TextColor3 = COR_FRUTA_INDISPONIVEL
+                else
+                    item.TextColor3 = COR_FRUTA_SEM_DADO
+                end
+                item.Font = FONTE_TEXTO
+                item.TextSize = 15
+                item.TextXAlignment = Enum.TextXAlignment.Left
+                item.TextTruncate = Enum.TextTruncate.AtEnd
+                item.ZIndex = 10002
+                Instance.new("UIPadding", item).PaddingLeft = UDim.new(0, 8)
+                Instance.new("UICorner", item).CornerRadius = UDim.new(0, 4)
+            end
+
+            if not final then return end -- prévia: mantém "Carregando a loja..."
+            if modo then
+                frutasStatus.TextColor3 = COR_TEXTO_SUB
+                frutasStatus.Text = "Na loja agora: " .. naLoja .. " de " .. #linhas .. " (verde = disponível, vermelho = indisponível)"
+            else
+                frutasStatus.TextColor3 = COR_ALERTA
+                frutasStatus.Text = "Não consegui ler o estoque da loja agora. Mostrando só os preços. Toque em Atualizar."
+            end
+        end
+
         local function carregarFrutas()
             if carregandoFrutas then return end
             carregandoFrutas = true
             frutasStatus.TextColor3 = COR_TEXTO_SUB
             frutasStatus.Text = "Carregando a loja..."
+            -- Mostra a lista de preços na hora e, se já houver estoque lido antes, usa ele.
+            pcall(renderizarFrutas, ultimoEstoque, ultimoModo, false)
             task.spawn(function()
-                local mapa, modo = lerEstoque()
-
-                local linhas, usadas = {}, {}
-                for _, f in ipairs(FRUTAS) do
-                    local chave = baseDaChave(chaveFruta(f[1]))
-                    local e = mapa and mapa[chave]
-                    usadas[chave] = true
-                    local disp = nil
-                    if modo == "flags" then
-                        disp = e ~= nil and e.disp == true
-                    elseif modo == "destaque" then
-                        disp = e ~= nil
-                    end
-                    local preco = f[2]
-                    if e and e.preco and e.preco > 0 then preco = e.preco end
-                    table.insert(linhas, { nome = f[1], preco = preco, disp = disp })
-                end
-                -- Frutas novas que o jogo informar e que ainda não estão na tabela.
-                if mapa then
-                    for chave, e in pairs(mapa) do
-                        if not usadas[chave] and e.preco and e.preco > 0 then
-                            local nomeCurto = string.match(e.nome, "^(.-)%-") or e.nome
-                            local disp = nil
-                            if modo == "flags" then disp = e.disp == true else disp = true end
-                            table.insert(linhas, { nome = nomeCurto, preco = e.preco, disp = disp })
-                        end
-                    end
-                end
-
-                table.sort(linhas, function(a, b)
-                    local da = a.disp == true and 0 or 1
-                    local db = b.disp == true and 0 or 1
-                    if da ~= db then return da < db end
-                    if a.preco ~= b.preco then return a.preco < b.preco end
-                    return a.nome < b.nome
-                end)
-
-                for _, c in ipairs(frutasLista:GetChildren()) do
-                    if c:IsA("TextLabel") then c:Destroy() end
-                end
-                local naLoja = 0
-                for _, l in ipairs(linhas) do
-                    if l.disp == true then naLoja = naLoja + 1 end
-                    local item = Instance.new("TextLabel", frutasLista)
-                    item.Size = UDim2.new(1, -6, 0, 26)
-                    item.BackgroundColor3 = Color3.fromRGB(60, 40, 80)
-                    item.Text = l.nome .. "  -  " .. formatarBeli(l.preco)
-                    if l.disp == true then
-                        item.TextColor3 = COR_BOLINHA_VERDE
-                    elseif l.disp == false then
-                        item.TextColor3 = COR_FRUTA_INDISPONIVEL
-                    else
-                        item.TextColor3 = COR_FRUTA_SEM_DADO
-                    end
-                    item.Font = FONTE_TEXTO
-                    item.TextSize = 15
-                    item.TextXAlignment = Enum.TextXAlignment.Left
-                    item.TextTruncate = Enum.TextTruncate.AtEnd
-                    item.ZIndex = 10002
-                    Instance.new("UIPadding", item).PaddingLeft = UDim.new(0, 8)
-                    Instance.new("UICorner", item).CornerRadius = UDim.new(0, 4)
-                end
-
-                if modo then
-                    frutasStatus.TextColor3 = COR_TEXTO_SUB
-                    frutasStatus.Text = "Na loja agora: " .. naLoja .. " de " .. #linhas .. " (verde = disponível, vermelho = indisponível)"
+                local ok, mapa, modo = pcall(lerEstoque)
+                if ok and mapa then
+                    ultimoEstoque, ultimoModo = mapa, modo
                 else
+                    mapa, modo = nil, nil
+                end
+                local okR, erro = pcall(renderizarFrutas, mapa, modo, true)
+                if not okR then
                     frutasStatus.TextColor3 = COR_ALERTA
-                    frutasStatus.Text = "Não consegui ler o estoque da loja agora. Mostrando só os preços."
+                    frutasStatus.Text = "Erro ao montar a lista. Toque em Atualizar."
                 end
                 carregandoFrutas = false
+            end)
+            -- Segurança: se algo travar, libera o botão depois de 15s.
+            task.delay(15, function()
+                if carregandoFrutas then
+                    carregandoFrutas = false
+                    if frutasStatus.Text == "Carregando a loja..." then
+                        frutasStatus.TextColor3 = COR_ALERTA
+                        frutasStatus.Text = "A loja demorou para responder. Toque em Atualizar."
+                    end
+                end
             end)
         end
 
@@ -14289,7 +14387,7 @@ function ESP(plr, logic)
 					if COREGUI:FindFirstChild(plr.Name..'_ESP') then
 						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Players.LocalPlayer.Character and getRoot(Players.LocalPlayer.Character) and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 							local pos = math.floor((getRoot(Players.LocalPlayer.Character).Position - getRoot(plr.Character).Position).magnitude)
-							TextLabel.Text = 'Name: '..plr.Name..' | Health: '..round(plr.Character:FindFirstChildOfClass('Humanoid').Health, 1)..' | Studs: '..pos
+							TextLabel.Text = 'Name: '..plr.Name..' - Health: '..round(plr.Character:FindFirstChildOfClass('Humanoid').Health, 1)..' - Studs: '..pos
 						end
 					else
 						teamChange:Disconnect()
@@ -14442,7 +14540,7 @@ function Locate(plr)
 					if COREGUI:FindFirstChild(plr.Name..'_LC') then
 						if plr.Character and getRoot(plr.Character) and plr.Character:FindFirstChildOfClass("Humanoid") and Players.LocalPlayer.Character and getRoot(Players.LocalPlayer.Character) and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
 							local pos = math.floor((getRoot(Players.LocalPlayer.Character).Position - getRoot(plr.Character).Position).magnitude)
-							TextLabel.Text = 'Name: '..plr.Name..' | Health: '..round(plr.Character:FindFirstChildOfClass('Humanoid').Health, 1)..' | Studs: '..pos
+							TextLabel.Text = 'Name: '..plr.Name..' - Health: '..round(plr.Character:FindFirstChildOfClass('Humanoid').Health, 1)..' - Studs: '..pos
 						end
 					else
 						teamChange:Disconnect()
