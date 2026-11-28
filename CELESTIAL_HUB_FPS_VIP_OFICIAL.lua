@@ -3135,7 +3135,7 @@ do
         end)
 
         -- ESP Player New: identificação avançada no estilo da referência.
-        -- Mostra nome, nível, distância e barra de vida de cada jogador.
+        -- Mostra foto, nome, nível, distância, PV/EN, ilha, equipe, PvP e Ken de cada jogador.
         local molduraSpawnNew = criarMoldura(contLocation, 290, 85, "ESP Player New")
         local spawnNewBox, spawnNewBtn = criarToggle(molduraSpawnNew)
         local spawnNewCircle = spawnNewBox:FindFirstChild("Circle")
@@ -3175,46 +3175,63 @@ do
             bb.Name = "CELESTIAL_ESP_PLAYER_NEW_" .. p.UserId
             bb.Adornee = head
             bb.AlwaysOnTop = true
-            bb.Size = UDim2.new(0, 230, 0, 72)
-            bb.StudsOffset = Vector3.new(0, 3.2, 0)
+            bb.Size = UDim2.new(0, 290, 0, 84)
+            bb.StudsOffset = Vector3.new(0, 3.6, 0)
             bb.ResetOnSpawn = false
             bb.Parent = gui
 
             local painel = Instance.new("Frame")
             painel.Name = "Painel"
             painel.Size = UDim2.new(1, 0, 1, 0)
-            painel.BackgroundColor3 = Color3.fromRGB(12, 20, 30)
             painel.BackgroundTransparency = 1
             painel.BorderSizePixel = 0
             painel.Parent = bb
-            Instance.new("UICorner", painel).CornerRadius = UDim.new(0, 5)
 
+            -- Foto (avatar) redonda com borda verde, igual à referência.
+            local foto = Instance.new("ImageLabel")
+            foto.Name = "Foto"
+            foto.Position = UDim2.new(0, 0, 0, 0)
+            foto.Size = UDim2.new(0, 38, 0, 38)
+            foto.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+            foto.BorderSizePixel = 0
+            foto.Image = "rbxthumb://type=AvatarHeadShot&id=" .. p.UserId .. "&w=150&h=150"
+            foto.Parent = painel
+            Instance.new("UICorner", foto).CornerRadius = UDim.new(1, 0)
+            local fotoBorda = Instance.new("UIStroke", foto)
+            fotoBorda.Color = Color3.fromRGB(80, 220, 120)
+            fotoBorda.Thickness = 2
+
+            -- Linha 1: Nome @usuario [Nv. X] · distância (dourado)
             local nome = Instance.new("TextLabel")
             nome.Name = "Nome"
             nome.BackgroundTransparency = 1
-            nome.Position = UDim2.new(0, 5, 0, 1)
-            nome.Size = UDim2.new(1, -10, 0, 25)
+            nome.Position = UDim2.new(0, 44, 0, 0)
+            nome.Size = UDim2.new(1, -44, 0, 13)
             nome.Font = FONTE_TEXTO
-            nome.TextSize = 12
-            nome.TextColor3 = Color3.fromRGB(255, 255, 255)
-            nome.TextStrokeTransparency = 0.25
-            nome.TextXAlignment = Enum.TextXAlignment.Center
+            nome.TextSize = 11
+            nome.TextColor3 = Color3.fromRGB(255, 215, 60)
+            nome.TextStrokeTransparency = 0.3
+            nome.TextXAlignment = Enum.TextXAlignment.Left
             nome.TextTruncate = Enum.TextTruncate.AtEnd
             nome.Parent = painel
 
+            -- Barra de vida (verde) "x/y PV"
             local fundoVida = Instance.new("Frame")
             fundoVida.Name = "FundoVida"
-            fundoVida.Position = UDim2.new(0, 7, 0, 31)
-            fundoVida.Size = UDim2.new(1, -14, 0, 11)
-            fundoVida.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+            fundoVida.Position = UDim2.new(0, 44, 0, 15)
+            fundoVida.Size = UDim2.new(1, -44, 0, 11)
+            fundoVida.BackgroundColor3 = Color3.fromRGB(35, 70, 45)
             fundoVida.BorderSizePixel = 0
             fundoVida.Parent = painel
             Instance.new("UICorner", fundoVida).CornerRadius = UDim.new(0, 4)
+            local bordaVida = Instance.new("UIStroke", fundoVida)
+            bordaVida.Color = Color3.fromRGB(20, 20, 20)
+            bordaVida.Thickness = 1
 
             local barraVida = Instance.new("Frame")
             barraVida.Name = "BarraVida"
             barraVida.Size = UDim2.new(1, 0, 1, 0)
-            barraVida.BackgroundColor3 = Color3.fromRGB(50, 230, 80)
+            barraVida.BackgroundColor3 = Color3.fromRGB(80, 215, 120)
             barraVida.BorderSizePixel = 0
             barraVida.Parent = fundoVida
             Instance.new("UICorner", barraVida).CornerRadius = UDim.new(0, 4)
@@ -3224,25 +3241,29 @@ do
             vidaTexto.BackgroundTransparency = 1
             vidaTexto.Size = UDim2.new(1, 0, 1, 0)
             vidaTexto.Font = FONTE_TEXTO
-            vidaTexto.TextSize = 9
+            vidaTexto.TextSize = 8
             vidaTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
-            vidaTexto.TextStrokeTransparency = 0
-            vidaTexto.Text = "0/0 HP"
+            vidaTexto.TextStrokeTransparency = 0.4
+            vidaTexto.Text = "0/0 PV"
             vidaTexto.Parent = fundoVida
 
+            -- Barra de energia (azul) "x/y EN"
             local fundoEnergia = Instance.new("Frame")
             fundoEnergia.Name = "FundoEnergia"
-            fundoEnergia.Position = UDim2.new(0, 7, 0, 47)
-            fundoEnergia.Size = UDim2.new(1, -14, 0, 9)
-            fundoEnergia.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+            fundoEnergia.Position = UDim2.new(0, 44, 0, 28)
+            fundoEnergia.Size = UDim2.new(1, -44, 0, 11)
+            fundoEnergia.BackgroundColor3 = Color3.fromRGB(25, 55, 75)
             fundoEnergia.BorderSizePixel = 0
             fundoEnergia.Parent = painel
             Instance.new("UICorner", fundoEnergia).CornerRadius = UDim.new(0, 4)
+            local bordaEnergia = Instance.new("UIStroke", fundoEnergia)
+            bordaEnergia.Color = Color3.fromRGB(20, 20, 20)
+            bordaEnergia.Thickness = 1
 
             local barraEnergia = Instance.new("Frame")
             barraEnergia.Name = "BarraEnergia"
-            barraEnergia.Size = UDim2.new(0, 0, 1, 0)
-            barraEnergia.BackgroundColor3 = Color3.fromRGB(55, 150, 255)
+            barraEnergia.Size = UDim2.new(1, 0, 1, 0)
+            barraEnergia.BackgroundColor3 = Color3.fromRGB(60, 185, 240)
             barraEnergia.BorderSizePixel = 0
             barraEnergia.Parent = fundoEnergia
             Instance.new("UICorner", barraEnergia).CornerRadius = UDim.new(0, 4)
@@ -3254,14 +3275,46 @@ do
             energiaTexto.Font = FONTE_TEXTO
             energiaTexto.TextSize = 8
             energiaTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
-            energiaTexto.TextStrokeTransparency = 0
-            energiaTexto.Text = "ENERGIA"
+            energiaTexto.TextStrokeTransparency = 0.4
+            energiaTexto.Text = "0/0 EN"
             energiaTexto.Parent = fundoEnergia
+
+            -- Linha: Island: Nome da ilha (lilás)
+            local ilhaLbl = Instance.new("TextLabel")
+            ilhaLbl.Name = "Ilha"
+            ilhaLbl.BackgroundTransparency = 1
+            ilhaLbl.Position = UDim2.new(0, 0, 0, 44)
+            ilhaLbl.Size = UDim2.new(1, 0, 0, 14)
+            ilhaLbl.Font = FONTE_TEXTO
+            ilhaLbl.TextSize = 11
+            ilhaLbl.TextColor3 = Color3.fromRGB(170, 150, 235)
+            ilhaLbl.TextStrokeTransparency = 0.4
+            ilhaLbl.TextXAlignment = Enum.TextXAlignment.Left
+            ilhaLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            ilhaLbl.Text = "Island: ..."
+            ilhaLbl.Parent = painel
+
+            -- Linha: Equipe · PvP · Ken x/4
+            local infoLbl = Instance.new("TextLabel")
+            infoLbl.Name = "Info"
+            infoLbl.BackgroundTransparency = 1
+            infoLbl.Position = UDim2.new(0, 0, 0, 59)
+            infoLbl.Size = UDim2.new(1, 0, 0, 14)
+            infoLbl.Font = FONTE_TEXTO
+            infoLbl.TextSize = 11
+            infoLbl.RichText = true
+            infoLbl.TextColor3 = Color3.fromRGB(220, 225, 240)
+            infoLbl.TextStrokeTransparency = 0.4
+            infoLbl.TextXAlignment = Enum.TextXAlignment.Left
+            infoLbl.TextTruncate = Enum.TextTruncate.AtEnd
+            infoLbl.Text = ""
+            infoLbl.Parent = painel
 
             spawnNewTags[p] = {
                 bb = bb, head = head, humanoid = humanoid,
                 nome = nome, barraVida = barraVida, vidaTexto = vidaTexto,
-                barraEnergia = barraEnergia, energiaTexto = energiaTexto
+                barraEnergia = barraEnergia, energiaTexto = energiaTexto,
+                ilha = ilhaLbl, info = infoLbl, ultimoIlha = 0, ilhaTexto = "?"
             }
         end
 
@@ -3300,10 +3353,96 @@ do
             return math.max(0, valorAtual), math.max(1, tonumber(valorMax) or 100)
         end
 
+        -- Nomes das ilhas em português (como aparece no jogo); o que não estiver aqui usa o nome original.
+        local ILHAS_PT = {
+            ["Tiki Outpost"] = "Posto Avançado Tiki",
+            ["Starter Island"] = "Ilha Inicial", ["Pirate Village"] = "Vila Pirata",
+            ["Desert"] = "Deserto", ["Frozen Village"] = "Vila Congelada",
+            ["Marine Fortress"] = "Fortaleza da Marinha", ["Skylands"] = "Ilhas do Céu",
+            ["Prison"] = "Prisão", ["Colosseum"] = "Coliseu", ["Magma Village"] = "Vila de Magma",
+            ["Underwater City"] = "Cidade Submersa", ["Fountain City"] = "Cidade da Fonte",
+            ["Kingdom of Rose"] = "Reino de Rose", ["Green Zone"] = "Zona Verde",
+            ["Graveyard"] = "Cemitério", ["Snow Mountain"] = "Montanha de Neve",
+            ["Hot and Cold"] = "Quente e Frio", ["Cursed Ship"] = "Navio Amaldiçoado",
+            ["Ice Castle"] = "Castelo de Gelo", ["Forgotten Island"] = "Ilha Esquecida",
+            ["Port Town"] = "Cidade Portuária", ["Hydra Island"] = "Ilha da Hidra",
+            ["Great Tree"] = "Grande Árvore", ["Floating Turtle"] = "Tartaruga Flutuante",
+            ["Castle on the Sea"] = "Castelo no Mar", ["Haunted Castle"] = "Castelo Assombrado",
+            ["Sea of Treats"] = "Mar dos Doces", ["Kitsune Island"] = "Ilha Kitsune",
+            ["Mansion"] = "Mansão", ["Temple of Time"] = "Templo do Tempo",
+        }
+        local ilhasLocais = {}
+        local ilhasLocaisUltimo = 0
+        local function atualizarListaIlhas()
+            if tick() - ilhasLocaisUltimo < 3 and #ilhasLocais > 0 then return end
+            ilhasLocaisUltimo = tick()
+            local lista = {}
+            local origem = workspace:FindFirstChild("_WorldOrigin")
+            local pasta = origem and origem:FindFirstChild("Locations")
+            if pasta then
+                for _, obj in ipairs(pasta:GetChildren()) do
+                    local pos
+                    if obj:IsA("BasePart") then pos = obj.Position
+                    elseif obj:IsA("Model") then
+                        local ok, pv = pcall(function() return obj:GetPivot() end)
+                        if ok and pv then pos = pv.Position end
+                    end
+                    if pos then lista[#lista + 1] = { nome = obj.Name, pos = pos } end
+                end
+            end
+            ilhasLocais = lista
+        end
+        local function ilhaMaisProxima(posicao)
+            atualizarListaIlhas()
+            local melhor, melhorDist = nil, 1200
+            for _, it in ipairs(ilhasLocais) do
+                local d = (it.pos - posicao).Magnitude
+                if d < melhorDist then melhor, melhorDist = it.nome, d end
+            end
+            if not melhor then return "Mar" end
+            return ILHAS_PT[melhor] or melhor
+        end
+
+        local function lerAtributo(p, char, nomes)
+            for _, n in ipairs(nomes) do
+                local v = char and char:GetAttribute(n)
+                if v == nil then v = p:GetAttribute(n) end
+                if v ~= nil then return v end
+            end
+            return nil
+        end
+
+        local function textoEquipeSpawnNew(p)
+            local t = p.Team and string.lower(p.Team.Name) or ""
+            if t == "marines" or t == "marine" then
+                return '<font color="rgb(90,150,255)">Marinheiros</font>'
+            elseif t == "pirates" or t == "pirate" then
+                return '<font color="rgb(255,90,90)">Piratas</font>'
+            end
+            return '<font color="rgb(200,200,200)">Sem equipe</font>'
+        end
+
+        local function textoPvpKenSpawnNew(p, char)
+            -- PvP: usa o valor exposto pelo jogo; se não houver, a zona segura (ForceField) indica PvP Off.
+            local pvpOff = lerAtributo(p, char, {"PvpDisabled", "PvPDisabled", "SafeZone", "InSafeZone"})
+            if pvpOff == nil then
+                pvpOff = char and char:FindFirstChildOfClass("ForceField") ~= nil or false
+            end
+            local pvp = pvpOff and "PvP Off" or "PvP On"
+
+            local kenAtivo = lerAtributo(p, char, {"KenActive", "KenOn", "Observation", "ObservationActive"})
+            local kenRest = tonumber(lerAtributo(p, char, {"KenDodgesLeft", "KenDodges"}))
+            local kenMax = tonumber(lerAtributo(p, char, {"KenDodgesMax", "MaxKenDodges"})) or 4
+            if kenRest == nil then kenRest = kenMax end
+            local ken = (kenAtivo and "Ken On " or "Ken Off ") .. math.floor(kenRest) .. "/" .. math.floor(kenMax)
+            return pvp .. " · " .. ken
+        end
+
         local function atualizarTagsSpawnNew()
             local charLocal = player.Character
             local rootLocal = charLocal and (charLocal:FindFirstChild("HumanoidRootPart") or charLocal:FindFirstChild("Head"))
             if not rootLocal then return end
+            local agora = tick()
 
             for p, tag in pairs(spawnNewTags) do
                 if not p.Parent or not tag.head or not tag.head.Parent or not tag.humanoid or not tag.humanoid.Parent then
@@ -3312,27 +3451,32 @@ do
                     local nivel = nivelDoJogador(p)
                     local distancia = math.floor((tag.head.Position - rootLocal.Position).Magnitude)
                     local nomeVisivel = p.DisplayName ~= "" and p.DisplayName or p.Name
-                    local nivelTexto = nivel and (" [Lv. " .. nivel .. "]") or ""
-                    tag.nome.Text = nomeVisivel .. " (@" .. p.Name .. ")" .. nivelTexto .. " - " .. distancia .. "m"
+                    local nivelTexto = nivel and (" [Nv. " .. nivel .. "]") or ""
+                    tag.nome.Text = nomeVisivel .. " @" .. p.Name .. nivelTexto .. " · " .. distancia .. "m"
 
                     local maxVida = math.max(tag.humanoid.MaxHealth, 1)
                     local vida = math.clamp(tag.humanoid.Health, 0, maxVida)
                     local proporcao = vida / maxVida
                     tag.barraVida.Size = UDim2.new(proporcao, 0, 1, 0)
                     tag.barraVida.BackgroundColor3 = proporcao > 0.6
-                        and Color3.fromRGB(50, 230, 80)
+                        and Color3.fromRGB(80, 215, 120)
                         or (proporcao > 0.3 and Color3.fromRGB(255, 190, 40) or Color3.fromRGB(240, 65, 65))
-                    tag.vidaTexto.Text = math.floor(vida) .. "/" .. math.floor(maxVida) .. " HP"
+                    tag.vidaTexto.Text = math.floor(vida) .. "/" .. math.floor(maxVida) .. " PV"
 
                     local energia, maxEnergia = lerEnergiaSpawnNew(p, p.Character)
                     if energia ~= nil then
-                        tag.barraEnergia.Visible = true
-                        tag.energiaTexto.Parent.Visible = true
                         tag.barraEnergia.Size = UDim2.new(math.clamp(energia / maxEnergia, 0, 1), 0, 1, 0)
-                        tag.energiaTexto.Text = "ENERGIA " .. math.floor(energia) .. "/" .. math.floor(maxEnergia)
+                        tag.energiaTexto.Text = math.floor(energia) .. "/" .. math.floor(maxEnergia) .. " EN"
                     else
-                        tag.barraEnergia.Visible = false
-                        tag.energiaTexto.Parent.Visible = false
+                        tag.barraEnergia.Size = UDim2.new(1, 0, 1, 0)
+                        tag.energiaTexto.Text = "-/- EN"
+                    end
+
+                    -- Ilha / equipe / PvP / Ken mudam pouco: atualiza a cada 0.5s.
+                    if agora - tag.ultimoIlha >= 0.5 then
+                        tag.ultimoIlha = agora
+                        tag.ilha.Text = "Island: " .. ilhaMaisProxima(tag.head.Position)
+                        tag.info.Text = textoEquipeSpawnNew(p) .. " · " .. textoPvpKenSpawnNew(p, p.Character)
                     end
                 end
             end
@@ -4316,6 +4460,239 @@ do
 
     -- Contador de pessoas no barco (aba SEA/CIA Event)
     end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
+    do -- Auto Comprar Barco (seletor ▼ + botão Comprar)
+        local molduraComprar = criarMoldura(containerMar, 0, 140, "Auto Comprar Barco")
+
+        -- r = nomes do remote (ambos os times); rp/rm = Pirata/Marinha.
+        -- Cada nome é tentado em ordem até o barco aparecer.
+        local BARCOS = {
+            { nome = "Dinghy", preco = "Grátis", req = "Grátis", r = {"Dinghy"} },
+            { nome = "Sloop", preco = "$300 (Marinha $150)", req = "Sem requisito", rp = {"PirateSloop"}, rm = {"MarineSloop"} },
+            { nome = "Brigade", preco = "$1,000 (Marinha $600)", req = "Sem requisito", rp = {"PirateBrigade"}, rm = {"MarineBrigade"} },
+            { nome = "Grand Brigade", preco = "$4,000 (Marinha $2,000)", req = "Precisa estar liberado no jogo", rp = {"PirateGrandBrigade"}, rm = {"MarineGrandBrigade"} },
+            { nome = "Miracle", preco = "Grátis", req = "Precisa do Game Pass Fast Boats", r = {"Miracle"} },
+            { nome = "The Sentinel", preco = "$1,000", req = "Precisa do Game Pass Fast Boats", r = {"Sentinel", "TheSentinel", "The Sentinel"} },
+            { nome = "Guardian", preco = "$5,000", req = "Precisa ter derrotado o Don Swan", r = {"Guardian"} },
+            { nome = "Lantern", preco = "$5,000 + 1,500 Fragmentos", req = "Precisa ter liberado com o Cyborg", r = {"Lantern"} },
+            { nome = "Sleigh", preco = "$5,000", req = "Precisa estar liberado no jogo", r = {"Sleigh"} },
+            { nome = "Beast Hunter", preco = "$5,000 + materiais", req = "Precisa dos materiais de craft", r = {"Beast Hunter", "BeastHunter"} },
+        }
+
+        local barcoSel = nil
+        local comprando = false
+
+        local comprarSelBtn = Instance.new("TextButton", molduraComprar)
+        comprarSelBtn.Size = UDim2.new(1, -20, 0, 30)
+        comprarSelBtn.Position = UDim2.new(0, 10, 0, 36)
+        comprarSelBtn.BackgroundColor3 = COR_CARD
+        comprarSelBtn.TextColor3 = COR_TEXTO
+        comprarSelBtn.Text = "Selecionar barco ▼"
+        comprarSelBtn.Font = FONTE_TEXTO
+        comprarSelBtn.TextSize = 15
+        comprarSelBtn.TextTruncate = Enum.TextTruncate.AtEnd
+        comprarSelBtn.ZIndex = 3
+        Instance.new("UICorner", comprarSelBtn).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(comprarSelBtn)
+
+        local comprarBarcoBtn = Instance.new("TextButton", molduraComprar)
+        comprarBarcoBtn.Size = UDim2.new(1, -20, 0, 28)
+        comprarBarcoBtn.Position = UDim2.new(0, 10, 0, 72)
+        comprarBarcoBtn.BackgroundColor3 = COR_BOTAO_ATIVO
+        comprarBarcoBtn.Text = "Comprar"
+        comprarBarcoBtn.TextColor3 = COR_TEXTO
+        comprarBarcoBtn.Font = FONTE_TEXTO
+        comprarBarcoBtn.TextSize = 15
+        comprarBarcoBtn.ZIndex = 3
+        Instance.new("UICorner", comprarBarcoBtn).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(comprarBarcoBtn)
+
+        local comprarStatus = Instance.new("TextLabel", molduraComprar)
+        comprarStatus.Size = UDim2.new(1, -20, 0, 32)
+        comprarStatus.Position = UDim2.new(0, 10, 0, 104)
+        comprarStatus.BackgroundTransparency = 1
+        comprarStatus.Text = ""
+        comprarStatus.TextColor3 = COR_TEXTO_SUB
+        comprarStatus.Font = FONTE_TEXTO
+        comprarStatus.TextSize = 11
+        comprarStatus.TextWrapped = true
+        comprarStatus.TextXAlignment = Enum.TextXAlignment.Left
+        comprarStatus.TextYAlignment = Enum.TextYAlignment.Top
+
+        local comprarDropdown = Instance.new("Frame", gui)
+        comprarDropdown.Size = UDim2.new(0, 240, 0, 195)
+        comprarDropdown.BackgroundColor3 = Color3.fromRGB(45, 30, 60)
+        comprarDropdown.BorderSizePixel = 0
+        comprarDropdown.Visible = false
+        comprarDropdown.ZIndex = 9999
+        Instance.new("UICorner", comprarDropdown).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(comprarDropdown)
+
+        local comprarSearch = Instance.new("TextBox", comprarDropdown)
+        comprarSearch.Size = UDim2.new(1, -12, 0, 30)
+        comprarSearch.Position = UDim2.new(0, 6, 0, 6)
+        comprarSearch.BackgroundColor3 = COR_CARD
+        comprarSearch.TextColor3 = COR_TEXTO
+        comprarSearch.PlaceholderText = " Pesquisar barco"
+        comprarSearch.PlaceholderColor3 = COR_TEXTO_SUB
+        comprarSearch.Text = ""
+        comprarSearch.Font = FONTE_TEXTO
+        comprarSearch.TextSize = 12
+        comprarSearch.ClearTextOnFocus = false
+        comprarSearch.ZIndex = 10000
+        Instance.new("UICorner", comprarSearch).CornerRadius = UDim.new(0, 6)
+        local bordaComprarSearchRGB = Instance.new("UIStroke", comprarSearch)
+        bordaComprarSearchRGB.Thickness = 1.5
+        bordaComprarSearchRGB.Transparency = 0
+        table.insert(bordasRGBAbas, bordaComprarSearchRGB)
+
+        local comprarVoltarBtn = Instance.new("TextButton", comprarDropdown)
+        comprarVoltarBtn.Size = UDim2.new(1, -12, 0, 28)
+        comprarVoltarBtn.Position = UDim2.new(0, 6, 0, 42)
+        comprarVoltarBtn.BackgroundColor3 = COR_CARD
+        comprarVoltarBtn.Text = "‹ Voltar"
+        comprarVoltarBtn.TextColor3 = COR_TEXTO
+        comprarVoltarBtn.Font = FONTE_TEXTO
+        comprarVoltarBtn.TextSize = 12
+        comprarVoltarBtn.ZIndex = 10000
+        Instance.new("UICorner", comprarVoltarBtn).CornerRadius = UDim.new(0, 6)
+        local bordaComprarVoltarRGB = Instance.new("UIStroke", comprarVoltarBtn)
+        bordaComprarVoltarRGB.Thickness = 1.5
+        bordaComprarVoltarRGB.Transparency = 0
+        table.insert(bordasRGBAbas, bordaComprarVoltarRGB)
+
+        local comprarLista = Instance.new("ScrollingFrame", comprarDropdown)
+        comprarLista.Size = UDim2.new(1, -10, 0, 118)
+        comprarLista.Position = UDim2.new(0, 6, 0, 74)
+        comprarLista.BackgroundTransparency = 1
+        comprarLista.BorderSizePixel = 0
+        comprarLista.ScrollBarThickness = 2
+        comprarLista.ZIndex = 10000
+        comprarLista.CanvasSize = UDim2.new(0, 0, 0, 0)
+        comprarLista.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        Instance.new("UIListLayout", comprarLista).Padding = UDim.new(0, 4)
+        aplicarPadraoDropdownIdiomas(comprarDropdown, comprarSearch, comprarVoltarBtn, comprarLista, "Pesquisar barcos...")
+        comprarLista.ScrollingDirection = Enum.ScrollingDirection.Y
+        comprarLista.ElasticBehavior = Enum.ElasticBehavior.Never
+
+        local function fecharDropdownComprar()
+            comprarDropdown.Visible = false
+            comprarSearch.Text = ""
+        end
+
+        local function atualizarListaBarcos(filtro)
+            for _, c in ipairs(comprarLista:GetChildren()) do
+                if c:IsA("TextButton") then c:Destroy() end
+            end
+            filtro = string.lower(filtro or "")
+            for _, b in ipairs(BARCOS) do
+                if string.find(string.lower(b.nome), filtro, 1, true) then
+                    local item = Instance.new("TextButton", comprarLista)
+                    item.Size = UDim2.new(1, 0, 0, 30)
+                    item.BackgroundColor3 = Color3.fromRGB(60, 40, 80)
+                    item.Text = b.nome .. " - " .. b.preco
+                    item.TextColor3 = b == barcoSel and Color3.fromRGB(150, 255, 150) or COR_TEXTO
+                    item.Font = FONTE_TEXTO
+                    item.TextSize = 15
+                    item.TextXAlignment = Enum.TextXAlignment.Left
+                    item.TextTruncate = Enum.TextTruncate.AtEnd
+                    item.ZIndex = 10001
+                    Instance.new("UIPadding", item).PaddingLeft = UDim.new(0, 8)
+                    Instance.new("UICorner", item).CornerRadius = UDim.new(0, 4)
+                    item.MouseButton1Click:Connect(function()
+                        vibrar()
+                        barcoSel = b
+                        comprarSelBtn.Text = b.nome .. " ▼"
+                        comprarSelBtn.TextColor3 = Color3.fromRGB(150, 255, 150)
+                        comprarStatus.TextColor3 = COR_TEXTO_SUB
+                        comprarStatus.Text = "Preço: " .. b.preco .. " | " .. b.req
+                        fecharDropdownComprar()
+                    end)
+                end
+            end
+        end
+
+        comprarSelBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            if comprarDropdown.Visible then
+                fecharDropdownComprar()
+            else
+                atualizarListaBarcos("")
+                comprarDropdown.Visible = true
+            end
+        end)
+
+        comprarVoltarBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            fecharDropdownComprar()
+        end)
+
+        comprarSearch:GetPropertyChangedSignal("Text"):Connect(function()
+            atualizarListaBarcos(comprarSearch.Text)
+        end)
+
+        local function barcoDoJogador()
+            local boats = workspace:FindFirstChild("Boats")
+            if not boats then return nil end
+            for _, boat in ipairs(boats:GetChildren()) do
+                local owner = boat:FindFirstChild("Owner")
+                if owner then
+                    local v = owner.Value
+                    if v == player or v == player.Name or v == player.UserId then return boat end
+                end
+            end
+            return nil
+        end
+
+        comprarBarcoBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            if comprando then return end
+            if not barcoSel then
+                comprarStatus.TextColor3 = COR_ALERTA
+                comprarStatus.Text = "Selecione um barco primeiro."
+                return
+            end
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+            local commF = remotes and remotes:FindFirstChild("CommF_")
+            if not commF then
+                comprarStatus.TextColor3 = COR_ALERTA
+                comprarStatus.Text = "Remote de compra não encontrado."
+                return
+            end
+
+            comprando = true
+            comprarBarcoBtn.Text = "Comprando..."
+            comprarStatus.TextColor3 = COR_TEXTO_SUB
+            comprarStatus.Text = "Comprando " .. barcoSel.nome .. "..."
+            local escolhido = barcoSel
+
+            task.spawn(function()
+                local marinha = player.Team ~= nil and player.Team.Name == "Marines"
+                local nomes = escolhido.r or (marinha and escolhido.rm or escolhido.rp) or {}
+                local antes = barcoDoJogador()
+                local comprou = false
+                for _, id in ipairs(nomes) do
+                    if not comprou then
+                        pcall(function() commF:InvokeServer("BuyBoat", id) end)
+                        local limite = os.clock() + 2.5
+                        while not comprou and os.clock() < limite do
+                            local atual = barcoDoJogador()
+                            if atual and atual ~= antes then comprou = true end
+                            if not comprou then task.wait(0.2) end
+                        end
+                    end
+                end
+                if comprou then
+                    comprarStatus.TextColor3 = COR_BOLINHA_VERDE
+                    comprarStatus.Text = escolhido.nome .. " comprado!"
+                else
+                    comprarStatus.TextColor3 = COR_ALERTA
+                    comprarStatus.Text = "Não comprou " .. escolhido.nome .. ". Falta Game Pass, requisito ou dinheiro, ou fique perto do Boat Dealer."
+                end
+                comprarBarcoBtn.Text = "Comprar"
+                comprando = false
+            end)
+        end)
+    end
     do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
     local molduraPessoas = criarMoldura(containerMar, 475, 68, "Pessoas no barco")
     local pessoasBox, pessoasBtn = criarToggleDireita(molduraPessoas, 35)
@@ -4325,8 +4702,8 @@ do
 
     local pessoasPopup = Instance.new("Frame")
     pessoasPopup.Name = "PessoasNoBarcoPopup"
-    pessoasPopup.Size = UDim2.new(0, 210, 0, 82)
-    pessoasPopup.Position = UDim2.new(0.5, -105, 0.18, 0)
+    pessoasPopup.Size = UDim2.new(0, 140, 0, 56)
+    pessoasPopup.Position = UDim2.new(0.5, -70, 0.18, 0)
     pessoasPopup.BackgroundColor3 = Color3.fromRGB(20, 22, 30)
     pessoasPopup.BackgroundTransparency = 0.08
     pessoasPopup.BorderSizePixel = 0
@@ -4345,10 +4722,35 @@ do
     pessoasTexto.Text = "TOTAL: 0\nEm pé: 0\nSentado: 0"
     pessoasTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
     pessoasTexto.Font = FONTE_TEXTO
-    pessoasTexto.TextSize = 13
+    pessoasTexto.TextSize = 11
     pessoasTexto.TextXAlignment = Enum.TextXAlignment.Center
     pessoasTexto.TextYAlignment = Enum.TextYAlignment.Center
     pessoasTexto.ZIndex = 1001
+
+    -- Posição do pop-up salva em arquivo: ao reabrir o script, ele volta onde foi deixado.
+    local ARQUIVO_POPUP_PESSOAS = "celestial_pessoas_popup.txt"
+    pcall(function()
+        if isfile and readfile and isfile(ARQUIVO_POPUP_PESSOAS) then
+            local xs, xo, ys, yo = string.match(readfile(ARQUIVO_POPUP_PESSOAS), "^([%-%d%.]+),([%-%d%.]+),([%-%d%.]+),([%-%d%.]+)$")
+            xs, xo, ys, yo = tonumber(xs), tonumber(xo), tonumber(ys), tonumber(yo)
+            if xs and xo and ys and yo then
+                -- Mantém o pop-up dentro da tela, caso a resolução tenha mudado.
+                local cam = workspace.CurrentCamera
+                local vp = cam and cam.ViewportSize or Vector2.new(1920, 1080)
+                local absX = math.clamp(xs * vp.X + xo, 0, math.max(0, vp.X - 140))
+                local absY = math.clamp(ys * vp.Y + yo, 0, math.max(0, vp.Y - 56))
+                pessoasPopup.Position = UDim2.new(0, absX, 0, absY)
+            end
+        end
+    end)
+    local function salvarPosicaoPopupPessoas()
+        pcall(function()
+            if writefile then
+                local pos = pessoasPopup.Position
+                writefile(ARQUIVO_POPUP_PESSOAS, pos.X.Scale .. "," .. pos.X.Offset .. "," .. pos.Y.Scale .. "," .. pos.Y.Offset)
+            end
+        end)
+    end
 
     -- Arraste o pop-up com mouse ou toque (celular).
     local popupDragging, popupDragInput, popupDragStart, popupStartPos
@@ -4358,7 +4760,10 @@ do
             popupDragStart = input.Position
             popupStartPos = pessoasPopup.Position
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then popupDragging = false end
+                if input.UserInputState == Enum.UserInputState.End then
+                    popupDragging = false
+                    salvarPosicaoPopupPessoas()
+                end
             end)
         end
     end)
@@ -4479,7 +4884,7 @@ do
     end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
     do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
     local EVENTOS_MARITIMOS_META = 20
-    local JANELA_AGRUPAMENTO = 12 -- segundos para reunir inimigos do mesmo surgimento
+    local JANELA_AGRUPAMENTO = 8 -- segundos para reunir inimigos do mesmo surgimento
     local eventosMaritimosRestantes = EVENTOS_MARITIMOS_META
     local eventosMaritimosConcluidos = 0
     local eventosMaritimosConexoes = {}
@@ -4487,7 +4892,7 @@ do
     local grupoMaritimoAtual = nil
     local pastaInimigosMar = nil
 
-    local molduraEventos = criarMoldura(containerMar, 0, 146, "Eventos marítimos - Cooldown")
+    local molduraEventos = criarMoldura(containerMar, 0, 172, "Eventos marítimos - Cooldown")
     local eventosStatus = Instance.new("TextLabel", molduraEventos)
     eventosStatus.Size = UDim2.new(1, -20, 0, 22)
     eventosStatus.Position = UDim2.new(0, 10, 0, 31)
@@ -4508,10 +4913,20 @@ do
     eventosContagem.TextSize = 12
     eventosContagem.TextXAlignment = Enum.TextXAlignment.Left
 
+    local eventosDerrotadosLbl = Instance.new("TextLabel", molduraEventos)
+    eventosDerrotadosLbl.Size = UDim2.new(1, -20, 0, 22)
+    eventosDerrotadosLbl.Position = UDim2.new(0, 10, 0, 80)
+    eventosDerrotadosLbl.BackgroundTransparency = 1
+    eventosDerrotadosLbl.Text = "Eventos marítimos derrotados: 0/" .. EVENTOS_MARITIMOS_META
+    eventosDerrotadosLbl.TextColor3 = Color3.fromRGB(0, 170, 255)
+    eventosDerrotadosLbl.Font = FONTE_TITULO
+    eventosDerrotadosLbl.TextSize = 12
+    eventosDerrotadosLbl.TextXAlignment = Enum.TextXAlignment.Left
+
     local cooldownSpy = { emCooldown = false }
     cooldownSpy.label = Instance.new("TextLabel", molduraEventos)
     cooldownSpy.label.Size = UDim2.new(1, -20, 0, 22)
-    cooldownSpy.label.Position = UDim2.new(0, 10, 0, 80)
+    cooldownSpy.label.Position = UDim2.new(0, 10, 0, 106)
     cooldownSpy.label.BackgroundTransparency = 1
     cooldownSpy.label.Text = "Não está em cooldown"
     cooldownSpy.label.TextColor3 = Color3.fromRGB(70, 230, 120)
@@ -4521,7 +4936,7 @@ do
 
     local atualizarEventosBtn = Instance.new("TextButton", molduraEventos)
     atualizarEventosBtn.Size = UDim2.new(1, -20, 0, 28)
-    atualizarEventosBtn.Position = UDim2.new(0, 10, 0, 108)
+    atualizarEventosBtn.Position = UDim2.new(0, 10, 0, 134)
     atualizarEventosBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 220)
     atualizarEventosBtn.BorderSizePixel = 0
     atualizarEventosBtn.Text = "ATUALIZAR"
@@ -4533,6 +4948,7 @@ do
 
     local function atualizarTextoEventos()
         eventosMaritimosRestantes = math.clamp(eventosMaritimosRestantes, 0, EVENTOS_MARITIMOS_META)
+        eventosDerrotadosLbl.Text = "Eventos marítimos derrotados: " .. tostring(math.min(eventosMaritimosConcluidos, EVENTOS_MARITIMOS_META)) .. "/" .. EVENTOS_MARITIMOS_META
         if eventosMaritimosRestantes > 0 then
             eventosStatus.Text = "Cooldown: progresso local estimado"
             eventosStatus.TextColor3 = Color3.fromRGB(255, 205, 90)
@@ -5184,7 +5600,7 @@ do
     end)
     -- ===================== FIM AUTO FROZEN DIMENSION / SEA EVENTS =====================
 
-    containerSeaEvent.CanvasSize = UDim2.new(0, 0, 0, 1117)
+    containerSeaEvent.CanvasSize = UDim2.new(0, 0, 0, 1289)
     end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
 end
 -- ===================== MULTIFARM =====================
@@ -7621,7 +8037,278 @@ do
         end)
     end)
 
-    contShop.CanvasSize = UDim2.new(0, 0, 0, 300)
+    do -- Lista de frutas: pop-up com o estoque da loja do jogo (Blox Fruit Dealer)
+        -- Preços em Beli (tabela do wiki, 42 frutas). Se o jogo informar o preço, ele tem prioridade.
+        local FRUTAS = {
+            {"Rocket", 5000}, {"Spin", 7500}, {"Blade", 30000}, {"Spring", 60000}, {"Bomb", 80000},
+            {"Smoke", 100000}, {"Spike", 180000}, {"Flame", 250000}, {"Ice", 350000}, {"Sand", 420000},
+            {"Dark", 500000}, {"Eagle", 550000}, {"Diamond", 600000}, {"Light", 650000}, {"Rubber", 750000},
+            {"Ghost", 940000}, {"Magma", 960000}, {"Quake", 1000000}, {"Buddha", 1200000}, {"Love", 1300000},
+            {"Creation", 1400000}, {"Spider", 1500000}, {"Sound", 1700000}, {"Phoenix", 1800000},
+            {"Portal", 1900000}, {"Lightning", 2100000}, {"Pain", 2300000}, {"Blizzard", 2400000},
+            {"Gravity", 2500000}, {"Mammoth", 2700000}, {"T-Rex", 2700000}, {"Dough", 2800000},
+            {"Shadow", 2900000}, {"Venom", 3000000}, {"Gas", 3200000}, {"Spirit", 3400000},
+            {"Tiger", 5000000}, {"Yeti", 5000000}, {"Magnet", 6000000}, {"Kitsune", 8000000},
+            {"Control", 9000000}, {"Dragon", 15000000},
+        }
+        local COR_FRUTA_INDISPONIVEL = Color3.fromRGB(255, 60, 60)
+        local COR_FRUTA_SEM_DADO = Color3.fromRGB(170, 170, 180)
+        local carregandoFrutas = false
+
+        local function chaveFruta(txt)
+            return (string.gsub(string.lower(tostring(txt or "")), "[^%a]", ""))
+        end
+        -- "Dragon-Dragon" e "Dragon" viram a mesma chave ("dragon").
+        local function baseDaChave(k)
+            local n = #k
+            if n > 0 and n % 2 == 0 and string.sub(k, 1, n / 2) == string.sub(k, n / 2 + 1) then
+                return string.sub(k, 1, n / 2)
+            end
+            return k
+        end
+        local function formatarBeli(v)
+            local txt = tostring(math.floor(tonumber(v) or 0))
+            local fmt = string.reverse(string.gsub(string.reverse(txt), "(%d%d%d)", "%1,"))
+            if string.sub(fmt, 1, 1) == "," then fmt = string.sub(fmt, 2) end
+            return "$" .. fmt
+        end
+
+        -- Estoque atual da loja. Retorna mapa e o modo ("flags" ou "destaque"); nil se não conseguiu ler.
+        local function lerEstoque()
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+            local commF = remotes and remotes:FindFirstChild("CommF_")
+            if commF then
+                local ok, res = pcall(function() return commF:InvokeServer("GetFruits") end)
+                if ok and type(res) == "table" then
+                    local mapa, temFlag = {}, false
+                    for _, e in pairs(res) do
+                        if type(e) == "table" and e.Name ~= nil then
+                            if e.OnSale ~= nil then temFlag = true end
+                            mapa[baseDaChave(chaveFruta(e.Name))] = {
+                                disp = e.OnSale == true, preco = tonumber(e.Price), nome = tostring(e.Name)
+                            }
+                        end
+                    end
+                    if temFlag then return mapa, "flags" end
+                end
+            end
+            -- Alternativa: módulo do jogo com GetFeaturedFruits (frutas em destaque = à venda).
+            for _, m in ipairs(ReplicatedStorage:GetDescendants()) do
+                if m:IsA("ModuleScript") and string.find(string.lower(m.Name), "fruit", 1, true) then
+                    local okReq, mod = pcall(require, m)
+                    if okReq and type(mod) == "table" and type(mod.GetFeaturedFruits) == "function" then
+                        local okF, lista = pcall(function() return mod.GetFeaturedFruits() end)
+                        if not (okF and type(lista) == "table") then
+                            okF, lista = pcall(function() return mod:GetFeaturedFruits() end)
+                        end
+                        if okF and type(lista) == "table" then
+                            local mapa, achou = {}, false
+                            for k, v in pairs(lista) do
+                                local nome = nil
+                                if type(v) == "string" then
+                                    nome = v
+                                elseif type(v) == "table" then
+                                    nome = v.Name or v.FruitName or v.name
+                                elseif type(k) == "string" and v then
+                                    nome = k
+                                end
+                                if nome then
+                                    achou = true
+                                    mapa[baseDaChave(chaveFruta(nome))] = { disp = true, nome = tostring(nome) }
+                                end
+                            end
+                            if achou then return mapa, "destaque" end
+                        end
+                    end
+                end
+            end
+            return nil, nil
+        end
+
+        local molduraFrutas = criarMoldura(contShop, 245, 70, "Lista de Frutas")
+        local abrirFrutasBtn = Instance.new("TextButton", molduraFrutas)
+        abrirFrutasBtn.Size = UDim2.new(1, -20, 0, 32)
+        abrirFrutasBtn.Position = UDim2.new(0, 10, 0, 32)
+        abrirFrutasBtn.BackgroundColor3 = COR_BOTAO_ATIVO
+        abrirFrutasBtn.Text = "Lista de frutas"
+        abrirFrutasBtn.TextColor3 = COR_TEXTO
+        abrirFrutasBtn.Font = FONTE_TEXTO
+        abrirFrutasBtn.TextSize = 15
+        abrirFrutasBtn.ZIndex = 3
+        Instance.new("UICorner", abrirFrutasBtn).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(abrirFrutasBtn)
+
+        local frutasPopup = Instance.new("Frame", gui)
+        frutasPopup.Size = UDim2.new(0, 280, 0, 340)
+        frutasPopup.Position = UDim2.new(0.5, -140, 0.5, -170)
+        frutasPopup.BackgroundColor3 = COR_FUNDO
+        frutasPopup.BorderSizePixel = 0
+        frutasPopup.Visible = false
+        frutasPopup.Active = true
+        frutasPopup.ClipsDescendants = true
+        frutasPopup.ZIndex = 10000
+        Instance.new("UICorner", frutasPopup).CornerRadius = UDim.new(0, 10)
+        addWhiteStroke(frutasPopup)
+
+        local frutasTitulo = Instance.new("TextLabel", frutasPopup)
+        frutasTitulo.Size = UDim2.new(1, -12, 0, 22)
+        frutasTitulo.Position = UDim2.new(0, 6, 0, 6)
+        frutasTitulo.BackgroundTransparency = 1
+        frutasTitulo.Text = "Lista de frutas"
+        frutasTitulo.TextColor3 = COR_TEXTO
+        frutasTitulo.Font = FONTE_TITULO
+        frutasTitulo.TextSize = 15
+        frutasTitulo.ZIndex = 10001
+
+        local frutasStatus = Instance.new("TextLabel", frutasPopup)
+        frutasStatus.Size = UDim2.new(1, -12, 0, 30)
+        frutasStatus.Position = UDim2.new(0, 6, 0, 30)
+        frutasStatus.BackgroundTransparency = 1
+        frutasStatus.Text = ""
+        frutasStatus.TextColor3 = COR_TEXTO_SUB
+        frutasStatus.Font = FONTE_TEXTO
+        frutasStatus.TextSize = 11
+        frutasStatus.TextWrapped = true
+        frutasStatus.ZIndex = 10001
+
+        local frutasVoltarBtn = Instance.new("TextButton", frutasPopup)
+        frutasVoltarBtn.Size = UDim2.new(0.5, -9, 0, 28)
+        frutasVoltarBtn.Position = UDim2.new(0, 6, 0, 64)
+        frutasVoltarBtn.BackgroundColor3 = COR_CARD
+        frutasVoltarBtn.Text = "‹ Voltar"
+        frutasVoltarBtn.TextColor3 = COR_TEXTO
+        frutasVoltarBtn.Font = FONTE_TEXTO
+        frutasVoltarBtn.TextSize = 15
+        frutasVoltarBtn.ZIndex = 10001
+        Instance.new("UICorner", frutasVoltarBtn).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(frutasVoltarBtn)
+
+        local frutasAtualizarBtn = Instance.new("TextButton", frutasPopup)
+        frutasAtualizarBtn.Size = UDim2.new(0.5, -9, 0, 28)
+        frutasAtualizarBtn.Position = UDim2.new(0.5, 3, 0, 64)
+        frutasAtualizarBtn.BackgroundColor3 = COR_BOTAO_ATIVO
+        frutasAtualizarBtn.Text = "Atualizar"
+        frutasAtualizarBtn.TextColor3 = COR_TEXTO
+        frutasAtualizarBtn.Font = FONTE_TEXTO
+        frutasAtualizarBtn.TextSize = 15
+        frutasAtualizarBtn.ZIndex = 10001
+        Instance.new("UICorner", frutasAtualizarBtn).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(frutasAtualizarBtn)
+
+        local frutasLista = Instance.new("ScrollingFrame", frutasPopup)
+        frutasLista.Size = UDim2.new(1, -12, 1, -100)
+        frutasLista.Position = UDim2.new(0, 6, 0, 96)
+        frutasLista.BackgroundTransparency = 1
+        frutasLista.BorderSizePixel = 0
+        frutasLista.ScrollBarThickness = 3
+        frutasLista.ZIndex = 10001
+        frutasLista.ClipsDescendants = true
+        frutasLista.CanvasSize = UDim2.new(0, 0, 0, 0)
+        frutasLista.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        frutasLista.ScrollingDirection = Enum.ScrollingDirection.Y
+        frutasLista.ElasticBehavior = Enum.ElasticBehavior.Never
+        Instance.new("UIListLayout", frutasLista).Padding = UDim.new(0, 3)
+
+        local function carregarFrutas()
+            if carregandoFrutas then return end
+            carregandoFrutas = true
+            frutasStatus.TextColor3 = COR_TEXTO_SUB
+            frutasStatus.Text = "Carregando a loja..."
+            task.spawn(function()
+                local mapa, modo = lerEstoque()
+
+                local linhas, usadas = {}, {}
+                for _, f in ipairs(FRUTAS) do
+                    local chave = baseDaChave(chaveFruta(f[1]))
+                    local e = mapa and mapa[chave]
+                    usadas[chave] = true
+                    local disp = nil
+                    if modo == "flags" then
+                        disp = e ~= nil and e.disp == true
+                    elseif modo == "destaque" then
+                        disp = e ~= nil
+                    end
+                    local preco = f[2]
+                    if e and e.preco and e.preco > 0 then preco = e.preco end
+                    table.insert(linhas, { nome = f[1], preco = preco, disp = disp })
+                end
+                -- Frutas novas que o jogo informar e que ainda não estão na tabela.
+                if mapa then
+                    for chave, e in pairs(mapa) do
+                        if not usadas[chave] and e.preco and e.preco > 0 then
+                            local nomeCurto = string.match(e.nome, "^(.-)%-") or e.nome
+                            local disp = nil
+                            if modo == "flags" then disp = e.disp == true else disp = true end
+                            table.insert(linhas, { nome = nomeCurto, preco = e.preco, disp = disp })
+                        end
+                    end
+                end
+
+                table.sort(linhas, function(a, b)
+                    local da = a.disp == true and 0 or 1
+                    local db = b.disp == true and 0 or 1
+                    if da ~= db then return da < db end
+                    if a.preco ~= b.preco then return a.preco < b.preco end
+                    return a.nome < b.nome
+                end)
+
+                for _, c in ipairs(frutasLista:GetChildren()) do
+                    if c:IsA("TextLabel") then c:Destroy() end
+                end
+                local naLoja = 0
+                for _, l in ipairs(linhas) do
+                    if l.disp == true then naLoja = naLoja + 1 end
+                    local item = Instance.new("TextLabel", frutasLista)
+                    item.Size = UDim2.new(1, -6, 0, 26)
+                    item.BackgroundColor3 = Color3.fromRGB(60, 40, 80)
+                    item.Text = l.nome .. "  -  " .. formatarBeli(l.preco)
+                    if l.disp == true then
+                        item.TextColor3 = COR_BOLINHA_VERDE
+                    elseif l.disp == false then
+                        item.TextColor3 = COR_FRUTA_INDISPONIVEL
+                    else
+                        item.TextColor3 = COR_FRUTA_SEM_DADO
+                    end
+                    item.Font = FONTE_TEXTO
+                    item.TextSize = 15
+                    item.TextXAlignment = Enum.TextXAlignment.Left
+                    item.TextTruncate = Enum.TextTruncate.AtEnd
+                    item.ZIndex = 10002
+                    Instance.new("UIPadding", item).PaddingLeft = UDim.new(0, 8)
+                    Instance.new("UICorner", item).CornerRadius = UDim.new(0, 4)
+                end
+
+                if modo then
+                    frutasStatus.TextColor3 = COR_TEXTO_SUB
+                    frutasStatus.Text = "Na loja agora: " .. naLoja .. " de " .. #linhas .. " (verde = disponível, vermelho = indisponível)"
+                else
+                    frutasStatus.TextColor3 = COR_ALERTA
+                    frutasStatus.Text = "Não consegui ler o estoque da loja agora. Mostrando só os preços."
+                end
+                carregandoFrutas = false
+            end)
+        end
+
+        abrirFrutasBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            if frutasPopup.Visible then
+                frutasPopup.Visible = false
+            else
+                frutasPopup.Visible = true
+                carregarFrutas()
+            end
+        end)
+        frutasVoltarBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            frutasPopup.Visible = false
+        end)
+        frutasAtualizarBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            carregarFrutas()
+        end)
+    end
+
+    contShop.CanvasSize = UDim2.new(0, 0, 0, 335)
 end
 -- ===================== FIM AUTO BUY BAIT =====================
 
@@ -37220,6 +37907,7 @@ do
             card.BorderSizePixel = 0
             card.Parent = parent
             Instance.new("UICorner", card).CornerRadius = UDim.new(0, 7)
+            addWhiteStroke(card)
 
             local title = Instance.new("TextLabel", card)
             title.BackgroundTransparency = 1
@@ -37313,6 +38001,7 @@ do
             card.BorderSizePixel = 0
             card.Parent = parent
             Instance.new("UICorner", card).CornerRadius = UDim.new(0, 7)
+            addWhiteStroke(card)
 
             local title = Instance.new("TextLabel", card)
             title.BackgroundTransparency = 1
@@ -37337,6 +38026,7 @@ do
             input.BorderSizePixel = 0
             input.Parent = card
             Instance.new("UICorner", input).CornerRadius = UDim.new(0, 6)
+            addWhiteStroke(input)
 
             local apply = Instance.new("TextButton", card)
             apply.Size = UDim2.new(0.48, -12, 0, 34)
@@ -37349,6 +38039,7 @@ do
             apply.BorderSizePixel = 0
             apply.Parent = card
             Instance.new("UICorner", apply).CornerRadius = UDim.new(0, 6)
+            addWhiteStroke(apply)
 
             input:GetPropertyChangedSignal("Text"):Connect(function()
                 apply.Text = textoBotao
@@ -37935,8 +38626,6 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
                 end)
 
             criarToggleAcaoUnica(settingsTab, "AcaoConsole", "Abrir console", "console")
-            criarToggleAcaoUnica(settingsTab, "AcaoInfoServidor", "Informações do servidor", "serverinfo")
-            criarToggleAcaoUnica(settingsTab, "AcaoJobId", "Copiar JobId", "jobid")
             criarToggleComando(settingsTab, "ToggleAntiIdle", "Anti-Idle", proximoY(settingsTab), "antiafk", "unantiafk")
             settingsTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(settingsTab) + 5)
         end
@@ -38205,6 +38894,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
             corCard.BorderSizePixel = 0
             corCard.Parent = pvpTab
             Instance.new("UICorner", corCard).CornerRadius = UDim.new(0, 7)
+            addWhiteStroke(corCard)
             local corLabel = Instance.new("TextLabel")
             corLabel.BackgroundTransparency = 1
             corLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -38227,6 +38917,7 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
             corBtn.TextSize = 10
             corBtn.Parent = corCard
             Instance.new("UICorner", corBtn).CornerRadius = UDim.new(0, 6)
+            addWhiteStroke(corBtn)
             local fovVerde = true
             corBtn.MouseButton1Click:Connect(function()
                 vibrar()
@@ -38249,95 +38940,10 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
         -- Ações únicas ficam distribuídas nas abas de uso correspondente.
         local locationTab = frame:FindFirstChild("ContainerAba_location")
         if locationTab then
-            -- Ping é contínuo: o switch liga e encerra o loop de notificações.
-            local pingAtivo = false
-            local pingToken = 0
-            criarToggleVisual(locationTab, "ToggleNotificarPing", "Notificar Ping", proximoY(locationTab), function(ativo)
-                pingAtivo = ativo
-                pingToken = pingToken + 1
-                local token = pingToken
-                if ativo then
-                    task.spawn(function()
-                        while pingAtivo and token == pingToken do
-                            local ok, pingMs = pcall(function()
-                                return math.round(Players.LocalPlayer:GetNetworkPing() * 1000)
-                            end)
-                            if ok then notify("Ping", tostring(pingMs) .. "ms") end
-                            task.wait(3)
-                        end
-                    end)
-                end
-            end, 64)
-
             -- Ações pontuais usam toggle momentâneo e voltam sozinhas para desligado.
-            criarToggleAcaoUnica(locationTab, "AcaoCopiarPosicao", "Copiar posição", "copyposition")
             criarToggleAcaoUnica(locationTab, "AcaoReentrarServidor", "Reentrar no servidor", "rejoin")
             criarToggleAcaoUnica(locationTab, "AcaoTrocarServidor", "Trocar de servidor", "serverhop")
 
-            local notifyY = proximoY(locationTab)
-            local notifyCard = Instance.new("Frame")
-            notifyCard.Name = "AcaoNotificacaoPersonalizada"
-            notifyCard.Size = UDim2.new(1, -20, 0, 92)
-            notifyCard.Position = UDim2.new(0, 10, 0, notifyY)
-            notifyCard.BackgroundColor3 = COR_CARD
-            notifyCard.BorderSizePixel = 0
-            notifyCard.Parent = locationTab
-            Instance.new("UICorner", notifyCard).CornerRadius = UDim.new(0, 7)
-            local notifyTitle = Instance.new("TextLabel", notifyCard)
-            notifyTitle.BackgroundTransparency = 1
-            notifyTitle.Position = UDim2.new(0, 10, 0, 5)
-            notifyTitle.Size = UDim2.new(1, -20, 0, 20)
-            notifyTitle.Text = "Notificação personalizada"
-            notifyTitle.TextColor3 = COR_TEXTO
-            notifyTitle.Font = FONTE_TEXTO
-            notifyTitle.TextSize = 12
-            notifyTitle.TextXAlignment = Enum.TextXAlignment.Left
-            local notifyInput = Instance.new("TextBox", notifyCard)
-            notifyInput.Size = UDim2.new(0.62, -12, 0, 34)
-            notifyInput.Position = UDim2.new(0, 10, 0, 42)
-            notifyInput.BackgroundColor3 = COR_PAINEL
-            notifyInput.TextColor3 = COR_TEXTO
-            notifyInput.PlaceholderText = "Digite sua mensagem"
-            notifyInput.Text = ""
-            notifyInput.Font = FONTE_TEXTO
-            notifyInput.TextSize = 11
-            notifyInput.ClearTextOnFocus = false
-            notifyInput.BorderSizePixel = 0
-            notifyInput.Parent = notifyCard
-            Instance.new("UICorner", notifyInput).CornerRadius = UDim.new(0, 6)
-            local notifyButton = Instance.new("TextButton", notifyCard)
-            notifyButton.Size = UDim2.new(0.38, -12, 0, 34)
-            notifyButton.Position = UDim2.new(0.62, 2, 0, 42)
-            notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
-            notifyButton.Text = "EXECUTAR"
-            notifyButton.TextColor3 = COR_TEXTO
-            notifyButton.Font = FONTE_TEXTO
-            notifyButton.TextSize = 11
-            notifyButton.BorderSizePixel = 0
-            notifyButton.Parent = notifyCard
-            Instance.new("UICorner", notifyButton).CornerRadius = UDim.new(0, 6)
-            notifyButton.MouseButton1Click:Connect(function()
-                vibrar()
-                local mensagem = (notifyInput.Text or ""):gsub("^%s+", ""):gsub("%s+$", "")
-                if mensagem == "" then
-                    notifyButton.Text = "DIGITE UMA MENSAGEM"
-                    notifyButton.BackgroundColor3 = COR_ALERTA
-                    return
-                end
-                local ok = rodarComando("notify " .. mensagem)
-                notifyButton.Text = ok and "ENVIADO" or "FALHA"
-                notifyButton.BackgroundColor3 = ok and COR_BOLINHA_VERDE or COR_ALERTA
-                task.delay(1.5, function()
-                    if notifyButton and notifyButton.Parent then
-                        notifyButton.Text = "EXECUTAR"
-                        notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
-                    end
-                end)
-            end)
-            notifyInput:GetPropertyChangedSignal("Text"):Connect(function()
-                notifyButton.Text = "EXECUTAR"
-                notifyButton.BackgroundColor3 = COR_BOTAO_ATIVO
-            end)
             locationTab.CanvasSize = UDim2.new(0, 0, 0, proximoY(locationTab) + 5)
         end
 
