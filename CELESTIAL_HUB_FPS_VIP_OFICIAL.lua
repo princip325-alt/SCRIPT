@@ -38496,7 +38496,7 @@ end
 -- CELESTIAL HUB - ABA TEMAS
 -- Seletor no mesmo padrão dos campos com seta para baixo.
 -- =====================================================
-do
+(function()
     local temasTab = frame:FindFirstChild("ContainerAba_temas")
     if temasTab then
         local descricao = Instance.new("TextLabel")
@@ -38732,9 +38732,9 @@ do
             temaPopup.Visible = false
             temaPesquisa.Text = ""
         end)
-        temaPesquisa:GetPropertyChangedSignal("Text"):Connect(function()
+         temaPesquisa:GetPropertyChangedSignal("Text"):Connect(function()
             atualizarTemas(temaPesquisa.Text)
         end)
     end
-end
+end)()
 
