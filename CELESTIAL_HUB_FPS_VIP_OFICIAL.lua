@@ -485,7 +485,7 @@ end
 local ABAS_COM_CONTEUDO = {
     idiomas = true, info = true, zoom = true, graficos = true, status = true,
     farmset = true, multifarm = true, seaevent = true, location = true,
-    fruit = true, settings = true, pvp = true, main = true, shop = true, temas = true,
+    fruit = true, settings = true, pvp = true, main = true, shop = true,
     raid = true, hide = true, comandos = true, keyboard = true
 }
 local bolinhasVerdes = {}
@@ -548,7 +548,6 @@ do
         {"shop","🛒\nSHOP","🛒 SHOP"},
         {"pvp","👥\nPVP","👥 PVP"},
         {"settings","🛠️\nSETTINGS","🛠️ SETTINGS"},
-        {"temas","🎨\nTEMAS","🎨 TEMAS"},
         {"comandos","⌘\nCOMANDOS","⌘ COMANDOS"},
         {"keyboard","⌨️\nKEYBOARD","KEYBOARD"},
     }
@@ -38491,24 +38490,3 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
     end
 end
 
-
-
--- CELESTIAL HUB | TESTE 1: inicializacao segura da aba TEMAS
-pcall(function()
-    local temasTab = frame:FindFirstChild("ContainerAba_temas")
-    assert(temasTab, "ContainerAba_temas nao foi criada")
-
-    local aviso = Instance.new("TextLabel")
-    aviso.Name = "TesteInicializacaoTemas"
-    aviso.Size = UDim2.new(1, -20, 0, 42)
-    aviso.Position = UDim2.new(0, 10, 0, 42)
-    aviso.BackgroundTransparency = 1
-    aviso.Text = "ABA TEMAS: inicializacao OK\nProximo teste: seletor de cores"
-    aviso.TextColor3 = COR_TEXTO_SUB
-    aviso.Font = FONTE_TEXTO
-    aviso.TextSize = 11
-    aviso.TextWrapped = true
-    aviso.TextXAlignment = Enum.TextXAlignment.Left
-    aviso.Parent = temasTab
-    print("[CELESTIAL HUB] TESTE 1 - aba TEMAS criada")
-end)
