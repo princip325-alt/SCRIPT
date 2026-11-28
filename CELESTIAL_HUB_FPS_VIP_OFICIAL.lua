@@ -3775,6 +3775,7 @@ do
         end)
     end
 
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
  local molduraBarco = criarMoldura(containerMar, 250, 100, "Velocidade do Barco")
     local barcoInput = Instance.new("TextBox", molduraBarco)
     barcoInput.Size = UDim2.new(0, 130, 0, 30)
@@ -3881,6 +3882,8 @@ do
         end
     end)
 
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
  local molduraAltura = criarMoldura(containerMar, 365, 105, "Altura do Barco")
     local alturaInput = Instance.new("TextBox", molduraAltura)
     alturaInput.Size = UDim2.new(0, 90, 0, 30)
@@ -3964,6 +3967,8 @@ do
     end)
 
     -- Contador de pessoas no barco (aba SEA/CIA Event)
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
     local molduraPessoas = criarMoldura(containerMar, 475, 68, "Pessoas no barco")
     local pessoasBox, pessoasBtn = criarToggleDireita(molduraPessoas, 35)
     local pessoasCircle = pessoasBox:FindFirstChild("Circle")
@@ -4123,6 +4128,8 @@ do
     -- Contador local por OCORRÊNCIA marítima (não por criatura individual).
     -- Inimigos que surgem em conjunto são agrupados em uma única ocorrência.
     -- O progresso é estimado localmente; o jogo não fornece aqui um contador oficial.
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
     local EVENTOS_MARITIMOS_META = 20
     local JANELA_AGRUPAMENTO = 12 -- segundos para reunir inimigos do mesmo surgimento
     local eventosMaritimosRestantes = EVENTOS_MARITIMOS_META
@@ -4361,6 +4368,8 @@ do
         end
     end)
 
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
  local molduraRochas = criarMoldura(containerMar, 485, 85, "Remover Rochas")
     local rochaBox, rochaBtn = criarToggleDireita(molduraRochas, 22)
     local rochaCircle = rochaBox:FindFirstChild("Circle")
@@ -4395,6 +4404,8 @@ do
         end
     end)
 
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
  local molduraBring = criarMoldura(containerMar, 585, 80, "Bring Boat")
     local bringBox, bringBtn = criarToggle(molduraBring)
     local bringCircle = bringBox:FindFirstChild("Circle")
@@ -4494,6 +4505,8 @@ do
 
     bringBtn.MouseButton1Click:Connect(alternarBringBoat)
 
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
  local molduraDia = criarMoldura(containerMar, 680, 85, "Sempre Dia")
     local diaBox, diaBtn = criarToggle(molduraDia)
     local diaCircle = diaBox:FindFirstChild("Circle")
@@ -4537,6 +4550,7 @@ do
     diaBtn.MouseButton1Click:Connect(toggleDia)
     task.spawn(function() task.wait(0.5); if not diaAtivo then toggleDia() end end)
 
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
  local molduraFog = criarMoldura(containerMar, 780, 85, "Remove Fog")
     local fogBox, fogBtn = criarToggle(molduraFog)
     local fogCircle = fogBox:FindFirstChild("Circle")
@@ -4602,6 +4616,7 @@ do
         return string.lower(tostring(nome or "")):gsub("[%s_%-<>]", "")
     end
 
+    do -- [CORRECAO] escopo limitado: evita estourar o limite de 200 variaveis locais
     local molduraFrozen = criarMoldura(containerMar, 880, 65, "Auto Frozen Dimension")
     local frozenBox, frozenBtn = criarToggle(molduraFrozen)
     local frozenCircle = frozenBox:FindFirstChild("Circle")
@@ -4731,6 +4746,7 @@ do
     -- ===================== FIM AUTO FROZEN DIMENSION / SEA EVENTS =====================
 
     containerSeaEvent.CanvasSize = UDim2.new(0, 0, 0, 1105)
+    end -- [CORRECAO] fim do escopo limitado (libera variaveis locais)
 end
 -- ===================== MULTIFARM =====================
 do
@@ -4927,6 +4943,173 @@ do
             if aguaPlataforma then aguaPlataforma:Destroy(); aguaPlataforma = nil end
             local char = player.Character
             if char then local ff = char:FindFirstChild("WaterImmunity") if ff then ff:Destroy() end end
+        end
+    end)
+
+    -- REMOVER LAVA (INTEGRADO AO PADRÃO VISUAL DO CELESTIAL HUB)
+    local molduraRemoverLava = criarMoldura(contMulti, 0, 60, "REMOVER LAVA")
+    local lavaBox, lavaBtn = criarToggle(molduraRemoverLava)
+    local lavaCircle = lavaBox:FindFirstChild("Circle")
+    local lavaAtivo = false
+    local lavaConexoes = {}
+    local lavaOriginal = {}
+    local lavaMonitorToken = 0
+
+    local function nomeIndicaLava(instancia)
+        local atual = instancia
+        while atual and atual ~= workspace do
+            local nome = string.lower(atual.Name or "")
+            if string.find(nome, "lava", 1, true)
+                or string.find(nome, "magma", 1, true)
+                or string.find(nome, "killbrick", 1, true) then
+                return true
+            end
+            atual = atual.Parent
+        end
+        return false
+    end
+
+    local function pareceLava(instancia)
+        if nomeIndicaLava(instancia) then
+            return true
+        end
+
+        if instancia:IsA("BasePart") then
+            local cor = instancia.Color
+            local material = instancia.Material
+            local corQuente = (cor.R > 0.55 and cor.G < 0.48 and cor.B < 0.35)
+                or (cor.R > 0.65 and cor.G > 0.18 and cor.G < 0.62 and cor.B < 0.2)
+            local materialQuente = material == Enum.Material.Neon
+                or material == Enum.Material.CrackedLava
+                or material == Enum.Material.Slate
+            local temToque = instancia:FindFirstChildOfClass("TouchTransmitter") ~= nil
+            return corQuente and (materialQuente or temToque)
+        end
+
+        return false
+    end
+
+    local function guardarPropriedade(instancia, chave, valor)
+        if not lavaOriginal[instancia] then
+            lavaOriginal[instancia] = {}
+        end
+        if lavaOriginal[instancia][chave] == nil then
+            lavaOriginal[instancia][chave] = valor
+        end
+    end
+
+    local function prepararLava(instancia)
+        if not lavaAtivo or not instancia or not instancia.Parent then return end
+
+        if instancia:IsA("BasePart") and pareceLava(instancia) then
+            guardarPropriedade(instancia, "CanTouch", instancia.CanTouch)
+            guardarPropriedade(instancia, "CanCollide", instancia.CanCollide)
+            guardarPropriedade(instancia, "Color", instancia.Color)
+            guardarPropriedade(instancia, "Material", instancia.Material)
+            guardarPropriedade(instancia, "Transparency", instancia.Transparency)
+
+            instancia.CanTouch = false
+
+            -- Plataformas finas e invisíveis de lava passam a funcionar como chão.
+            if instancia.Transparency >= 0.75 and instancia.Size.Y <= 8 then
+                instancia.CanCollide = true
+            end
+
+            instancia.Color = Color3.fromRGB(85, 85, 90)
+            instancia.Material = Enum.Material.Slate
+        end
+
+        if instancia:IsA("ParticleEmitter")
+            or instancia:IsA("Trail")
+            or instancia:IsA("Beam")
+            or instancia:IsA("PointLight")
+            or instancia:IsA("SpotLight")
+            or instancia:IsA("SurfaceLight") then
+            local pai = instancia.Parent
+            if pai and (pareceLava(pai) or (pai.Parent and pareceLava(pai.Parent))) then
+                guardarPropriedade(instancia, "Enabled", instancia.Enabled)
+                instancia.Enabled = false
+            end
+        elseif instancia:IsA("Decal") or instancia:IsA("Texture") then
+            local pai = instancia.Parent
+            if pai and (pareceLava(pai) or (pai.Parent and pareceLava(pai.Parent))) then
+                guardarPropriedade(instancia, "Transparency", instancia.Transparency)
+                instancia.Transparency = 1
+            end
+        end
+    end
+
+    local function restaurarLava()
+        for instancia, propriedades in pairs(lavaOriginal) do
+            if instancia and instancia.Parent then
+                for chave, valor in pairs(propriedades) do
+                    pcall(function()
+                        instancia[chave] = valor
+                    end)
+                end
+            end
+        end
+        table.clear(lavaOriginal)
+    end
+
+    local function desligarMonitoramentoLava()
+        for _, conexao in ipairs(lavaConexoes) do
+            pcall(function() conexao:Disconnect() end)
+        end
+        table.clear(lavaConexoes)
+    end
+
+    local function procurarLava()
+        if not lavaAtivo then return end
+        for _, instancia in ipairs(workspace:GetDescendants()) do
+            prepararLava(instancia)
+        end
+    end
+
+    lavaBtn.MouseButton1Click:Connect(function()
+        vibrar()
+        lavaAtivo = not lavaAtivo
+
+        TweenService:Create(lavaBox, TweenInfo.new(0.15), {
+            BackgroundColor3 = lavaAtivo and Color3.fromRGB(0, 120, 220)
+                or Color3.fromRGB(60, 60, 70)
+        }):Play()
+
+        if lavaCircle then
+            TweenService:Create(lavaCircle, TweenInfo.new(0.15), {
+                Position = lavaAtivo and UDim2.new(0, 25, 0.5, -10)
+                    or UDim2.new(0, 3, 0.5, -10)
+            }):Play()
+        end
+
+        desligarMonitoramentoLava()
+        lavaMonitorToken = lavaMonitorToken + 1
+        local tokenAtual = lavaMonitorToken
+
+        if lavaAtivo then
+            procurarLava()
+
+            table.insert(lavaConexoes, workspace.DescendantAdded:Connect(function(instancia)
+                if lavaAtivo then
+                    task.defer(function()
+                        prepararLava(instancia)
+                        for _, filho in ipairs(instancia:GetDescendants()) do
+                            prepararLava(filho)
+                        end
+                    end)
+                end
+            end))
+
+            task.spawn(function()
+                while lavaAtivo and lavaMonitorToken == tokenAtual do
+                    task.wait(5)
+                    if lavaAtivo and lavaMonitorToken == tokenAtual then
+                        procurarLava()
+                    end
+                end
+            end)
+        else
+            restaurarLava()
         end
     end)
 
