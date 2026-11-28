@@ -483,6 +483,7 @@ end
 
 -- ✅ ALTERAÇÃO 1: Aba "main" adicionada ao ABAS_COM_CONTEUDO (para ganhar bolinha verde)
 local ABAS_COM_CONTEUDO = {
+    temas = true,
     idiomas = true, info = true, zoom = true, graficos = true, status = true,
     farmset = true, multifarm = true, seaevent = true, location = true,
     fruit = true, settings = true, pvp = true, main = true, shop = true,
@@ -530,6 +531,7 @@ do
     
     local novas = {
         {"idiomas","IDIOMAS","IDIOMAS"},
+        {"temas","🎨\nTEMAS","🎨 TEMAS"},
         {"info","ℹ️\nINFORMAÇÕES","ℹ️ INFORMAÇÕES"},
         {"zoom","🔍\nZOOM","🔍 ZOOM"},
         {"graficos","📈\nGRÁFICOS","📈 GRÁFICOS"},
@@ -1109,6 +1111,335 @@ local function aplicarPadraoDropdownIdiomas(popup, pesquisa, voltar, lista, plac
     lista.ZIndex = 10001
     lista.ClipsDescendants = true
 end
+
+-- ===================== TEMAS (ABA TEMAS) =====================
+-- Aba "Temas" com seletor de seta (▼), pesquisa e botão Voltar no mesmo padrão dos
+-- outros seletores. O tema escolhido recolore toda a interface e fica salvo.
+do
+    local okTemas, erroTemas = pcall(function()
+        local contTemas = frame:FindFirstChild("ContainerAba_temas")
+        if not contTemas then return end
+
+        local function C(r, g, b) return Color3.fromRGB(r, g, b) end
+        local function novoTema(nome, fundo, painel, card, borda, ativo, texto, sub, desab)
+            return {
+                nome = nome, fundo = fundo, painel = painel, card = card, borda = borda,
+                ativo = ativo, texto = texto, sub = sub, desab = desab,
+                item = fundo:Lerp(painel, 0.3)
+            }
+        end
+
+        local temas = {
+            novoTema("Roxo (padrão)", C(58, 38, 78), C(76, 50, 102), C(98, 65, 128), C(140, 100, 180), C(130, 90, 200), C(255, 255, 255), C(210, 200, 220), C(45, 30, 60)),
+            novoTema("Preto", C(10, 10, 12), C(20, 20, 24), C(32, 32, 38), C(95, 95, 105), C(75, 75, 88), C(255, 255, 255), C(185, 185, 195), C(6, 6, 8)),
+            novoTema("Branco", C(238, 240, 246), C(224, 228, 238), C(206, 212, 226), C(120, 130, 165), C(150, 180, 240), C(24, 26, 36), C(78, 84, 104), C(198, 202, 214)),
+            novoTema("Cinza", C(48, 50, 55), C(66, 69, 76), C(86, 90, 98), C(145, 148, 156), C(112, 118, 130), C(255, 255, 255), C(210, 213, 220), C(36, 38, 42)),
+            novoTema("Azul", C(12, 32, 68), C(20, 50, 98), C(30, 70, 128), C(90, 150, 230), C(40, 110, 230), C(255, 255, 255), C(200, 220, 250), C(8, 24, 50)),
+            novoTema("Verde", C(12, 46, 32), C(18, 68, 46), C(26, 92, 62), C(80, 200, 130), C(30, 160, 90), C(255, 255, 255), C(200, 240, 215), C(8, 34, 24)),
+            novoTema("Vermelho", C(62, 14, 18), C(92, 20, 26), C(124, 30, 38), C(230, 90, 100), C(200, 50, 60), C(255, 255, 255), C(250, 205, 208), C(46, 10, 14)),
+            novoTema("Rosa", C(70, 24, 56), C(100, 36, 80), C(136, 52, 108), C(240, 130, 200), C(220, 70, 160), C(255, 255, 255), C(250, 210, 236), C(52, 16, 42)),
+            novoTema("Laranja", C(66, 36, 10), C(96, 54, 14), C(130, 76, 20), C(240, 170, 80), C(230, 120, 20), C(255, 255, 255), C(250, 225, 190), C(48, 26, 8)),
+            novoTema("Azul e Preto", C(8, 10, 18), C(14, 20, 38), C(20, 34, 66), C(50, 130, 255), C(30, 100, 230), C(255, 255, 255), C(170, 195, 235), C(5, 6, 12)),
+            novoTema("Azul e Verde", C(8, 40, 52), C(10, 62, 74), C(14, 88, 96), C(60, 220, 170), C(0, 150, 170), C(255, 255, 255), C(190, 240, 235), C(6, 28, 38)),
+            novoTema("Azul e Roxo", C(20, 16, 64), C(32, 26, 96), C(48, 40, 132), C(120, 110, 255), C(80, 70, 220), C(255, 255, 255), C(210, 205, 250), C(14, 11, 46)),
+            novoTema("Roxo e Preto", C(14, 8, 22), C(28, 16, 46), C(44, 24, 72), C(150, 80, 240), C(110, 50, 200), C(255, 255, 255), C(200, 180, 235), C(9, 5, 15)),
+            novoTema("Vermelho e Preto", C(14, 8, 8), C(30, 14, 16), C(50, 20, 24), C(230, 50, 60), C(180, 30, 40), C(255, 255, 255), C(235, 185, 188), C(9, 5, 5)),
+            novoTema("Rosa e Roxo", C(44, 20, 72), C(68, 30, 104), C(100, 44, 140), C(255, 120, 210), C(200, 70, 170), C(255, 255, 255), C(245, 205, 240), C(32, 14, 54)),
+            novoTema("Verde e Preto", C(6, 14, 8), C(12, 28, 16), C(18, 44, 24), C(40, 220, 90), C(20, 150, 60), C(255, 255, 255), C(170, 235, 185), C(4, 9, 5)),
+            novoTema("Dourado e Preto", C(16, 12, 6), C(34, 26, 10), C(56, 42, 14), C(240, 190, 60), C(190, 140, 20), C(255, 245, 220), C(225, 205, 150), C(10, 8, 4))
+        }
+        temas[1].item = C(60, 40, 80) -- cor fixa usada pelos itens das listas no tema padrão
+        local temaPadrao = temas[1]
+        local temaAtual = temaPadrao
+        local mapasNovos = nil -- converte cores do tema padrão para o tema atual (objetos criados depois)
+
+        local ARQUIVO_TEMA = "CelestialHub_Tema.txt"
+        local function salvarTema(nome)
+            pcall(function()
+                if writefile then writefile(ARQUIVO_TEMA, nome) end
+            end)
+        end
+        local function lerTemaSalvo()
+            local ok, texto = pcall(function()
+                if isfile and readfile and isfile(ARQUIVO_TEMA) then return readfile(ARQUIVO_TEMA) end
+                return nil
+            end)
+            if ok and type(texto) == "string" and texto ~= "" then return texto end
+            return nil
+        end
+
+        local function trocarCor(cor, lista)
+            for _, par in ipairs(lista) do
+                if cor == par[1] then return par[2] end
+            end
+            return nil
+        end
+
+        local function montarMapas(de, para)
+            return {
+                fundo = {
+                    {de.fundo, para.fundo}, {de.painel, para.painel}, {de.card, para.card},
+                    {de.ativo, para.ativo}, {de.desab, para.desab}, {de.item, para.item}
+                },
+                texto = {{de.texto, para.texto}, {de.sub, para.sub}},
+                borda = {{de.borda, para.borda}}
+            }
+        end
+
+        local function recolorirObjeto(obj, mapas)
+            if obj:GetAttribute("SemTema") then return end
+            if obj:IsA("GuiObject") then
+                local novoFundo = trocarCor(obj.BackgroundColor3, mapas.fundo)
+                if novoFundo then obj.BackgroundColor3 = novoFundo end
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                    local novoTexto = trocarCor(obj.TextColor3, mapas.texto)
+                    if novoTexto then obj.TextColor3 = novoTexto end
+                    if obj:IsA("TextBox") then
+                        local novoPlaceholder = trocarCor(obj.PlaceholderColor3, mapas.texto)
+                        if novoPlaceholder then obj.PlaceholderColor3 = novoPlaceholder end
+                    end
+                end
+            elseif obj:IsA("UIStroke") then
+                local novaBorda = trocarCor(obj.Color, mapas.borda)
+                if novaBorda then obj.Color = novaBorda end
+            end
+        end
+
+        local function aplicarTema(novo, salvar)
+            if not novo or novo == temaAtual then return end
+            local mapas = montarMapas(temaAtual, novo)
+            for _, obj in ipairs(gui:GetDescendants()) do
+                pcall(recolorirObjeto, obj, mapas)
+            end
+            -- Atualiza as cores base: tudo que for criado ou atualizado depois já usa o tema novo.
+            COR_FUNDO = novo.fundo
+            COR_PAINEL = novo.painel
+            COR_CARD = novo.card
+            COR_BORDA = novo.borda
+            COR_TEXTO = novo.texto
+            COR_TEXTO_SUB = novo.sub
+            COR_BOTAO_ATIVO = novo.ativo
+            COR_BOTAO_INATIVO = novo.fundo
+            COR_BOTAO_DESABILITADO = novo.desab
+            temaAtual = novo
+            if novo == temaPadrao then
+                mapasNovos = nil
+            else
+                mapasNovos = montarMapas(temaPadrao, novo)
+            end
+            if salvar then salvarTema(novo.nome) end
+        end
+
+        gui.DescendantAdded:Connect(function(obj)
+            task.defer(function()
+                if mapasNovos and obj and obj.Parent then
+                    pcall(recolorirObjeto, obj, mapasNovos)
+                end
+            end)
+        end)
+
+        -- ===== Conteúdo da aba =====
+        local temaAtualLabel = Instance.new("TextLabel", contTemas)
+        temaAtualLabel.Size = UDim2.new(1, -20, 0, 34)
+        temaAtualLabel.Position = UDim2.new(0, 10, 0, 48)
+        temaAtualLabel.BackgroundTransparency = 1
+        temaAtualLabel.Text = "Tema atual: " .. temaAtual.nome
+        temaAtualLabel.TextColor3 = COR_TEXTO_SUB
+        temaAtualLabel.Font = FONTE_TEXTO
+        temaAtualLabel.TextSize = 12
+        temaAtualLabel.TextWrapped = true
+
+        local escolherTemaBtn = Instance.new("TextButton", contTemas)
+        escolherTemaBtn.Size = UDim2.new(1, -20, 0, 42)
+        escolherTemaBtn.Position = UDim2.new(0, 10, 0, 92)
+        escolherTemaBtn.BackgroundColor3 = COR_BOTAO_ATIVO
+        escolherTemaBtn.BackgroundTransparency = 1
+        escolherTemaBtn.Text = "Selecionar tema  ▼"
+        escolherTemaBtn.TextColor3 = COR_TEXTO
+        escolherTemaBtn.Font = FONTE_TEXTO
+        escolherTemaBtn.TextSize = 13
+        Instance.new("UICorner", escolherTemaBtn).CornerRadius = UDim.new(0, 8)
+        addWhiteStroke(escolherTemaBtn)
+
+        local avisoTema = Instance.new("TextLabel", contTemas)
+        avisoTema.Size = UDim2.new(1, -20, 0, 72)
+        avisoTema.Position = UDim2.new(0, 10, 0, 145)
+        avisoTema.BackgroundTransparency = 1
+        avisoTema.Text = "Escolha um tema para mudar as cores do menu. O tema escolhido fica salvo para a próxima vez."
+        avisoTema.TextColor3 = COR_TEXTO_SUB
+        avisoTema.Font = FONTE_TEXTO
+        avisoTema.TextSize = 12
+        avisoTema.TextWrapped = true
+        avisoTema.TextXAlignment = Enum.TextXAlignment.Left
+        avisoTema.TextYAlignment = Enum.TextYAlignment.Top
+        contTemas.CanvasSize = UDim2.new(0, 0, 0, 235)
+
+        -- ===== Pop-up do seletor (mesmo padrão dos outros seletores com seta) =====
+        local temaPopup = Instance.new("Frame", gui)
+        temaPopup.Name = "DropdownTemas"
+        temaPopup.Size = UDim2.new(0, 250, 0, 230)
+        temaPopup.Position = UDim2.new(0.5, -125, 0.5, -115)
+        temaPopup.BackgroundColor3 = COR_FUNDO
+        temaPopup.BorderSizePixel = 0
+        temaPopup.Visible = false
+        temaPopup.ZIndex = 10000
+        Instance.new("UICorner", temaPopup).CornerRadius = UDim.new(0, 10)
+        addWhiteStroke(temaPopup)
+
+        local temaSearch = Instance.new("TextBox", temaPopup)
+        temaSearch.Size = UDim2.new(1, -12, 0, 30)
+        temaSearch.Position = UDim2.new(0, 6, 0, 6)
+        temaSearch.BackgroundColor3 = COR_CARD
+        temaSearch.TextColor3 = COR_TEXTO
+        temaSearch.PlaceholderText = "Pesquisar temas..."
+        temaSearch.PlaceholderColor3 = COR_TEXTO_SUB
+        temaSearch.Text = ""
+        temaSearch.Font = FONTE_TEXTO
+        temaSearch.TextSize = 12
+        temaSearch.ClearTextOnFocus = false
+        temaSearch.ZIndex = 10002
+
+        local temaVoltarBtn = Instance.new("TextButton", temaPopup)
+        temaVoltarBtn.Size = UDim2.new(1, -12, 0, 28)
+        temaVoltarBtn.Position = UDim2.new(0, 6, 0, 42)
+        temaVoltarBtn.BackgroundColor3 = COR_CARD
+        temaVoltarBtn.Text = "‹ Voltar"
+        temaVoltarBtn.TextColor3 = COR_TEXTO
+        temaVoltarBtn.Font = FONTE_TEXTO
+        temaVoltarBtn.TextSize = 12
+        temaVoltarBtn.ZIndex = 10002
+
+        local temaLista = Instance.new("ScrollingFrame", temaPopup)
+        temaLista.Size = UDim2.new(1, -12, 1, -78)
+        temaLista.Position = UDim2.new(0, 6, 0, 74)
+        temaLista.BackgroundTransparency = 1
+        temaLista.BorderSizePixel = 0
+        temaLista.ScrollBarThickness = 3
+        temaLista.CanvasSize = UDim2.new(0, 0, 0, 0)
+        temaLista.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        temaLista.ZIndex = 10001
+        local temaLayout = Instance.new("UIListLayout", temaLista)
+        temaLayout.Padding = UDim.new(0, 4)
+        temaLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+        aplicarPadraoDropdownIdiomas(temaPopup, temaSearch, temaVoltarBtn, temaLista, "Pesquisar temas...")
+
+        -- ===== Lista de temas =====
+        local botoesTema = {}
+
+        local function atualizarMarcas()
+            for _, item in ipairs(botoesTema) do
+                item.botao.Text = (item.tema == temaAtual and "✓  " or "") .. item.tema.nome
+            end
+        end
+
+        local function filtrarTemas(filtro)
+            filtro = string.lower(filtro or "")
+            for _, item in ipairs(botoesTema) do
+                item.botao.Visible = filtro == ""
+                    or string.find(string.lower(item.tema.nome), filtro, 1, true) ~= nil
+            end
+        end
+
+        local function mostrarTemaEscolhido()
+            temaAtualLabel.Text = "Tema atual: " .. temaAtual.nome
+            escolherTemaBtn.Text = temaAtual.nome .. "  ▼"
+            atualizarMarcas()
+        end
+
+        for i, tema in ipairs(temas) do
+            local botao = Instance.new("TextButton", temaLista)
+            botao.Name = "Tema_" .. tostring(i)
+            botao.Size = UDim2.new(1, -4, 0, 30)
+            botao.BackgroundColor3 = COR_PAINEL
+            botao.Text = tema.nome
+            botao.TextColor3 = COR_TEXTO
+            botao.Font = FONTE_TEXTO
+            botao.TextSize = 12
+            botao.TextXAlignment = Enum.TextXAlignment.Left
+            botao.LayoutOrder = i
+            botao.ZIndex = 10002
+            botao:SetAttribute("NaoTraduzir", true)
+            Instance.new("UICorner", botao).CornerRadius = UDim.new(0, 5)
+            local espaco = Instance.new("UIPadding", botao)
+            espaco.PaddingLeft = UDim.new(0, 8)
+
+            -- Prévia das cores do tema (não é recolorida pelo sistema de temas).
+            local amostra = Instance.new("Frame", botao)
+            amostra.Name = "Amostra"
+            amostra.Size = UDim2.new(0, 58, 0, 16)
+            amostra.AnchorPoint = Vector2.new(1, 0.5)
+            amostra.Position = UDim2.new(1, -8, 0.5, 0)
+            amostra.BackgroundTransparency = 1
+            amostra.ZIndex = 10003
+            amostra:SetAttribute("SemTema", true)
+            local amostraLayout = Instance.new("UIListLayout", amostra)
+            amostraLayout.FillDirection = Enum.FillDirection.Horizontal
+            amostraLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            amostraLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+            amostraLayout.Padding = UDim.new(0, 4)
+            amostraLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            for j, cor in ipairs({tema.fundo, tema.card, tema.ativo}) do
+                local quadrado = Instance.new("Frame", amostra)
+                quadrado.Size = UDim2.new(0, 16, 0, 16)
+                quadrado.BackgroundColor3 = cor
+                quadrado.BorderSizePixel = 0
+                quadrado.LayoutOrder = j
+                quadrado.ZIndex = 10004
+                quadrado:SetAttribute("SemTema", true)
+                Instance.new("UICorner", quadrado).CornerRadius = UDim.new(1, 0)
+                local contorno = Instance.new("UIStroke", quadrado)
+                contorno.Thickness = 1
+                contorno.Color = Color3.fromRGB(150, 150, 160)
+                contorno.Transparency = 0.3
+                contorno:SetAttribute("SemTema", true)
+            end
+
+            botao.MouseButton1Click:Connect(function()
+                vibrar()
+                aplicarTema(tema, true)
+                mostrarTemaEscolhido()
+                temaPopup.Visible = false
+                temaSearch.Text = ""
+                filtrarTemas("")
+            end)
+            table.insert(botoesTema, {botao = botao, tema = tema})
+        end
+
+        escolherTemaBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            temaPopup.Visible = true
+            temaSearch.Text = ""
+            filtrarTemas("")
+            atualizarMarcas()
+        end)
+        temaVoltarBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            temaPopup.Visible = false
+            temaSearch.Text = ""
+            filtrarTemas("")
+        end)
+        temaSearch:GetPropertyChangedSignal("Text"):Connect(function()
+            filtrarTemas(temaSearch.Text)
+        end)
+
+        atualizarMarcas()
+
+        -- Aplica o tema salvo da última vez (se existir).
+        local nomeSalvo = lerTemaSalvo()
+        if nomeSalvo then
+            for _, tema in ipairs(temas) do
+                if tema.nome == nomeSalvo then
+                    aplicarTema(tema, false)
+                    mostrarTemaEscolhido()
+                    break
+                end
+            end
+        end
+    end)
+    if not okTemas then warn("[Celestial Hub TEMAS] " .. tostring(erroTemas)) end
+end
+-- ===================== FIM TEMAS =====================
 
 
 task.spawn(function()
