@@ -4487,7 +4487,7 @@ do
     local grupoMaritimoAtual = nil
     local pastaInimigosMar = nil
 
-    local molduraEventos = criarMoldura(containerMar, 0, 124, "Eventos marítimos - Cooldown")
+    local molduraEventos = criarMoldura(containerMar, 0, 146, "Eventos marítimos - Cooldown")
     local eventosStatus = Instance.new("TextLabel", molduraEventos)
     eventosStatus.Size = UDim2.new(1, -20, 0, 22)
     eventosStatus.Position = UDim2.new(0, 10, 0, 31)
@@ -4508,9 +4508,20 @@ do
     eventosContagem.TextSize = 12
     eventosContagem.TextXAlignment = Enum.TextXAlignment.Left
 
+    local cooldownSpy = { emCooldown = false }
+    cooldownSpy.label = Instance.new("TextLabel", molduraEventos)
+    cooldownSpy.label.Size = UDim2.new(1, -20, 0, 22)
+    cooldownSpy.label.Position = UDim2.new(0, 10, 0, 80)
+    cooldownSpy.label.BackgroundTransparency = 1
+    cooldownSpy.label.Text = "Não está em cooldown"
+    cooldownSpy.label.TextColor3 = Color3.fromRGB(70, 230, 120)
+    cooldownSpy.label.Font = FONTE_TITULO
+    cooldownSpy.label.TextSize = 12
+    cooldownSpy.label.TextXAlignment = Enum.TextXAlignment.Left
+
     local atualizarEventosBtn = Instance.new("TextButton", molduraEventos)
     atualizarEventosBtn.Size = UDim2.new(1, -20, 0, 28)
-    atualizarEventosBtn.Position = UDim2.new(0, 10, 0, 86)
+    atualizarEventosBtn.Position = UDim2.new(0, 10, 0, 108)
     atualizarEventosBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 220)
     atualizarEventosBtn.BorderSizePixel = 0
     atualizarEventosBtn.Text = "ATUALIZAR"
@@ -4534,6 +4545,84 @@ do
             eventosContagem.TextColor3 = Color3.fromRGB(70, 230, 120)
         end
     end
+
+    function cooldownSpy.definir(estado)
+        cooldownSpy.emCooldown = estado
+        if estado then
+            cooldownSpy.label.Text = "Está em cooldown"
+            cooldownSpy.label.TextColor3 = Color3.fromRGB(255, 90, 90)
+        else
+            cooldownSpy.label.Text = "Não está em cooldown"
+            cooldownSpy.label.TextColor3 = Color3.fromRGB(70, 230, 120)
+        end
+    end
+
+    -- Spy (Tiki Outpost): "I don't know anything yet" = em cooldown.
+    local function textoIndicaCooldown(txt)
+        local t = string.lower(tostring(txt or ""))
+        return string.find(t, "know anything", 1, true) ~= nil
+            or string.find(t, "sei de nada", 1, true) ~= nil
+    end
+
+    local function dentroDeDialogo(obj, playerGui)
+        local pai = obj.Parent
+        while pai and pai ~= playerGui do
+            if string.find(string.lower(pai.Name), "dialog", 1, true) then return true end
+            pai = pai.Parent
+        end
+        return false
+    end
+
+    local function observarTextoSpy(obj, playerGui)
+        if not (obj:IsA("TextLabel") or obj:IsA("TextButton")) then return end
+        if not dentroDeDialogo(obj, playerGui) then return end
+        local function checar()
+            if obj.Visible and textoIndicaCooldown(obj.Text) then
+                cooldownSpy.definir(true)
+            end
+        end
+        obj:GetPropertyChangedSignal("Text"):Connect(checar)
+        obj:GetPropertyChangedSignal("Visible"):Connect(checar)
+    end
+
+    task.spawn(function()
+        local playerGui = player:WaitForChild("PlayerGui", 30)
+        if not playerGui then return end
+        for _, obj in ipairs(playerGui:GetDescendants()) do
+            observarTextoSpy(obj, playerGui)
+        end
+        playerGui.DescendantAdded:Connect(function(obj)
+            observarTextoSpy(obj, playerGui)
+        end)
+    end)
+
+    -- Spy cobrou 1.500 Fragmentos (perto dele) = NÃO está em cooldown.
+    local function pertoDoSpy()
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return false end
+        local npcs = workspace:FindFirstChild("NPCs")
+        local spy = npcs and npcs:FindFirstChild("Spy")
+        if not spy then spy = workspace:FindFirstChild("Spy", true) end
+        if not spy then return false end
+        local ok, pos = pcall(function() return spy:GetPivot().Position end)
+        return ok and (pos - root.Position).Magnitude <= 150
+    end
+
+    task.spawn(function()
+        local dados = player:WaitForChild("Data", 30)
+        local frag = dados and dados:WaitForChild("Fragments", 30)
+        if not frag then return end
+        local anterior = tonumber(frag.Value) or 0
+        frag.Changed:Connect(function(novo)
+            novo = tonumber(novo) or anterior
+            local gasto = anterior - novo
+            anterior = novo
+            if gasto == 1500 and pertoDoSpy() then
+                cooldownSpy.definir(false)
+            end
+        end)
+    end)
 
     local function nomeEhEventoMaritimo(nome)
         local n = string.lower(tostring(nome or "")):gsub("[%s_%-<>]", "")
@@ -4692,6 +4781,7 @@ do
         if not string.find(normalizarNomeLeviata(modelo.Name), "leviathan", 1, true) then return end
         if leviataosJaProcessados[modelo] then return end
         leviataosJaProcessados[modelo] = true
+        cooldownSpy.definir(true)
         eventosMaritimosConcluidos = 0
         eventosMaritimosRestantes = EVENTOS_MARITIMOS_META
         atualizarTextoEventos()
@@ -4703,6 +4793,7 @@ do
             reiniciarContadorPorLeviata(obj)
         end
     end
+    cooldownSpy.definir(false)
 
     workspace.DescendantAdded:Connect(function(obj)
         if obj:IsA("Model") and string.find(normalizarNomeLeviata(obj.Name), "leviathan", 1, true) then
