@@ -5209,9 +5209,11 @@ do
         end))
     end
 
+    -- Os Sea Beasts ficam na pasta "SeaBeasts" (não em "Enemies"), então observamos as duas.
+    local pastasObservadasMar = {}
     local function conectarPastaInimigosMar(pasta)
-        if not pasta or pasta == pastaInimigosMar then return end
-        pastaInimigosMar = pasta
+        if not pasta or pastasObservadasMar[pasta] then return end
+        pastasObservadasMar[pasta] = true
         for _, inimigo in ipairs(pasta:GetChildren()) do
             observarEventoMaritimo(inimigo)
         end
@@ -5221,8 +5223,17 @@ do
     end
 
     conectarPastaInimigosMar(workspace:FindFirstChild("Enemies"))
+    conectarPastaInimigosMar(workspace:FindFirstChild("SeaBeasts"))
+    -- Modelos já soltos direto no workspace (caso o jogo não use pasta).
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("Model") then observarEventoMaritimo(obj) end
+    end
     workspace.ChildAdded:Connect(function(obj)
-        if obj.Name == "Enemies" then conectarPastaInimigosMar(obj) end
+        if obj.Name == "Enemies" or obj.Name == "SeaBeasts" then
+            conectarPastaInimigosMar(obj)
+        elseif obj:IsA("Model") then
+            task.defer(function() observarEventoMaritimo(obj) end)
+        end
     end)
 
     atualizarEventosBtn.MouseButton1Click:Connect(function()
@@ -5247,6 +5258,17 @@ do
         if not modelo or not modelo:IsA("Model") then return end
         if not string.find(normalizarNomeLeviata(modelo.Name), "leviathan", 1, true) then return end
         if leviataosJaProcessados[modelo] then return end
+        -- Não reinicia no meio da contagem: o jogo só solta o Leviatã quando a contagem
+        -- chega a 0, então um Leviatã aparecendo com a contagem em andamento (ex.: de
+        -- outro jogador, ou carregando de longe) não deve zerar o seu progresso.
+        if eventosMaritimosConcluidos > 0 and eventosMaritimosRestantes > 0 then return end
+        -- Também ignora Leviatã muito longe de você.
+        local charLoc = player.Character
+        local rootLoc = charLoc and charLoc:FindFirstChild("HumanoidRootPart")
+        if rootLoc then
+            local okPos, posLev = pcall(function() return modelo:GetPivot().Position end)
+            if okPos and (posLev - rootLoc.Position).Magnitude > 3000 then return end
+        end
         leviataosJaProcessados[modelo] = true
         cooldownSpy.definir(true)
         eventosMaritimosConcluidos = 0
