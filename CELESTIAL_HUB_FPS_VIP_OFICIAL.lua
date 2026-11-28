@@ -485,7 +485,7 @@ end
 local ABAS_COM_CONTEUDO = {
     idiomas = true, info = true, zoom = true, graficos = true, status = true,
     farmset = true, multifarm = true, seaevent = true, location = true,
-    fruit = true, settings = true, pvp = true, main = true, shop = true,
+    fruit = true, settings = true, pvp = true, main = true, shop = true, temas = true,
     raid = true, hide = true, comandos = true, keyboard = true
 }
 local bolinhasVerdes = {}
@@ -548,6 +548,7 @@ do
         {"shop","🛒\nSHOP","🛒 SHOP"},
         {"pvp","👥\nPVP","👥 PVP"},
         {"settings","🛠️\nSETTINGS","🛠️ SETTINGS"},
+        {"temas","🎨\nTEMAS","🎨 TEMAS"},
         {"comandos","⌘\nCOMANDOS","⌘ COMANDOS"},
         {"keyboard","⌨️\nKEYBOARD","KEYBOARD"},
     }
@@ -3972,8 +3973,8 @@ do
 
     local pessoasPopup = Instance.new("Frame")
     pessoasPopup.Name = "PessoasNoBarcoPopup"
-    pessoasPopup.Size = UDim2.new(0, 190, 0, 54)
-    pessoasPopup.Position = UDim2.new(0.5, -95, 0.18, 0)
+    pessoasPopup.Size = UDim2.new(0, 210, 0, 82)
+    pessoasPopup.Position = UDim2.new(0.5, -105, 0.18, 0)
     pessoasPopup.BackgroundColor3 = Color3.fromRGB(20, 22, 30)
     pessoasPopup.BackgroundTransparency = 0.08
     pessoasPopup.BorderSizePixel = 0
@@ -3986,14 +3987,15 @@ do
     popupStroke.Color = Color3.fromRGB(0, 170, 255)
     popupStroke.Thickness = 1
     local pessoasTexto = Instance.new("TextLabel", pessoasPopup)
-    pessoasTexto.Size = UDim2.new(1, -16, 1, 0)
-    pessoasTexto.Position = UDim2.new(0, 8, 0, 0)
+    pessoasTexto.Size = UDim2.new(1, -16, 1, -8)
+    pessoasTexto.Position = UDim2.new(0, 8, 0, 4)
     pessoasTexto.BackgroundTransparency = 1
-    pessoasTexto.Text = "Pessoas no barco: 0"
+    pessoasTexto.Text = "TOTAL: 0\\nEm pé: 0  |  Sentado: 0"
     pessoasTexto.TextColor3 = Color3.fromRGB(255, 255, 255)
     pessoasTexto.Font = FONTE_TEXTO
-    pessoasTexto.TextSize = 14
+    pessoasTexto.TextSize = 13
     pessoasTexto.TextXAlignment = Enum.TextXAlignment.Center
+    pessoasTexto.TextYAlignment = Enum.TextYAlignment.Center
     pessoasTexto.ZIndex = 1001
 
     -- Arraste o pop-up com mouse ou toque (celular).
@@ -4018,19 +4020,80 @@ do
         end
     end)
 
-    local function contarPessoasNoBarco()
+    -- Identifica o barco do jogador mesmo quando ele está em pé.
+    local function obterBarcoParaContagem()
+        local boats = workspace:FindFirstChild("Boats")
+        if not boats then return nil end
+
         local char = player.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         local seat = hum and hum.SeatPart
-        local modelo = seat and seat:IsA("VehicleSeat") and modeloDoBarco(seat)
-        if not modelo then return 0 end
-        local total = 0
-        for _, obj in ipairs(modelo:GetDescendants()) do
-            if obj:IsA("Seat") or obj:IsA("VehicleSeat") then
-                if obj.Occupant then total = total + 1 end
+        if seat and seat:IsDescendantOf(boats) then
+            local atual = seat
+            while atual.Parent and atual.Parent ~= boats do atual = atual.Parent end
+            return atual
+        end
+
+        -- Primeiro tenta reconhecer o barco pelo valor Owner.
+        for _, boat in ipairs(boats:GetChildren()) do
+            local owner = boat:FindFirstChild("Owner")
+            if owner then
+                local value = owner.Value
+                if value == player or value == player.Name or value == player.UserId then
+                    return boat
+                end
             end
         end
-        return total
+
+        -- Se o jogador estiver em pé, procura o barco que contém seu personagem.
+        local root = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso"))
+        if root then
+            for _, boat in ipairs(boats:GetChildren()) do
+                local ok, cf, size = pcall(function() return boat:GetBoundingBox() end)
+                if ok and cf and size then
+                    local localPos = cf:PointToObjectSpace(root.Position)
+                    local half = size * 0.5
+                    if math.abs(localPos.X) <= half.X + 5
+                        and math.abs(localPos.Y) <= half.Y + 8
+                        and math.abs(localPos.Z) <= half.Z + 5 then
+                        return boat
+                    end
+                end
+            end
+        end
+        return nil
+    end
+
+    local function contarPessoasNoBarco()
+        local modelo = obterBarcoParaContagem()
+        if not modelo then return 0, 0, 0 end
+
+        local ok, cf, size = pcall(function() return modelo:GetBoundingBox() end)
+        if not ok or not cf or not size then return 0, 0, 0 end
+
+        local total, emPe, sentado = 0, 0, 0
+        local half = size * 0.5
+        local margem = Vector3.new(5, 8, 5)
+
+        for _, jogador in ipairs(PlayersService:GetPlayers()) do
+            local character = jogador.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("UpperTorso"))
+            if humanoid and root and humanoid.Health > 0 then
+                local localPos = cf:PointToObjectSpace(root.Position)
+                if math.abs(localPos.X) <= half.X + margem.X
+                    and math.abs(localPos.Y) <= half.Y + margem.Y
+                    and math.abs(localPos.Z) <= half.Z + margem.Z then
+                    total = total + 1
+                    if humanoid.SeatPart then
+                        sentado = sentado + 1
+                    else
+                        emPe = emPe + 1
+                    end
+                end
+            end
+        end
+        return total, emPe, sentado
     end
 
     local function setPessoasToggle(ativo)
@@ -4049,27 +4112,33 @@ do
         if pessoasAtivo then
             local function atualizarContagem()
                 if not pessoasAtivo then return end
-                pessoasTexto.Text = "Pessoas no barco: " .. tostring(contarPessoasNoBarco())
+                local total, emPe, sentado = contarPessoasNoBarco()
+                pessoasTexto.Text = "TOTAL: " .. tostring(total)
+                    .. "\\nEm pé: " .. tostring(emPe) .. "  |  Sentado: " .. tostring(sentado)
             end
             atualizarContagem()
             pessoasLoop = RunService.Heartbeat:Connect(atualizarContagem)
         end
     end)
 
-    -- Contador local de eventos marítimos para acompanhar o cooldown do Spy.
-    -- Só observa inimigos marítimos dentro de workspace.Enemies; não conta NPCs,
-    -- jogadores, mobs terrestres nem o barco do próprio jogador.
+    -- Contador local por OCORRÊNCIA marítima (não por criatura individual).
+    -- Inimigos que surgem em conjunto são agrupados em uma única ocorrência.
+    -- O progresso é estimado localmente; o jogo não fornece aqui um contador oficial.
     local EVENTOS_MARITIMOS_META = 20
+    local JANELA_AGRUPAMENTO = 12 -- segundos para reunir inimigos do mesmo surgimento
     local eventosMaritimosRestantes = EVENTOS_MARITIMOS_META
-    local eventosMaritimosContados = {}
+    local eventosMaritimosConcluidos = 0
     local eventosMaritimosConexoes = {}
+    local gruposEventosMaritimos = {}
+    local grupoMaritimoAtual = nil
+    local pastaInimigosMar = nil
 
     local molduraEventos = criarMoldura(containerMar, 0, 112, "Eventos marítimos / Cooldown")
     local eventosStatus = Instance.new("TextLabel", molduraEventos)
     eventosStatus.Size = UDim2.new(1, -20, 0, 22)
     eventosStatus.Position = UDim2.new(0, 10, 0, 31)
     eventosStatus.BackgroundTransparency = 1
-    eventosStatus.Text = "Cooldown: aguardando eventos"
+    eventosStatus.Text = "Cooldown: monitorando eventos marítimos"
     eventosStatus.TextColor3 = Color3.fromRGB(255, 205, 90)
     eventosStatus.Font = FONTE_TEXTO
     eventosStatus.TextSize = 11
@@ -4105,7 +4174,7 @@ do
             eventosContagem.Text = "Faltam: " .. tostring(eventosMaritimosRestantes) .. " eventos marítimos"
             eventosContagem.TextColor3 = COR_TEXTO
         else
-            eventosStatus.Text = "Contagem concluída — confira no Spy"
+            eventosStatus.Text = "Meta local concluída — confira no Spy"
             eventosStatus.TextColor3 = Color3.fromRGB(70, 230, 120)
             eventosContagem.Text = "Faltam: 0 eventos marítimos"
             eventosContagem.TextColor3 = Color3.fromRGB(70, 230, 120)
@@ -4114,36 +4183,85 @@ do
 
     local function nomeEhEventoMaritimo(nome)
         local n = string.lower(tostring(nome or "")):gsub("[%s_%-<>]", "")
-        -- Nomes comuns de Sea Events e navios inimigos do Blox Fruits.
         return n:find("seabeast", 1, true) ~= nil
             or n:find("terrorshark", 1, true) ~= nil
             or n:find("piranha", 1, true) ~= nil
-            or n == "shark" or n:find("shark", 1, true) ~= nil
+            or n:find("shark", 1, true) ~= nil
             or n:find("piratebrigade", 1, true) ~= nil
             or n:find("grandbrigade", 1, true) ~= nil
             or n:find("pirateship", 1, true) ~= nil
             or n:find("fishboat", 1, true) ~= nil
-            or n == "ship" or n:find("enemyship", 1, true) ~= nil
+            or n:find("enemyship", 1, true) ~= nil
     end
 
-    local function registrarEventoMaritimo(modelo)
-        if not modelo or eventosMaritimosContados[modelo] then return end
-        eventosMaritimosContados[modelo] = true
-        eventosMaritimosRestantes = math.max(0, eventosMaritimosRestantes - 1)
-        atualizarTextoEventos()
+    local function grupoEstaDerrotado(grupo)
+        if not grupo or #grupo.membros == 0 then return false end
+        for _, membro in ipairs(grupo.membros) do
+            if not membro.derrotado then return false end
+        end
+        return true
+    end
+
+    local function tentarConcluirGrupo(grupo)
+        if not grupo or grupo.concluido or grupo.finalizando then return end
+        if not grupoEstaDerrotado(grupo) then return end
+        local espera = math.max(0, JANELA_AGRUPAMENTO - (os.clock() - grupo.ultimoSpawn))
+        grupo.finalizando = true
+        task.delay(espera, function()
+            grupo.finalizando = false
+            if grupo.concluido or not grupoEstaDerrotado(grupo) then return end
+            -- Se outro inimigo entrou no mesmo intervalo, aguarda o novo fim da janela.
+            local restante = JANELA_AGRUPAMENTO - (os.clock() - grupo.ultimoSpawn)
+            if restante > 0 then
+                tentarConcluirGrupo(grupo)
+                return
+            end
+            grupo.concluido = true
+            eventosMaritimosConcluidos = eventosMaritimosConcluidos + 1
+            eventosMaritimosRestantes = math.max(0, EVENTOS_MARITIMOS_META - eventosMaritimosConcluidos)
+            atualizarTextoEventos()
+        end)
+    end
+
+    local function marcarMembroDerrotado(grupo, membro)
+        if not grupo or not membro or membro.derrotado then return end
+        membro.derrotado = true
+        tentarConcluirGrupo(grupo)
+    end
+
+    local function obterGrupoParaSpawn()
+        local agora = os.clock()
+        if grupoMaritimoAtual and not grupoMaritimoAtual.concluido
+            and (agora - grupoMaritimoAtual.ultimoSpawn) <= JANELA_AGRUPAMENTO then
+            grupoMaritimoAtual.ultimoSpawn = agora
+            return grupoMaritimoAtual
+        end
+        local grupo = { membros = {}, ultimoSpawn = agora, concluido = false, finalizando = false }
+        table.insert(gruposEventosMaritimos, grupo)
+        grupoMaritimoAtual = grupo
+        return grupo
     end
 
     local function observarEventoMaritimo(modelo)
         if not modelo or not modelo:IsA("Model") or eventosMaritimosConexoes[modelo] then return end
         if not nomeEhEventoMaritimo(modelo.Name) then return end
-        eventosMaritimosConexoes[modelo] = {}
+
+        local grupo = obterGrupoParaSpawn()
+        local membro = { modelo = modelo, derrotado = false }
+        table.insert(grupo.membros, membro)
+        eventosMaritimosConexoes[modelo] = { grupo = grupo, membro = membro, conexoes = {} }
+        local dados = eventosMaritimosConexoes[modelo]
 
         local function conectarHumanoid(obj)
-            if obj and obj:IsA("Humanoid") and not eventosMaritimosConexoes[modelo].humanoid then
-                eventosMaritimosConexoes[modelo].humanoid = obj
-                eventosMaritimosConexoes[modelo].died = obj.Died:Connect(function()
-                    registrarEventoMaritimo(modelo)
-                end)
+            if obj and obj:IsA("Humanoid") and not dados.humanoid then
+                dados.humanoid = obj
+                if obj.Health <= 0 then
+                    marcarMembroDerrotado(grupo, membro)
+                else
+                    table.insert(dados.conexoes, obj.Died:Connect(function()
+                        marcarMembroDerrotado(grupo, membro)
+                    end))
+                end
             end
         end
 
@@ -4151,14 +4269,17 @@ do
             if not (obj:IsA("NumberValue") or obj:IsA("IntValue")) then return end
             local nome = string.lower(obj.Name)
             if nome ~= "health" and nome ~= "hp" and nome ~= "boathealth" then return end
-            if eventosMaritimosConexoes[modelo][obj] then return end
-            local vidaAnterior = obj.Value
-            eventosMaritimosConexoes[modelo][obj] = obj.Changed:Connect(function(novoValor)
-                if vidaAnterior > 0 and tonumber(novoValor) and tonumber(novoValor) <= 0 then
-                    registrarEventoMaritimo(modelo)
+            if dados[obj] then return end
+            local vidaAnterior = tonumber(obj.Value) or 0
+            dados[obj] = true
+            table.insert(dados.conexoes, obj.Changed:Connect(function(novoValor)
+                local vidaAtual = tonumber(novoValor)
+                if vidaAnterior > 0 and vidaAtual and vidaAtual <= 0 then
+                    marcarMembroDerrotado(grupo, membro)
                 end
-                vidaAnterior = tonumber(novoValor) or vidaAnterior
-            end)
+                vidaAnterior = vidaAtual or vidaAnterior
+            end))
+            if vidaAnterior <= 0 then marcarMembroDerrotado(grupo, membro) end
         end
 
         for _, desc in ipairs(modelo:GetDescendants()) do
@@ -4166,25 +4287,36 @@ do
             conectarVida(desc)
         end
         conectarHumanoid(modelo:FindFirstChildOfClass("Humanoid"))
-        eventosMaritimosConexoes[modelo].descendant = modelo.DescendantAdded:Connect(function(desc)
+        table.insert(dados.conexoes, modelo.DescendantAdded:Connect(function(desc)
             conectarHumanoid(desc)
             conectarVida(desc)
-        end)
+        end))
+        table.insert(dados.conexoes, modelo.AncestryChanged:Connect(function(_, novoPai)
+            if novoPai == nil then
+                -- Modelos removidos após a derrota também encerram sua participação.
+                marcarMembroDerrotado(grupo, membro)
+            end
+        end))
     end
 
-    local pastaInimigosMar = workspace:FindFirstChild("Enemies")
-    if pastaInimigosMar then
-        for _, inimigo in ipairs(pastaInimigosMar:GetChildren()) do
+    local function conectarPastaInimigosMar(pasta)
+        if not pasta or pasta == pastaInimigosMar then return end
+        pastaInimigosMar = pasta
+        for _, inimigo in ipairs(pasta:GetChildren()) do
             observarEventoMaritimo(inimigo)
         end
-        pastaInimigosMar.ChildAdded:Connect(function(inimigo)
+        pasta.ChildAdded:Connect(function(inimigo)
             task.defer(function() observarEventoMaritimo(inimigo) end)
         end)
     end
 
+    conectarPastaInimigosMar(workspace:FindFirstChild("Enemies"))
+    workspace.ChildAdded:Connect(function(obj)
+        if obj.Name == "Enemies" then conectarPastaInimigosMar(obj) end
+    end)
+
     atualizarEventosBtn.MouseButton1Click:Connect(function()
         vibrar()
-        -- A detecção é contínua; o botão apenas atualiza a exibição do contador.
         atualizarTextoEventos()
         atualizarEventosBtn.Text = "ATUALIZADO"
         task.delay(1, function()
@@ -4194,6 +4326,41 @@ do
         end)
     end)
     atualizarTextoEventos()
+
+    -- Leviatã: encontrar OU remover/derrotar o mesmo modelo pode disparar
+    -- o reset, mas cada instância só pode iniciar um ciclo uma única vez.
+    local leviataosJaProcessados = setmetatable({}, {__mode = "k"})
+    local function normalizarNomeLeviata(nome)
+        return string.lower(tostring(nome or "")):gsub("[%s_%-<>]", "")
+    end
+    local function reiniciarContadorPorLeviata(modelo)
+        if not modelo or not modelo:IsA("Model") then return end
+        if not string.find(normalizarNomeLeviata(modelo.Name), "leviathan", 1, true) then return end
+        if leviataosJaProcessados[modelo] then return end
+        leviataosJaProcessados[modelo] = true
+        eventosMaritimosConcluidos = 0
+        eventosMaritimosRestantes = EVENTOS_MARITIMOS_META
+        atualizarTextoEventos()
+    end
+
+    -- Também verifica modelos que já existiam quando o script foi iniciado.
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and string.find(normalizarNomeLeviata(obj.Name), "leviathan", 1, true) then
+            reiniciarContadorPorLeviata(obj)
+        end
+    end
+
+    workspace.DescendantAdded:Connect(function(obj)
+        if obj:IsA("Model") and string.find(normalizarNomeLeviata(obj.Name), "leviathan", 1, true) then
+            reiniciarContadorPorLeviata(obj)
+            obj.AncestryChanged:Connect(function(_, novoPai)
+                if novoPai == nil then
+                    -- A remoção do mesmo modelo não reinicia o contador de novo.
+                    reiniciarContadorPorLeviata(obj)
+                end
+            end)
+        end
+    end)
 
  local molduraRochas = criarMoldura(containerMar, 485, 85, "Remover Rochas")
     local rochaBox, rochaBtn = criarToggleDireita(molduraRochas, 22)
@@ -4761,6 +4928,173 @@ do
             if aguaPlataforma then aguaPlataforma:Destroy(); aguaPlataforma = nil end
             local char = player.Character
             if char then local ff = char:FindFirstChild("WaterImmunity") if ff then ff:Destroy() end end
+        end
+    end)
+
+    -- REMOVER LAVA (INTEGRADO AO PADRÃO VISUAL DO CELESTIAL HUB)
+    local molduraRemoverLava = criarMoldura(contMulti, 0, 60, "REMOVER LAVA")
+    local lavaBox, lavaBtn = criarToggle(molduraRemoverLava)
+    local lavaCircle = lavaBox:FindFirstChild("Circle")
+    local lavaAtivo = false
+    local lavaConexoes = {}
+    local lavaOriginal = {}
+    local lavaMonitorToken = 0
+
+    local function nomeIndicaLava(instancia)
+        local atual = instancia
+        while atual and atual ~= workspace do
+            local nome = string.lower(atual.Name or "")
+            if string.find(nome, "lava", 1, true)
+                or string.find(nome, "magma", 1, true)
+                or string.find(nome, "killbrick", 1, true) then
+                return true
+            end
+            atual = atual.Parent
+        end
+        return false
+    end
+
+    local function pareceLava(instancia)
+        if nomeIndicaLava(instancia) then
+            return true
+        end
+
+        if instancia:IsA("BasePart") then
+            local cor = instancia.Color
+            local material = instancia.Material
+            local corQuente = (cor.R > 0.55 and cor.G < 0.48 and cor.B < 0.35)
+                or (cor.R > 0.65 and cor.G > 0.18 and cor.G < 0.62 and cor.B < 0.2)
+            local materialQuente = material == Enum.Material.Neon
+                or material == Enum.Material.CrackedLava
+                or material == Enum.Material.Slate
+            local temToque = instancia:FindFirstChildOfClass("TouchTransmitter") ~= nil
+            return corQuente and (materialQuente or temToque)
+        end
+
+        return false
+    end
+
+    local function guardarPropriedade(instancia, chave, valor)
+        if not lavaOriginal[instancia] then
+            lavaOriginal[instancia] = {}
+        end
+        if lavaOriginal[instancia][chave] == nil then
+            lavaOriginal[instancia][chave] = valor
+        end
+    end
+
+    local function prepararLava(instancia)
+        if not lavaAtivo or not instancia or not instancia.Parent then return end
+
+        if instancia:IsA("BasePart") and pareceLava(instancia) then
+            guardarPropriedade(instancia, "CanTouch", instancia.CanTouch)
+            guardarPropriedade(instancia, "CanCollide", instancia.CanCollide)
+            guardarPropriedade(instancia, "Color", instancia.Color)
+            guardarPropriedade(instancia, "Material", instancia.Material)
+            guardarPropriedade(instancia, "Transparency", instancia.Transparency)
+
+            instancia.CanTouch = false
+
+            -- Plataformas finas e invisíveis de lava passam a funcionar como chão.
+            if instancia.Transparency >= 0.75 and instancia.Size.Y <= 8 then
+                instancia.CanCollide = true
+            end
+
+            instancia.Color = Color3.fromRGB(85, 85, 90)
+            instancia.Material = Enum.Material.Slate
+        end
+
+        if instancia:IsA("ParticleEmitter")
+            or instancia:IsA("Trail")
+            or instancia:IsA("Beam")
+            or instancia:IsA("PointLight")
+            or instancia:IsA("SpotLight")
+            or instancia:IsA("SurfaceLight") then
+            local pai = instancia.Parent
+            if pai and (pareceLava(pai) or (pai.Parent and pareceLava(pai.Parent))) then
+                guardarPropriedade(instancia, "Enabled", instancia.Enabled)
+                instancia.Enabled = false
+            end
+        elseif instancia:IsA("Decal") or instancia:IsA("Texture") then
+            local pai = instancia.Parent
+            if pai and (pareceLava(pai) or (pai.Parent and pareceLava(pai.Parent))) then
+                guardarPropriedade(instancia, "Transparency", instancia.Transparency)
+                instancia.Transparency = 1
+            end
+        end
+    end
+
+    local function restaurarLava()
+        for instancia, propriedades in pairs(lavaOriginal) do
+            if instancia and instancia.Parent then
+                for chave, valor in pairs(propriedades) do
+                    pcall(function()
+                        instancia[chave] = valor
+                    end)
+                end
+            end
+        end
+        table.clear(lavaOriginal)
+    end
+
+    local function desligarMonitoramentoLava()
+        for _, conexao in ipairs(lavaConexoes) do
+            pcall(function() conexao:Disconnect() end)
+        end
+        table.clear(lavaConexoes)
+    end
+
+    local function procurarLava()
+        if not lavaAtivo then return end
+        for _, instancia in ipairs(workspace:GetDescendants()) do
+            prepararLava(instancia)
+        end
+    end
+
+    lavaBtn.MouseButton1Click:Connect(function()
+        vibrar()
+        lavaAtivo = not lavaAtivo
+
+        TweenService:Create(lavaBox, TweenInfo.new(0.15), {
+            BackgroundColor3 = lavaAtivo and Color3.fromRGB(0, 120, 220)
+                or Color3.fromRGB(60, 60, 70)
+        }):Play()
+
+        if lavaCircle then
+            TweenService:Create(lavaCircle, TweenInfo.new(0.15), {
+                Position = lavaAtivo and UDim2.new(0, 25, 0.5, -10)
+                    or UDim2.new(0, 3, 0.5, -10)
+            }):Play()
+        end
+
+        desligarMonitoramentoLava()
+        lavaMonitorToken = lavaMonitorToken + 1
+        local tokenAtual = lavaMonitorToken
+
+        if lavaAtivo then
+            procurarLava()
+
+            table.insert(lavaConexoes, workspace.DescendantAdded:Connect(function(instancia)
+                if lavaAtivo then
+                    task.defer(function()
+                        prepararLava(instancia)
+                        for _, filho in ipairs(instancia:GetDescendants()) do
+                            prepararLava(filho)
+                        end
+                    end)
+                end
+            end))
+
+            task.spawn(function()
+                while lavaAtivo and lavaMonitorToken == tokenAtual do
+                    task.wait(5)
+                    if lavaAtivo and lavaMonitorToken == tokenAtual then
+                        procurarLava()
+                    end
+                end
+            end)
+        else
+            restaurarLava()
         end
     end)
 
@@ -38154,6 +38488,238 @@ local keyboardInputLock -- declarado antes do callback da aba para evitar refer�
         end
         busca:GetPropertyChangedSignal("Text"):Connect(filtrar)
         task.defer(atualizarCanvasComandos)
+    end
+end
+
+
+-- =====================================================
+-- CELESTIAL HUB - ABA TEMAS
+-- Seletor no mesmo padrão dos campos com seta para baixo.
+-- =====================================================
+do
+    local temasTab = frame:FindFirstChild("ContainerAba_temas")
+    if temasTab then
+        local descricao = Instance.new("TextLabel")
+        descricao.Name = "DescricaoTemas"
+        descricao.Size = UDim2.new(1, -20, 0, 34)
+        descricao.Position = UDim2.new(0, 10, 0, 10)
+        descricao.BackgroundTransparency = 1
+        descricao.Text = "Personalize as cores do Celestial Hub"
+        descricao.TextColor3 = COR_TEXTO_SUB
+        descricao.Font = FONTE_TEXTO
+        descricao.TextSize = 11
+        descricao.TextXAlignment = Enum.TextXAlignment.Left
+        descricao.TextWrapped = true
+        descricao.Parent = temasTab
+
+        local cardTema = Instance.new("Frame")
+        cardTema.Name = "MolduraSelecionarTema"
+        cardTema.Size = UDim2.new(1, -20, 0, 112)
+        cardTema.Position = UDim2.new(0, 10, 0, 48)
+        cardTema.BackgroundColor3 = COR_CARD
+        cardTema.BorderSizePixel = 0
+        cardTema.Parent = temasTab
+        Instance.new("UICorner", cardTema).CornerRadius = UDim.new(0, 10)
+        addWhiteStroke(cardTema)
+
+        local tituloTema = Instance.new("TextLabel")
+        tituloTema.Size = UDim2.new(1, -20, 0, 22)
+        tituloTema.Position = UDim2.new(0, 10, 0, 7)
+        tituloTema.BackgroundTransparency = 1
+        tituloTema.Text = "Escolher aparência"
+        tituloTema.TextColor3 = COR_TEXTO
+        tituloTema.Font = FONTE_TITULO
+        tituloTema.TextSize = 13
+        tituloTema.TextXAlignment = Enum.TextXAlignment.Left
+        tituloTema.Parent = cardTema
+
+        local temaBtn = Instance.new("TextButton")
+        temaBtn.Name = "SelecionarTemaBtn"
+        temaBtn.Size = UDim2.new(1, -20, 0, 34)
+        temaBtn.Position = UDim2.new(0, 10, 0, 36)
+        temaBtn.BackgroundColor3 = COR_BOTAO_INATIVO
+        temaBtn.Text = "Selecionar tema ▼"
+        temaBtn.TextColor3 = COR_TEXTO
+        temaBtn.Font = FONTE_TEXTO
+        temaBtn.TextSize = 12
+        temaBtn.ZIndex = 3
+        temaBtn.Parent = cardTema
+        Instance.new("UICorner", temaBtn).CornerRadius = UDim.new(0, 6)
+        addWhiteStroke(temaBtn)
+
+        local temaAtual = Instance.new("TextLabel")
+        temaAtual.Name = "TemaAtual"
+        temaAtual.Size = UDim2.new(1, -20, 0, 18)
+        temaAtual.Position = UDim2.new(0, 10, 0, 78)
+        temaAtual.BackgroundTransparency = 1
+        temaAtual.Text = "Tema atual: Violeta"
+        temaAtual.TextColor3 = COR_TEXTO_SUB
+        temaAtual.Font = FONTE_TEXTO
+        temaAtual.TextSize = 10
+        temaAtual.TextXAlignment = Enum.TextXAlignment.Left
+        temaAtual.Parent = cardTema
+
+        local temaPopup = Instance.new("Frame")
+        temaPopup.Name = "DropdownTemas"
+        temaPopup.Size = UDim2.new(0, 240, 0, 230)
+        temaPopup.Position = UDim2.new(0.5, -120, 0.5, -115)
+        temaPopup.BackgroundColor3 = COR_FUNDO
+        temaPopup.BorderSizePixel = 0
+        temaPopup.Visible = false
+        temaPopup.ZIndex = 10000
+        temaPopup.Parent = gui
+        temaPopup.ClipsDescendants = true
+        Instance.new("UICorner", temaPopup).CornerRadius = UDim.new(0, 8)
+        addWhiteStroke(temaPopup)
+
+        local temaPesquisa = Instance.new("TextBox")
+        temaPesquisa.Name = "PesquisarTema"
+        temaPesquisa.Size = UDim2.new(1, -12, 0, 30)
+        temaPesquisa.Position = UDim2.new(0, 6, 0, 6)
+        temaPesquisa.BackgroundColor3 = COR_CARD
+        temaPesquisa.TextColor3 = COR_TEXTO
+        temaPesquisa.PlaceholderColor3 = COR_TEXTO_SUB
+        temaPesquisa.PlaceholderText = "Pesquisar tema..."
+        temaPesquisa.Text = ""
+        temaPesquisa.Font = FONTE_TEXTO
+        temaPesquisa.TextSize = 12
+        temaPesquisa.ClearTextOnFocus = false
+        temaPesquisa.ZIndex = 10001
+        temaPesquisa.Parent = temaPopup
+        Instance.new("UICorner", temaPesquisa).CornerRadius = UDim.new(0, 6)
+
+        local temaVoltar = Instance.new("TextButton")
+        temaVoltar.Size = UDim2.new(1, -12, 0, 26)
+        temaVoltar.Position = UDim2.new(0, 6, 0, 40)
+        temaVoltar.BackgroundTransparency = 1
+        temaVoltar.Text = "‹ Voltar"
+        temaVoltar.TextColor3 = COR_TEXTO
+        temaVoltar.Font = FONTE_TEXTO
+        temaVoltar.TextSize = 12
+        temaVoltar.ZIndex = 10001
+        temaVoltar.Parent = temaPopup
+
+        local temaLista = Instance.new("ScrollingFrame")
+        temaLista.Name = "ListaTemas"
+        temaLista.Size = UDim2.new(1, -12, 1, -74)
+        temaLista.Position = UDim2.new(0, 6, 0, 70)
+        temaLista.BackgroundTransparency = 1
+        temaLista.BorderSizePixel = 0
+        temaLista.ScrollBarThickness = 3
+        temaLista.CanvasSize = UDim2.new(0, 0, 0, 0)
+        temaLista.ZIndex = 10001
+        temaLista.Parent = temaPopup
+
+        local temaLayout = Instance.new("UIListLayout")
+        temaLayout.Padding = UDim.new(0, 4)
+        temaLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        temaLayout.Parent = temaLista
+
+        local temas = {
+            {nome = "Violeta", fundo = Color3.fromRGB(58, 38, 78), painel = Color3.fromRGB(76, 50, 102), card = Color3.fromRGB(98, 65, 128), borda = Color3.fromRGB(140, 100, 180), ativo = Color3.fromRGB(130, 90, 200), inativo = Color3.fromRGB(58, 38, 78), desabilitado = Color3.fromRGB(45, 30, 60), texto = Color3.fromRGB(255,255,255), sub = Color3.fromRGB(210,200,220)},
+            {nome = "Roxo", fundo = Color3.fromRGB(38, 18, 66), painel = Color3.fromRGB(65, 35, 105), card = Color3.fromRGB(88, 52, 135), borda = Color3.fromRGB(155, 110, 210), ativo = Color3.fromRGB(145, 85, 220), inativo = Color3.fromRGB(48, 25, 78), desabilitado = Color3.fromRGB(30, 15, 48), texto = Color3.fromRGB(255,255,255), sub = Color3.fromRGB(218,205,235)},
+            {nome = "Roxo + Preto", fundo = Color3.fromRGB(15, 10, 22), painel = Color3.fromRGB(29, 19, 42), card = Color3.fromRGB(48, 30, 66), borda = Color3.fromRGB(115, 75, 155), ativo = Color3.fromRGB(125, 65, 190), inativo = Color3.fromRGB(22, 15, 32), desabilitado = Color3.fromRGB(12, 8, 18), texto = Color3.fromRGB(255,255,255), sub = Color3.fromRGB(195,180,210)},
+            {nome = "Branco", fundo = Color3.fromRGB(232, 234, 239), painel = Color3.fromRGB(248, 249, 252), card = Color3.fromRGB(255, 255, 255), borda = Color3.fromRGB(170, 175, 188), ativo = Color3.fromRGB(105, 115, 140), inativo = Color3.fromRGB(220, 223, 230), desabilitado = Color3.fromRGB(205, 208, 216), texto = Color3.fromRGB(35, 38, 48), sub = Color3.fromRGB(95, 100, 115)},
+            {nome = "Preto", fundo = Color3.fromRGB(12, 12, 14), painel = Color3.fromRGB(24, 24, 28), card = Color3.fromRGB(38, 38, 44), borda = Color3.fromRGB(85, 85, 95), ativo = Color3.fromRGB(105, 105, 120), inativo = Color3.fromRGB(28, 28, 32), desabilitado = Color3.fromRGB(18, 18, 20), texto = Color3.fromRGB(248,248,250), sub = Color3.fromRGB(185,185,195)},
+            {nome = "Cinza", fundo = Color3.fromRGB(65, 67, 72), painel = Color3.fromRGB(85, 88, 95), card = Color3.fromRGB(108, 112, 120), borda = Color3.fromRGB(155, 160, 170), ativo = Color3.fromRGB(135, 142, 155), inativo = Color3.fromRGB(72, 75, 82), desabilitado = Color3.fromRGB(48, 50, 55), texto = Color3.fromRGB(255,255,255), sub = Color3.fromRGB(220,222,228)}
+        }
+
+        local paletaAtual = {
+            fundo = COR_FUNDO, painel = COR_PAINEL, card = COR_CARD, borda = COR_BORDA,
+            ativo = COR_BOTAO_ATIVO, inativo = COR_BOTAO_INATIVO,
+            desabilitado = COR_BOTAO_DESABILITADO, texto = COR_TEXTO, sub = COR_TEXTO_SUB
+        }
+
+        local function aplicarTema(tema)
+            local anterior = paletaAtual
+            local nova = {
+                fundo = tema.fundo, painel = tema.painel, card = tema.card, borda = tema.borda,
+                ativo = tema.ativo, inativo = tema.inativo, desabilitado = tema.desabilitado,
+                texto = tema.texto, sub = tema.sub
+            }
+            local troca = {
+                [anterior.fundo] = nova.fundo, [anterior.painel] = nova.painel,
+                [anterior.card] = nova.card, [anterior.borda] = nova.borda,
+                [anterior.ativo] = nova.ativo, [anterior.inativo] = nova.inativo,
+                [anterior.desabilitado] = nova.desabilitado,
+                [anterior.texto] = nova.texto, [anterior.sub] = nova.sub
+            }
+            for _, obj in ipairs(gui:GetDescendants()) do
+                if obj:IsA("GuiObject") then
+                    local corOriginal = obj.BackgroundColor3
+                    local cor = troca[corOriginal]
+                    if corOriginal == anterior.fundo and anterior.fundo == anterior.inativo then
+                        cor = (obj.Parent == gui) and nova.fundo or nova.inativo
+                    end
+                    if cor then obj.BackgroundColor3 = cor end
+                end
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                    local corTexto = troca[obj.TextColor3]
+                    if corTexto then obj.TextColor3 = corTexto end
+                    if obj:IsA("TextBox") then
+                        local corPlaceholder = troca[obj.PlaceholderColor3]
+                        if corPlaceholder then obj.PlaceholderColor3 = corPlaceholder end
+                    end
+                end
+                if obj:IsA("UIStroke") then
+                    local corBorda = troca[obj.Color]
+                    if corBorda then obj.Color = corBorda end
+                end
+            end
+            paletaAtual = nova
+            COR_FUNDO, COR_PAINEL, COR_CARD, COR_BORDA = nova.fundo, nova.painel, nova.card, nova.borda
+            COR_BOTAO_ATIVO, COR_BOTAO_INATIVO = nova.ativo, nova.inativo
+            COR_BOTAO_DESABILITADO, COR_TEXTO, COR_TEXTO_SUB = nova.desabilitado, nova.texto, nova.sub
+            temaAtual.Text = "Tema atual: " .. tema.nome
+            temaBtn.Text = tema.nome .. " ▼"
+        end
+
+        local function atualizarTemas(filtro)
+            for _, filho in ipairs(temaLista:GetChildren()) do
+                if filho:IsA("TextButton") then filho:Destroy() end
+            end
+            filtro = string.lower(filtro or "")
+            for ordem, tema in ipairs(temas) do
+                if filtro == "" or string.find(string.lower(tema.nome), filtro, 1, true) then
+                    local item = Instance.new("TextButton")
+                    item.Name = "Tema_" .. ordem
+                    item.Size = UDim2.new(1, -2, 0, 30)
+                    item.BackgroundColor3 = COR_CARD
+                    item.Text = tema.nome
+                    item.TextColor3 = COR_TEXTO
+                    item.Font = FONTE_TEXTO
+                    item.TextSize = 12
+                    item.ZIndex = 10002
+                    item.LayoutOrder = ordem
+                    item.Parent = temaLista
+                    Instance.new("UICorner", item).CornerRadius = UDim.new(0, 5)
+                    item.MouseButton1Click:Connect(function()
+                        vibrar()
+                        aplicarTema(tema)
+                        temaPopup.Visible = false
+                        temaPesquisa.Text = ""
+                    end)
+                end
+            end
+            temaLista.CanvasSize = UDim2.new(0, 0, 0, temaLayout.AbsoluteContentSize.Y + 4)
+        end
+
+        temaBtn.MouseButton1Click:Connect(function()
+            vibrar()
+            temaPopup.Visible = not temaPopup.Visible
+            if temaPopup.Visible then
+                temaPesquisa.Text = ""
+                atualizarTemas("")
+            end
+        end)
+        temaVoltar.MouseButton1Click:Connect(function()
+            vibrar()
+            temaPopup.Visible = false
+            temaPesquisa.Text = ""
+        end)
+        temaPesquisa:GetPropertyChangedSignal("Text"):Connect(function()
+            atualizarTemas(temaPesquisa.Text)
+        end)
     end
 end
 
