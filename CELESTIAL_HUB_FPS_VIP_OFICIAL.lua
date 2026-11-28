@@ -38637,39 +38637,54 @@ do
                 ativo = tema.ativo, inativo = tema.inativo, desabilitado = tema.desabilitado,
                 texto = tema.texto, sub = tema.sub
             }
-            local troca = {
-                [anterior.fundo] = nova.fundo, [anterior.painel] = nova.painel,
-                [anterior.card] = nova.card, [anterior.borda] = nova.borda,
-                [anterior.ativo] = nova.ativo, [anterior.inativo] = nova.inativo,
-                [anterior.desabilitado] = nova.desabilitado,
-                [anterior.texto] = nova.texto, [anterior.sub] = nova.sub
-            }
+
+            -- Mapeia as cores por comparação, sem usar Color3 como chave de tabela.
+            local function trocarCor(cor)
+                if cor == anterior.fundo then return nova.fundo end
+                if cor == anterior.painel then return nova.painel end
+                if cor == anterior.card then return nova.card end
+                if cor == anterior.borda then return nova.borda end
+                if cor == anterior.ativo then return nova.ativo end
+                if cor == anterior.inativo then return nova.inativo end
+                if cor == anterior.desabilitado then return nova.desabilitado end
+                if cor == anterior.texto then return nova.texto end
+                if cor == anterior.sub then return nova.sub end
+                return nil
+            end
+
             for _, obj in ipairs(gui:GetDescendants()) do
                 if obj:IsA("GuiObject") then
-                    local corOriginal = obj.BackgroundColor3
-                    local cor = troca[corOriginal]
-                    if corOriginal == anterior.fundo and anterior.fundo == anterior.inativo then
-                        cor = (obj.Parent == gui) and nova.fundo or nova.inativo
-                    end
-                    if cor then obj.BackgroundColor3 = cor end
+                    local novaCor = trocarCor(obj.BackgroundColor3)
+                    if novaCor then obj.BackgroundColor3 = novaCor end
                 end
+
                 if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-                    local corTexto = troca[obj.TextColor3]
-                    if corTexto then obj.TextColor3 = corTexto end
+                    local novaCorTexto = trocarCor(obj.TextColor3)
+                    if novaCorTexto then obj.TextColor3 = novaCorTexto end
+
                     if obj:IsA("TextBox") then
-                        local corPlaceholder = troca[obj.PlaceholderColor3]
-                        if corPlaceholder then obj.PlaceholderColor3 = corPlaceholder end
+                        local novaCorPlaceholder = trocarCor(obj.PlaceholderColor3)
+                        if novaCorPlaceholder then obj.PlaceholderColor3 = novaCorPlaceholder end
                     end
                 end
+
                 if obj:IsA("UIStroke") then
-                    local corBorda = troca[obj.Color]
-                    if corBorda then obj.Color = corBorda end
+                    local novaBorda = trocarCor(obj.Color)
+                    if novaBorda then obj.Color = novaBorda end
                 end
             end
+
             paletaAtual = nova
-            COR_FUNDO, COR_PAINEL, COR_CARD, COR_BORDA = nova.fundo, nova.painel, nova.card, nova.borda
-            COR_BOTAO_ATIVO, COR_BOTAO_INATIVO = nova.ativo, nova.inativo
-            COR_BOTAO_DESABILITADO, COR_TEXTO, COR_TEXTO_SUB = nova.desabilitado, nova.texto, nova.sub
+            COR_FUNDO = nova.fundo
+            COR_PAINEL = nova.painel
+            COR_CARD = nova.card
+            COR_BORDA = nova.borda
+            COR_BOTAO_ATIVO = nova.ativo
+            COR_BOTAO_INATIVO = nova.inativo
+            COR_BOTAO_DESABILITADO = nova.desabilitado
+            COR_TEXTO = nova.texto
+            COR_TEXTO_SUB = nova.sub
+
             temaAtual.Text = "Tema atual: " .. tema.nome
             temaBtn.Text = tema.nome .. " ▼"
         end
